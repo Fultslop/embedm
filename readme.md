@@ -1,5 +1,5 @@
 # EmbedM 
-version 0.2
+version 0.3
 
 A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents.
 
@@ -21,7 +21,41 @@ EmbedM processes Markdown files by resolving special embed blocks that reference
 - **YAML-Based Syntax**: Clean, extensible YAML format with syntax highlighting
 - **Batch Processing**: Process individual files or entire directories
 
+## Project Structure
+
+EmbedM is organized as a modular Python package with clear separation of concerns:
+
+```
+embedm/
+├── pyproject.toml          # Modern Python project configuration
+├── src/embedm/
+│   ├── __init__.py        # Public API exports
+│   ├── __main__.py        # Module execution support
+│   ├── cli.py            # Command-line interface
+│   ├── parsing.py        # YAML embed block parsing
+│   ├── extraction.py     # Region and line extraction
+│   ├── formatting.py     # Line number formatting
+│   ├── converters.py     # CSV and TOC generation
+│   ├── processors.py     # File embed processing
+│   └── resolver.py       # Core resolution logic
+└── tests/                 # Comprehensive test suite
+```
+
+The codebase has been refactored from a single 549-line file into focused modules averaging ~75 lines each, making it easier to maintain, test, and extend.
+
 ## Installation
+
+### From Source (Recommended for Development)
+
+```bash
+git clone https://github.com/Fultslop/embedm.git
+cd embedm
+pip install -e .
+```
+
+This installs embedm in editable mode with all dependencies (PyYAML) and creates the `embedm` command.
+
+### Traditional Method
 
 ```bash
 git clone https://github.com/Fultslop/embedm.git
@@ -32,25 +66,42 @@ pip install -r requirements.txt
 ### Requirements
 
 - Python 3.8+
-- PyYAML
+- PyYAML>=6.0
+
+### Development Dependencies
+
+```bash
+pip install -e ".[dev]"
+```
+
+This installs additional development tools including pytest.
 
 ## Usage
 
 ### Basic Usage
 
-Process a single file:
+After installing with `pip install -e .`, you can use the `embedm` command directly:
+
+Process a single file (creates `input.compiled.md`):
 ```bash
-python src/embedm.py input.md
+embedm input.md
 ```
 
 Process a single file with custom output:
 ```bash
-python src/embedm.py input.md output.md
+embedm input.md output.md
 ```
 
 Process a directory:
 ```bash
-python src/embedm.py source_dir/ output_dir/
+embedm source_dir/ output_dir/
+```
+
+### Alternative: Module Execution
+
+You can also run embedm as a Python module:
+```bash
+python -m embedm input.md
 ```
 
 ## Embed Syntax
@@ -240,6 +291,27 @@ Run with verbose output:
 ```bash
 python tests/test_embedm.py -v
 ```
+
+Or use pytest (recommended):
+```bash
+pytest tests/ -v
+```
+
+## Project Configuration
+
+EmbedM uses `pyproject.toml` for modern Python project configuration, following PEP 518 standards. This provides:
+
+- **Single Configuration File**: All project metadata, dependencies, and tool settings in one place
+- **Standard Packaging**: Easy to install, distribute, and publish to PyPI
+- **CLI Entry Point**: Automatic `embedm` command registration
+- **Development Tools**: Integrated pytest and coverage configuration
+- **Dependency Management**: Clear separation between runtime and development dependencies
+
+The `pyproject.toml` file makes it easy to:
+- Install for development: `pip install -e .`
+- Install with dev tools: `pip install -e ".[dev]"`
+- Build distributions: `python -m build`
+- Publish to PyPI: `twine upload dist/*`
 
 ## Why YAML Format?
 

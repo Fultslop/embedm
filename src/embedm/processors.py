@@ -1,0 +1,106 @@
+"""File embed processing logic."""
+
+import os
+from typing import Dict, Set
+
+from .extraction import extract_lines, extract_region
+from .formatting import format_with_line_numbers, format_with_line_numbers_text, dedent_lines
+from .converters import csv_to_markdown_table
+
+
+def process_file_embed(properties: Dict, current_file_dir: str, processing_stack: Set[str]) -> str:
+    """
+    Process a file embed with the given properties
+    """
+    # Import here to avoid circular dependency
+    from .resolver import resolve_content
+
+    source = properties.get('source')
+    if not source:
+        return "> [!CAUTION]\n> **Embed Error:** 'source' property is required for file embeds"
+
+    region = properties.get('region')
+    title = properties.get('title')
+    line_numbers = properties.get('line_numbers', False)
+
+    # Normalize line_numbers value
+    if isinstance(line_numbers, str):
+        line_numbers = line_numbers.lower()
+        if line_numbers not in ('text', 'html', 'false'):
+            line_numbers = 'html' if line_numbers in ('true', 'yes', '1') else False
+    elif isinstance(line_numbers, bool):
+        line_numbers = 'html' if line_numbers else False
+    else:
+        line_numbers = False
+
+    target_path = os.path.abspath(os.path.join(current_file_dir, source))
+    is_markdown = target_path.endswith('.md')
+
+    if not os.path.exists(target_path):
+        return f"> [!CAUTION]\n> File not found: `{source}` relative to `{current_file_dir}`"
+
+    with open(target_path, 'r', encoding='utf-8') as f:
+        raw_content = f.read()
+
+    # Case A: Embedding specific part (region) or non-Markdown file
+    if region or not is_markdown:
+        result_data = None
+        ext = os.path.splitext(target_path)[1][1:] or 'text'
+
+        if region:
+            # Try L10-20 format first
+            result_data = extract_lines(raw_content, region)
+            # If not L-format, try named region tags
+            if not result_data:
+                result_data = extract_region(raw_content, region)
+
+            if not result_data:
+                return f"> [!CAUTION]\n> Region `{region}` not found in `{source}`"
+
+            # Apply line numbers if requested
+            if line_numbers == 'html':
+                raw_content = format_with_line_numbers(result_data['lines'], result_data['startLine'], ext)
+            elif line_numbers == 'text':
+                raw_content = format_with_line_numbers_text(result_data['lines'], result_data['startLine'])
+            else:
+                # Just dedent the lines without numbers
+                raw_content = dedent_lines(result_data['lines'])
+        else:
+            # Whole file without region - apply line numbers if requested
+            if line_numbers:
+                lines = raw_content.split('\n')
+                if line_numbers == 'html':
+                    raw_content = format_with_line_numbers(lines, 1, ext)
+                elif line_numbers == 'text':
+                    raw_content = format_with_line_numbers_text(lines, 1)
+
+        # Special handling for CSV files - convert to markdown table
+        if ext == 'csv' and not region:
+            table = csv_to_markdown_table(raw_content)
+            # Wrap in optional title
+            if title:
+                return f"**{title}**\n\n{table}"
+            return table
+
+        # Build result with optional title
+        result = ''
+        if title:
+            result += f"**{title}**\n\n"
+
+        # If we formatted with HTML line numbers, return as-is (no code block wrapper)
+        if line_numbers == 'html':
+            result += raw_content
+        else:
+            # Standard markdown code block (for text line numbers or no line numbers)
+            result += f"```{ext}\n{raw_content.rstrip()}\n```"
+
+        return result
+
+    # Case B: Embedding another Markdown file recursively
+    embedded_md = resolve_content(target_path, set(processing_stack))
+
+    # Add title if specified
+    if title:
+        return f"**{title}**\n\n{embedded_md}"
+
+    return embedded_md
