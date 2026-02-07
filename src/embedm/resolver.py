@@ -7,6 +7,7 @@ from typing import Optional, Set, Dict
 from .parsing import parse_yaml_embed_block
 from .processors import process_file_embed
 from .converters import generate_table_of_contents
+from .layout import process_layout_embed
 
 
 class ProcessingContext:
@@ -99,6 +100,8 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
         # Route to appropriate handler based on type
         if embed_type == 'file':
             return process_file_embed(properties, current_file_dir, processing_stack, context)
+        elif embed_type == 'layout':
+            return process_layout_embed(properties, current_file_dir, processing_stack, context)
         elif embed_type == 'toc' or embed_type == 'table_of_contents':
             # TOC is handled in a second pass, leave marker
             return match.group(0)
