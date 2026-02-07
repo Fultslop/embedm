@@ -18,6 +18,7 @@ EmbedM processes Markdown files by resolving special embed blocks that reference
 - **Line Numbers**: Display embedded code with text or HTML-formatted line numbers
 - **CSV to Table**: Automatically convert CSV files to Markdown tables
 - **Table of Contents**: Generate GitHub-style table of contents from document headings
+- **Layout Embeds**: Create multi-column/row layouts with flexbox-based positioning and styling
 - **Recursive Embedding**: Embed Markdown files that contain their own embeds
 - **YAML-Based Syntax**: Clean, extensible YAML format with syntax highlighting
 - **Batch Processing**: Process individual files or entire directories
@@ -49,6 +50,7 @@ embedm/
 │   ├── extraction.py     # Region and line extraction
 │   ├── formatting.py     # Line number formatting
 │   ├── converters.py     # CSV and TOC generation
+│   ├── layout.py         # Layout embed processing (flexbox)
 │   ├── processors.py     # File embed processing
 │   └── resolver.py       # Core resolution logic with limit checking
 └── tests/                 # Comprehensive test suite
@@ -323,6 +325,8 @@ title: Core Implementation
 
 ### Generate Table of Contents
 
+Generate a table of contents from the current document's headings:
+
 ````markdown
 ```yaml
 type: embed.toc
@@ -336,6 +340,20 @@ type: embed.table_of_contents
 ```
 ````
 
+Generate a table of contents from a specific file:
+
+````markdown
+```yaml
+type: embed.toc
+source: path/to/document.md
+```
+````
+
+**TOC Properties:**
+- `source`: Optional path to file to generate TOC from. If not specified, generates from current document's headings.
+
+**Note:** When using TOC in layouts, the `source` property is **required** to specify which file's headings to include.
+
 ### Embed CSV as Table
 
 ````markdown
@@ -346,6 +364,138 @@ source: data.csv
 ````
 
 CSV files are automatically converted to Markdown tables.
+
+### Layout Embeds
+
+Create multi-column or multi-row layouts using flexbox-based positioning.
+
+**Basic Two-Column Layout:**
+
+````markdown
+```yaml
+type: embed.layout
+orientation: row
+gap: 20px
+sections:
+  - size: 50%
+    embed:
+      type: embed.file
+      source: left-content.md
+  - size: 50%
+    embed:
+      type: embed.file
+      source: right-content.md
+```
+````
+
+**Layout with Styling:**
+
+````markdown
+```yaml
+type: embed.layout
+orientation: row
+gap: 15px
+border: "1px solid #ccc"
+padding: 20px
+background: "#f9f9f9"
+sections:
+  - size: 30%
+    border: "2px solid #007bff"
+    padding: 15px
+    background: "#e7f3ff"
+    embed:
+      type: embed.toc
+      source: main-content.md
+  - size: 70%
+    padding: 15px
+    embed:
+      type: embed.file
+      source: main-content.md
+```
+````
+
+**Scrollable Sidebar Layout:**
+
+````markdown
+```yaml
+type: embed.layout
+orientation: row
+gap: 20px
+sections:
+  - size: 250px
+    max-height: 600px
+    overflow-y: auto
+    overflow-x: hidden
+    padding: 15px
+    border: "1px solid #ddd"
+    background: "#f8f9fa"
+    embed:
+      type: embed.toc
+      source: content.md
+  - size: auto
+    embed:
+      type: embed.file
+      source: content.md
+```
+````
+
+This creates a fixed-width sidebar (250px) with scrollable overflow when the table of contents exceeds 600px height, while the main content area takes up remaining space.
+
+**Layout Properties:**
+
+Container-level properties:
+- `orientation`: `row` (horizontal) or `column` (vertical) - default: `row`
+- `gap`: Space between sections (e.g., `20px`, `10%`) - default: `0`
+- `border`: Container border (e.g., `"1px solid #ccc"`, `true`) - optional
+- `padding`: Container padding (e.g., `20px`, `5%`) - optional
+- `background`: Container background color or CSS background - optional
+- `overflow`: Overflow behavior (`auto`, `scroll`, `hidden`, `visible`) - optional
+- `overflow-x`: Horizontal overflow (overrides `overflow` for x-axis) - optional
+- `overflow-y`: Vertical overflow (overrides `overflow` for y-axis) - optional
+- `max-height`: Maximum height (e.g., `500px`, `80vh`) - optional
+- `max-width`: Maximum width (e.g., `1200px`, `90%`) - optional
+- `min-height`: Minimum height (e.g., `300px`) - optional
+- `min-width`: Minimum width (e.g., `200px`) - optional
+
+Section properties (per section in `sections` list):
+- `size`: Section size (`auto`, `50%`, `300px`) - default: `auto`
+- `border`: Section border - optional
+- `padding`: Section padding - optional
+- `background`: Section background - optional
+- `overflow`: Section overflow behavior - optional
+- `overflow-x`: Section horizontal overflow - optional
+- `overflow-y`: Section vertical overflow - optional
+- `max-height`: Section maximum height - optional
+- `max-width`: Section maximum width - optional
+- `min-height`: Section minimum height - optional
+- `min-width`: Section minimum width - optional
+- `embed`: Nested embed directive (file, toc, or another layout) - required
+
+**Size Specifications:**
+
+- `auto` - Section grows/shrinks to fit content (uses `flex: 1 1 auto`)
+- `50%` - Fixed percentage of container
+- `300px` - Fixed pixel size
+- If no size specified, defaults to `auto`
+
+**Important Notes:**
+
+- **Color Values**: In YAML, colors starting with `#` must be quoted (e.g., `"#ccc"`) because `#` is a comment character
+- **Border Shorthand**: `border: true` uses default `1px solid #ccc`
+- **Nested Layouts**: Layouts can contain other layouts for complex grid structures
+- **Rendering**: Uses inline CSS flexbox, compatible with most markdown renderers
+- **Overflow Defaults**: Overflow defaults to `visible` (no scrollbars). Use `overflow: auto` to add scrollbars when content exceeds size
+- **Scrollable Sections**: Combine `max-height` or `max-width` with `overflow: auto` for scrollable regions
+- **Viewport Units**: You can use viewport units like `80vh` (80% of viewport height) for responsive max-height values
+
+**Use Cases:**
+
+- Side-by-side code comparisons
+- Documentation with scrollable sidebar navigation
+- Dashboard-style layouts with multiple panels
+- Multi-column feature lists
+- Fixed-height content previews with scroll
+- Responsive layouts with viewport-based dimensions
 
 ## Examples
 
@@ -409,6 +559,38 @@ Create reusable sections:
 type: embed.file
 source: sections/features.md
 ```
+````
+
+### Example 4: Documentation with Sidebar Layout
+
+Create a documentation page with table of contents sidebar:
+
+````markdown
+# User Guide
+
+```yaml
+type: embed.layout
+orientation: row
+gap: 20px
+padding: 20px
+border: "1px solid #e0e0e0"
+sections:
+  - size: 25%
+    background: "#f5f5f5"
+    padding: 15px
+    border: "1px solid #ddd"
+    embed:
+      type: embed.toc
+      source: guide-content.md
+  - size: 75%
+    padding: 15px
+    embed:
+      type: embed.file
+      source: guide-content.md
+```
+
+## Getting Started
+...
 ````
 
 For more examples see the [examples directory](https://github.com/Fultslop/embedm/tree/main/doc/examples/src)

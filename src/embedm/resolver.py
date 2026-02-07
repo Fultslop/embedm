@@ -7,6 +7,7 @@ from typing import Optional, Set, Dict
 from .parsing import parse_yaml_embed_block
 from .processors import process_file_embed
 from .converters import generate_table_of_contents
+from .layout import process_layout_embed
 
 
 class ProcessingContext:
@@ -99,6 +100,8 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
         # Route to appropriate handler based on type
         if embed_type == 'file':
             return process_file_embed(properties, current_file_dir, processing_stack, context)
+        elif embed_type == 'layout':
+            return process_layout_embed(properties, current_file_dir, processing_stack, context)
         elif embed_type == 'toc' or embed_type == 'table_of_contents':
             # TOC is handled in a second pass, leave marker
             return match.group(0)
@@ -109,12 +112,21 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
     return resolved
 
 
-def resolve_table_of_contents(content: str) -> str:
+def resolve_table_of_contents(content: str, source_file_path: str = None) -> str:
     """
     Post-process to resolve table_of_contents embeds
+
+    Args:
+        content: Content with TOC markers to resolve
+        source_file_path: Path to the source file (for resolving relative paths in source property)
     """
+    import os
+
     # Regex to find YAML blocks
     yaml_regex = re.compile(r'^```yaml\s*\n([\s\S]*?)```', re.MULTILINE)
+
+    # Get directory of source file for resolving relative paths
+    current_file_dir = os.path.dirname(os.path.abspath(source_file_path)) if source_file_path else None
 
     def replace_toc(match):
         yaml_content = match.group(1)
@@ -126,10 +138,16 @@ def resolve_table_of_contents(content: str) -> str:
         embed_type, properties = parsed
 
         if embed_type in ('toc', 'table_of_contents'):
-            # Generate TOC from current content (without TOC markers)
-            # First remove all TOC embeds to avoid including them
-            temp_content = yaml_regex.sub(lambda m: '' if parse_yaml_embed_block(m.group(1)) and parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents') else m.group(0), content)
-            return generate_table_of_contents(temp_content)
+            # Check if source file is specified
+            source = properties.get('source')
+            if source:
+                # Generate TOC from specified file
+                return generate_table_of_contents('', source_file=source, current_file_dir=current_file_dir)
+            else:
+                # Generate TOC from current content (without TOC markers)
+                # First remove all TOC embeds to avoid including them
+                temp_content = yaml_regex.sub(lambda m: '' if parse_yaml_embed_block(m.group(1)) and parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents') else m.group(0), content)
+                return generate_table_of_contents(temp_content)
 
         return match.group(0)
 

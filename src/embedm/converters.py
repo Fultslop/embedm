@@ -79,10 +79,32 @@ def slugify(text: str) -> str:
     return result
 
 
-def generate_table_of_contents(content: str) -> str:
+def generate_table_of_contents(content: str, source_file: str = None, current_file_dir: str = None) -> str:
     """
     Generates a table of contents from markdown headings
+
+    Args:
+        content: Markdown content to generate TOC from (used if source_file is None)
+        source_file: Optional path to file to read and generate TOC from
+        current_file_dir: Directory of the file containing the TOC embed (for resolving relative paths)
+
+    Returns:
+        Generated table of contents as markdown list
     """
+    import os
+
+    # If source_file is specified, read that file instead
+    if source_file and current_file_dir:
+        target_path = os.path.abspath(os.path.join(current_file_dir, source_file))
+        if not os.path.exists(target_path):
+            return f"> [!CAUTION]\n> **TOC Error:** Source file not found: `{source_file}`"
+
+        try:
+            with open(target_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+        except Exception as e:
+            return f"> [!CAUTION]\n> **TOC Error:** Could not read `{source_file}`: {str(e)}"
+
     # Normalize line endings first
     lines = content.replace('\r\n', '\n').replace('\r', '\n').split('\n')
     toc_lines = []
