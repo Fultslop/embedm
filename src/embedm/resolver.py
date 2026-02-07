@@ -102,6 +102,9 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
             return process_file_embed(properties, current_file_dir, processing_stack, context)
         elif embed_type == 'layout':
             return process_layout_embed(properties, current_file_dir, processing_stack, context)
+        elif embed_type == 'comment':
+            # Comments are removed from compiled output
+            return ''
         elif embed_type == 'toc' or embed_type == 'table_of_contents':
             # TOC is handled in a second pass, leave marker
             return match.group(0)

@@ -431,6 +431,36 @@ name: value
         self.assertIn('```yaml', result)
         self.assertIn('type: config', result)
 
+    def test_comment_removed(self):
+        """Test that embed.comment blocks are completely removed from output"""
+        md_content = '''# Test Document
+
+Before comment
+
+```yaml
+type: embed.comment
+text: This is a comment that should be removed from the compiled output
+```
+
+After comment
+
+```yaml
+type: embed.comment
+```
+
+End of document'''
+        md_path = self.create_file('test.md', md_content)
+
+        result = resolve_content(md_path)
+        # Verify comments are completely removed
+        self.assertNotIn('embed.comment', result)
+        self.assertNotIn('This is a comment', result)
+        self.assertNotIn('```yaml', result)
+        # Verify surrounding content is preserved
+        self.assertIn('Before comment', result)
+        self.assertIn('After comment', result)
+        self.assertIn('End of document', result)
+
 
 class TestResolveTableOfContents(unittest.TestCase):
     """Tests for resolve_table_of_contents function"""

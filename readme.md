@@ -365,6 +365,28 @@ source: data.csv
 
 CSV files are automatically converted to Markdown tables.
 
+### Embed Comments
+
+Add documentation comments that describe your document structure. These comments are completely removed from the compiled output.
+
+````markdown
+```yaml
+type: embed.comment
+text: This section is for API documentation. The sidebar contains the table of contents, and the main area shows the detailed API reference.
+```
+````
+
+**Comment Properties:**
+- `text`: The comment text (optional - if omitted, the comment can serve as a visual separator)
+
+**Use Cases:**
+- Document the intended structure of complex layouts
+- Leave notes for future maintainers
+- Explain why certain sections are organized a particular way
+- Mark sections that need future updates
+
+Comments are useful for documenting the organization of files with multiple embeds, especially layouts. Since they're removed during compilation, they don't affect the output.
+
 ### Layout Embeds
 
 Create multi-column or multi-row layouts using flexbox-based positioning.
