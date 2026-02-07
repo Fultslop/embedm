@@ -461,6 +461,59 @@ End of document'''
         self.assertIn('After comment', result)
         self.assertIn('End of document', result)
 
+    def test_line_numbers_with_default_style(self):
+        """Test that line_numbers with html format uses default style"""
+        code_path = self.create_file('test.py', 'print("hello")\nprint("world")')
+        md_content = '''```yaml
+type: embed.file
+source: test.py
+line_numbers: html
+```'''
+        md_path = self.create_file('test.md', md_content)
+
+        result = resolve_content(md_path)
+        # Should have HTML structure with default class
+        self.assertIn('code-block-default', result)
+        self.assertIn('<style>', result)
+        # Default style should have GitHub colors
+        self.assertIn('#f6f8fa', result)  # Default background color
+
+    def test_line_numbers_with_dark_style(self):
+        """Test that line_numbers_style property loads dark theme"""
+        code_path = self.create_file('test.py', 'print("hello")')
+        md_content = '''```yaml
+type: embed.file
+source: test.py
+line_numbers: html
+line_numbers_style: dark
+```'''
+        md_path = self.create_file('test.md', md_content)
+
+        result = resolve_content(md_path)
+        # Should have HTML structure with dark class
+        self.assertIn('code-block-dark', result)
+        self.assertIn('<style>', result)
+        # Dark style should have dark background
+        self.assertIn('#0d1117', result)  # Dark background color
+
+    def test_line_numbers_with_minimal_style(self):
+        """Test that line_numbers_style property loads minimal theme"""
+        code_path = self.create_file('test.py', 'x = 1')
+        md_content = '''```yaml
+type: embed.file
+source: test.py
+line_numbers: html
+line_numbers_style: minimal
+```'''
+        md_path = self.create_file('test.md', md_content)
+
+        result = resolve_content(md_path)
+        # Should have HTML structure with minimal class
+        self.assertIn('code-block-minimal', result)
+        self.assertIn('<style>', result)
+        # Minimal style should have simple border
+        self.assertIn('1px solid #ccc', result)
+
 
 class TestResolveTableOfContents(unittest.TestCase):
     """Tests for resolve_table_of_contents function"""
@@ -533,8 +586,8 @@ class TestFormatWithLineNumbersHTML(unittest.TestCase):
     def test_html_generation(self):
         lines = ['def hello():', '    print("world")']
         result = format_with_line_numbers(lines, 1, 'python')
-        
-        self.assertIn('<div class="code-block-with-lines">', result)
+
+        self.assertIn('<div class="code-block-default">', result)
         self.assertIn('<style>', result)
         self.assertIn('class="line-number"', result)
         self.assertIn('language-python', result)

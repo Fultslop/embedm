@@ -34,6 +34,7 @@ def process_file_embed(properties: Dict, current_file_dir: str, processing_stack
     region = properties.get('region')
     title = properties.get('title')
     line_numbers = properties.get('line_numbers', False)
+    line_numbers_style = properties.get('line_numbers_style', 'default')
 
     # Normalize line_numbers value
     if isinstance(line_numbers, str):
@@ -78,7 +79,8 @@ def process_file_embed(properties: Dict, current_file_dir: str, processing_stack
 
             # Apply line numbers if requested
             if line_numbers == 'html':
-                raw_content = format_with_line_numbers(result_data['lines'], result_data['startLine'], ext)
+                raw_content = format_with_line_numbers(result_data['lines'], result_data['startLine'], ext,
+                                                       line_numbers_style, current_file_dir)
             elif line_numbers == 'text':
                 raw_content = format_with_line_numbers_text(result_data['lines'], result_data['startLine'])
             else:
@@ -89,7 +91,7 @@ def process_file_embed(properties: Dict, current_file_dir: str, processing_stack
             if line_numbers:
                 lines = raw_content.split('\n')
                 if line_numbers == 'html':
-                    raw_content = format_with_line_numbers(lines, 1, ext)
+                    raw_content = format_with_line_numbers(lines, 1, ext, line_numbers_style, current_file_dir)
                 elif line_numbers == 'text':
                     raw_content = format_with_line_numbers_text(lines, 1)
 
