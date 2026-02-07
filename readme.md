@@ -325,6 +325,8 @@ title: Core Implementation
 
 ### Generate Table of Contents
 
+Generate a table of contents from the current document's headings:
+
 ````markdown
 ```yaml
 type: embed.toc
@@ -337,6 +339,20 @@ Alternative (both work):
 type: embed.table_of_contents
 ```
 ````
+
+Generate a table of contents from a specific file:
+
+````markdown
+```yaml
+type: embed.toc
+source: path/to/document.md
+```
+````
+
+**TOC Properties:**
+- `source`: Optional path to file to generate TOC from. If not specified, generates from current document's headings.
+
+**Note:** When using TOC in layouts, the `source` property is **required** to specify which file's headings to include.
 
 ### Embed CSV as Table
 
@@ -389,6 +405,7 @@ sections:
     background: "#e7f3ff"
     embed:
       type: embed.toc
+      source: main-content.md
   - size: 70%
     padding: 15px
     embed:
@@ -414,6 +431,7 @@ sections:
     background: "#f8f9fa"
     embed:
       type: embed.toc
+      source: content.md
   - size: auto
     embed:
       type: embed.file
@@ -563,6 +581,7 @@ sections:
     border: "1px solid #ddd"
     embed:
       type: embed.toc
+      source: guide-content.md
   - size: 75%
     padding: 15px
     embed:

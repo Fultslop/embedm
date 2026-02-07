@@ -172,7 +172,7 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
             final_content = resolve_content(file_path, context=context)
 
             # Second pass: resolve table of contents
-            final_content = resolve_table_of_contents(final_content)
+            final_content = resolve_table_of_contents(final_content, source_file_path=file_path)
 
             # Check output size limit
             output_size = len(final_content.encode('utf-8'))
@@ -196,7 +196,7 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
         final_content = resolve_content(file_path, context=context)
 
         # Second pass: resolve table of contents
-        final_content = resolve_table_of_contents(final_content)
+        final_content = resolve_table_of_contents(final_content, source_file_path=file_path)
 
         # Check output size limit
         output_size = len(final_content.encode('utf-8'))

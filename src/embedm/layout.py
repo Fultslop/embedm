@@ -276,8 +276,14 @@ def process_layout_embed(properties: Dict, current_file_dir: str, processing_sta
         if embed_type == 'file':
             embedded_content = process_file_embed(embed, current_file_dir, processing_stack, context)
         elif embed_type in ('toc', 'table_of_contents'):
-            # TOC needs special handling - for now, just a placeholder
-            embedded_content = "> [!NOTE]\n> Table of contents will be generated in final pass"
+            # Generate TOC - check if source file is specified
+            source = embed.get('source')
+            if source:
+                # Generate TOC from specified file
+                embedded_content = generate_table_of_contents('', source_file=source, current_file_dir=current_file_dir)
+            else:
+                # No source specified - cannot generate TOC in layout context
+                embedded_content = "> [!CAUTION]\n> **TOC Error:** 'source' property is required for TOC in layouts. Specify which file to generate TOC from."
         else:
             embedded_content = f"> [!CAUTION]\n> **Layout Error:** Unknown embed type in section {i+1}: '{embed_type}'"
 
