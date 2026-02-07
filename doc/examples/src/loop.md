@@ -5,7 +5,7 @@
 ```yaml
 type: embed.file
 title: cannot include parent
-file: ./include_loops.md
+source: ./embed_loops.md
 ```
 
 ## loop via self
@@ -13,5 +13,5 @@ file: ./include_loops.md
 ```yaml
 type: embed.file
 title: cannot include self
-file: ./loop.md
+source: ./loop.md
 ```

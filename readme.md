@@ -1,16 +1,17 @@
-# EmbedM 
-version 0.3
+# EmbedM
+version 0.4
 
-A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents.
+A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents with built-in safety limits and validation.
 
 EmbedM is part of a bigger initiative to explore how far we can push the current state of the art LLMs. This project has been built mainly using [Claude Sonnet 4.5](https://claude.ai/) and [Google Gemini 3](https://gemini.google.com/app).
 
 ## What is EmbedM?
 
-EmbedM processes Markdown files by resolving special embed blocks that reference external files or generate content dynamically. It enables you to maintain a single source of truth for code examples, documentation snippets, and structured data while keeping your Markdown files clean and maintainable.
+EmbedM processes Markdown files by resolving special embed blocks that reference external files or generate content dynamically. It features a three-phase pipeline architecture that validates all operations before execution, ensuring safe and predictable processing.
 
 ## Features
 
+### Core Features
 - **File Embedding**: Embed entire files or specific portions into Markdown documents
 - **Line Range Selection**: Extract specific line ranges using `L10-20` syntax
 - **Named Regions**: Extract code sections marked with `md.start:name` and `md.end:name` tags
@@ -20,6 +21,15 @@ EmbedM processes Markdown files by resolving special embed blocks that reference
 - **Recursive Embedding**: Embed Markdown files that contain their own embeds
 - **YAML-Based Syntax**: Clean, extensible YAML format with syntax highlighting
 - **Batch Processing**: Process individual files or entire directories
+
+### Safety & Validation
+- **Three-Phase Pipeline**: Discovery → Validation → Execution
+- **Comprehensive Validation**: Check all files, limits, and dependencies before processing
+- **Safety Limits**: Configurable limits on file sizes, recursion depth, embed counts, and more
+- **Circular Dependency Detection**: Automatically detect and report infinite loops
+- **Fail Fast**: All errors reported upfront with file:line references
+- **Force Mode**: Optional `--force` flag to embed warnings in output and continue processing
+- **Helpful Error Messages**: Clear guidance on how to fix issues or override limits
 
 ## Project Structure
 
@@ -31,17 +41,20 @@ embedm/
 ├── src/embedm/
 │   ├── __init__.py        # Public API exports
 │   ├── __main__.py        # Module execution support
-│   ├── cli.py            # Command-line interface
+│   ├── cli.py            # Command-line interface with argparse
+│   ├── models.py         # Data structures (Limits, ValidationResult, etc.)
+│   ├── discovery.py      # File and embed discovery
+│   ├── validation.py     # Validation phase logic
 │   ├── parsing.py        # YAML embed block parsing
 │   ├── extraction.py     # Region and line extraction
 │   ├── formatting.py     # Line number formatting
 │   ├── converters.py     # CSV and TOC generation
 │   ├── processors.py     # File embed processing
-│   └── resolver.py       # Core resolution logic
+│   └── resolver.py       # Core resolution logic with limit checking
 └── tests/                 # Comprehensive test suite
 ```
 
-The codebase has been refactored from a single 549-line file into focused modules averaging ~75 lines each, making it easier to maintain, test, and extend.
+The codebase follows a clean architecture with focused modules, making it easy to maintain, test, and extend.
 
 ## Installation
 
@@ -82,19 +95,21 @@ This installs additional development tools including pytest.
 
 After installing with `pip install -e .`, you can use the `embedm` command directly:
 
-Process a single file (creates `input.compiled.md`):
 ```bash
+# Process a single file (creates input.compiled.md)
 embedm input.md
-```
 
-Process a single file with custom output:
-```bash
+# Process with custom output
 embedm input.md output.md
-```
 
-Process a directory:
-```bash
+# Process a directory
 embedm source_dir/ output_dir/
+
+# Validate without processing (dry run)
+embedm input.md --dry-run
+
+# View all available options
+embedm --help
 ```
 
 ### Alternative: Module Execution
@@ -103,6 +118,124 @@ You can also run embedm as a Python module:
 ```bash
 python -m embedm input.md
 ```
+
+### Safety Limits
+
+EmbedM includes configurable safety limits to prevent resource exhaustion and catch common errors:
+
+```bash
+# Override individual limits
+embedm input.md --max-file-size 5MB
+embedm input.md --max-recursion 10
+embedm input.md --max-embeds 200
+
+# Override multiple limits
+embedm input.md \
+  --max-file-size 5MB \
+  --max-recursion 10 \
+  --max-embeds 200 \
+  --max-output-size 20MB \
+  --max-embed-text 5KB
+
+# Disable specific limits (use 0)
+embedm input.md --max-recursion 0  # Unlimited recursion
+```
+
+**Default Limits:**
+- `--max-file-size`: 1MB (input file size)
+- `--max-recursion`: 8 (maximum recursion depth)
+- `--max-embeds`: 100 (embeds per file)
+- `--max-output-size`: 10MB (output file size)
+- `--max-embed-text`: 2KB (embedded content length)
+
+**Size Formats:** `1024`, `1KB`, `1K`, `1MB`, `1M`, `1GB`, `1G`
+
+### Force Mode
+
+Use `--force` to continue processing even when validation errors occur. Errors will be embedded in the output as warnings:
+
+```bash
+embedm input.md --force
+```
+
+When using `--force`, missing files or exceeded limits will appear in the compiled output:
+
+```markdown
+> [!CAUTION]
+> **Embed Error:** File not found: `missing_file.txt`
+```
+
+```markdown
+> [!CAUTION]
+> **File Size Limit Exceeded:** Source file `large.txt` size 5.0MB exceeds
+> limit 1.0MB. Use `--max-file-size` to increase this limit.
+```
+
+This is useful for:
+- Previewing partial results while debugging
+- Working with incomplete documentation
+- Seeing exactly where limits are being exceeded
+
+### Validation Pipeline
+
+EmbedM uses a three-phase pipeline architecture that validates all operations before execution:
+
+#### Phase 1: Discovery & Validation
+```
+🔍 Validation Phase
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Discovered: 5 files, 23 embeds
+  Dependencies: max depth 4
+  ✅ All validations passed
+```
+
+During this phase, EmbedM:
+- Discovers all files to process
+- Parses all embed directives (without executing them)
+- Builds a dependency graph
+- Validates all limits and checks:
+  - All source files exist
+  - No circular dependencies
+  - File sizes within limits
+  - Recursion depth acceptable
+  - Embed counts within limits
+  - All regions/line ranges are valid
+
+#### Phase 2: Reporting
+
+All errors and warnings are displayed together with file:line references:
+
+```
+❌ Errors Found (2)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  doc/api.md:15
+    └─ Source file not found: examples/missing.py
+
+  doc/embed_loops.md
+    └─ Circular dependency detected: loop.md -> embed_loops.md
+```
+
+The tool exits before any processing if errors are found (unless `--force` is used).
+
+#### Phase 3: Execution
+
+Only runs if validation passes (or `--force` is enabled):
+
+```
+⚙️  Processing Phase
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ api.md → compiled/api.md
+  ✅ guide.md → compiled/guide.md
+  ✅ reference.md → compiled/reference.md
+
+✅ Processing complete (3 files, 2.3s)
+```
+
+This architecture ensures:
+- **Fail Fast**: All errors reported upfront, not one-by-one
+- **No Partial Writes**: Files only written if all validation passes
+- **Better Debugging**: See all issues at once
+- **Safety**: Limits checked before any file operations
 
 ## Embed Syntax
 
@@ -279,6 +412,67 @@ source: sections/features.md
 ````
 
 For more examples see the [examples directory](https://github.com/Fultslop/embedm/tree/main/doc/examples/src)
+
+## Common Use Cases & Troubleshooting
+
+### Working with Large Files
+
+If you encounter file size limit errors:
+
+```bash
+# Increase file size limit
+embedm large-doc.md --max-file-size 10MB
+
+# Or disable the limit entirely
+embedm large-doc.md --max-file-size 0
+```
+
+### Deep Nesting / Recursion
+
+For deeply nested embed structures:
+
+```bash
+# Increase recursion limit
+embedm nested-docs.md --max-recursion 15
+
+# Or disable recursion limit
+embedm nested-docs.md --max-recursion 0
+```
+
+### Many Embeds in One File
+
+If a file has many embed directives:
+
+```bash
+# Increase embed count limit
+embedm complex-doc.md --max-embeds 500
+```
+
+### Debugging Validation Errors
+
+Use `--dry-run` to validate without processing:
+
+```bash
+# Check for errors without writing files
+embedm source_dir/ output_dir/ --dry-run
+```
+
+Use `--force` to see partial results:
+
+```bash
+# Process with errors, warnings embedded in output
+embedm incomplete-doc.md --force
+```
+
+### Circular Dependencies
+
+If you get circular dependency errors:
+
+```
+❌ Circular dependency detected: a.md -> b.md -> a.md
+```
+
+Review your embed chain to identify the loop. Each file should only embed files that don't reference it back.
 
 ## Testing
 

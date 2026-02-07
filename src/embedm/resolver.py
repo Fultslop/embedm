@@ -2,27 +2,74 @@
 
 import os
 import re
-from typing import Optional, Set
+from typing import Optional, Set, Dict
 
 from .parsing import parse_yaml_embed_block
 from .processors import process_file_embed
 from .converters import generate_table_of_contents
 
 
-def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]] = None) -> str:
+class ProcessingContext:
+    """Context for tracking limits during processing."""
+    def __init__(self, limits=None):
+        self.limits = limits
+        self.embed_counts = {}  # Track embeds per file
+        self.total_embeds = 0
+
+    def increment_embed_count(self, file_path: str) -> Optional[str]:
+        """
+        Increment embed count for a file and check limits.
+        Returns warning message if limit exceeded, None otherwise.
+        """
+        if self.limits is None or self.limits.max_embeds_per_file <= 0:
+            return None
+
+        self.embed_counts[file_path] = self.embed_counts.get(file_path, 0) + 1
+        self.total_embeds += 1
+
+        if self.embed_counts[file_path] > self.limits.max_embeds_per_file:
+            from .models import Limits
+            return f"> [!CAUTION]\n> **Embed Limit Exceeded:** File has {self.embed_counts[file_path]} embeds, limit is {self.limits.max_embeds_per_file}. Use `--max-embeds` to increase this limit."
+
+        return None
+
+
+def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]] = None, context: Optional[ProcessingContext] = None) -> str:
     """
-    Recursive Resolver with Path Scoping
+    Recursive Resolver with Path Scoping and Limit Checking
+
+    Args:
+        absolute_file_path: Path to the file to process
+        processing_stack: Set of files being processed (for cycle detection)
+        context: Processing context with limits
     """
     if processing_stack is None:
         processing_stack = set()
 
+    if context is None:
+        context = ProcessingContext()
+
+    # Check for circular dependencies
     if absolute_file_path in processing_stack:
         return f"> [!CAUTION]\n> **Embed Error:** Infinite loop detected! `{os.path.basename(absolute_file_path)}` is trying to embed a parent."
 
     if not os.path.exists(absolute_file_path) or os.path.isdir(absolute_file_path):
         return f"> [!CAUTION]\n> **Embed Error:** File not found: `{absolute_file_path}`"
 
+    # Check recursion depth
+    if context.limits and context.limits.max_recursion > 0:
+        if len(processing_stack) >= context.limits.max_recursion:
+            from .models import Limits
+            return f"> [!CAUTION]\n> **Recursion Limit Exceeded:** Maximum recursion depth of {context.limits.max_recursion} reached. Use `--max-recursion` to increase this limit."
+
     processing_stack.add(absolute_file_path)
+
+    # Check file size limit
+    if context.limits and context.limits.max_file_size > 0:
+        file_size = os.path.getsize(absolute_file_path)
+        if file_size > context.limits.max_file_size:
+            from .models import Limits
+            return f"> [!CAUTION]\n> **File Size Limit Exceeded:** File size {Limits.format_size(file_size)} exceeds limit {Limits.format_size(context.limits.max_file_size)}. Use `--max-file-size` to increase this limit."
 
     with open(absolute_file_path, 'r', encoding='utf-8') as f:
         content = f.read()
@@ -44,9 +91,14 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
 
         embed_type, properties = parsed
 
+        # Check embed count limit
+        limit_warning = context.increment_embed_count(absolute_file_path)
+        if limit_warning:
+            return limit_warning
+
         # Route to appropriate handler based on type
         if embed_type == 'file':
-            return process_file_embed(properties, current_file_dir, processing_stack)
+            return process_file_embed(properties, current_file_dir, processing_stack, context)
         elif embed_type == 'toc' or embed_type == 'table_of_contents':
             # TOC is handled in a second pass, leave marker
             return match.group(0)
