@@ -1,44 +1,43 @@
 import sys
 import os
 import re
+import yaml
 from typing import Optional, Set, List, Dict
 
-def parse_embed_options(embed_block_content: str) -> Dict:
+def parse_yaml_embed_block(content: str) -> Optional[tuple[str, Dict]]:
     """
-    Parses options from an embed block
-    Extracts key:value pairs like "title: My Title" or "line_numbers: html"
+    Parse YAML embed block content
+    Returns: (embed_type, properties_dict) or None if not a valid embed block
+    
+    Expected format:
+    ```yaml
+    type: embed.file
+    source: path/to/file.py
+    region: L10-20
+    line_numbers: html
+    title: My Title
+    ```
     """
-    options = {
-        'title': None,
-        'line_numbers': False  # False | 'text' | 'html'
-    }
-    
-    lines = embed_block_content.split('\n')
-    
-    for line in lines:
-        trimmed = line.strip()
+    try:
+        data = yaml.safe_load(content)
         
-        # Match "title: value" (capture everything after colon)
-        title_match = re.match(r'^title:\s*(.+)$', trimmed, re.IGNORECASE)
-        if title_match:
-            options['title'] = title_match.group(1).strip()
-            continue
+        if not isinstance(data, dict):
+            return None
         
-        # Match "line_numbers: text/html/true/false"
-        line_num_match = re.match(r'^line_numbers:\s*(.+)$', trimmed, re.IGNORECASE)
-        if line_num_match:
-            val = line_num_match.group(1).lower().strip()
-            if val == 'text':
-                options['line_numbers'] = 'text'
-            elif val == 'html':
-                options['line_numbers'] = 'html'
-            elif val in ('true', 'yes', '1'):
-                options['line_numbers'] = 'html'  # Default to html for backwards compatibility
-            else:
-                options['line_numbers'] = False
-            continue
+        embed_type = data.get('type', '')
+        
+        # Check if this is an embed block
+        if not embed_type.startswith('embed.'):
+            return None
+        
+        # Extract the actual type (e.g., 'file' from 'embed.file')
+        actual_type = embed_type[6:]  # Remove 'embed.' prefix
+        
+        # Return type and all properties
+        return (actual_type, data)
     
-    return options
+    except yaml.YAMLError:
+        return None
 
 
 def extract_region(content: str, tag_name: str) -> Optional[Dict]:
@@ -328,6 +327,101 @@ def generate_table_of_contents(content: str) -> str:
     return '\n'.join(toc_lines) if toc_lines else '> [!NOTE]\n> No headings found in document.'
 
 
+def process_file_embed(properties: Dict, current_file_dir: str, processing_stack: Set[str]) -> str:
+    """
+    Process a file embed with the given properties
+    """
+    source = properties.get('source')
+    if not source:
+        return "> [!CAUTION]\n> **Embed Error:** 'source' property is required for file embeds"
+    
+    region = properties.get('region')
+    title = properties.get('title')
+    line_numbers = properties.get('line_numbers', False)
+    
+    # Normalize line_numbers value
+    if isinstance(line_numbers, str):
+        line_numbers = line_numbers.lower()
+        if line_numbers not in ('text', 'html', 'false'):
+            line_numbers = 'html' if line_numbers in ('true', 'yes', '1') else False
+    elif isinstance(line_numbers, bool):
+        line_numbers = 'html' if line_numbers else False
+    else:
+        line_numbers = False
+    
+    target_path = os.path.abspath(os.path.join(current_file_dir, source))
+    is_markdown = target_path.endswith('.md')
+    
+    if not os.path.exists(target_path):
+        return f"> [!CAUTION]\n> File not found: `{source}` relative to `{current_file_dir}`"
+    
+    with open(target_path, 'r', encoding='utf-8') as f:
+        raw_content = f.read()
+    
+    # Case A: Embedding specific part (region) or non-Markdown file
+    if region or not is_markdown:
+        result_data = None
+        ext = os.path.splitext(target_path)[1][1:] or 'text'
+        
+        if region:
+            # Try L10-20 format first
+            result_data = extract_lines(raw_content, region)
+            # If not L-format, try named region tags
+            if not result_data:
+                result_data = extract_region(raw_content, region)
+            
+            if not result_data:
+                return f"> [!CAUTION]\n> Region `{region}` not found in `{source}`"
+            
+            # Apply line numbers if requested
+            if line_numbers == 'html':
+                raw_content = format_with_line_numbers(result_data['lines'], result_data['startLine'], ext)
+            elif line_numbers == 'text':
+                raw_content = format_with_line_numbers_text(result_data['lines'], result_data['startLine'])
+            else:
+                # Just dedent the lines without numbers
+                raw_content = dedent_lines(result_data['lines'])
+        else:
+            # Whole file without region - apply line numbers if requested
+            if line_numbers:
+                lines = raw_content.split('\n')
+                if line_numbers == 'html':
+                    raw_content = format_with_line_numbers(lines, 1, ext)
+                elif line_numbers == 'text':
+                    raw_content = format_with_line_numbers_text(lines, 1)
+        
+        # Special handling for CSV files - convert to markdown table
+        if ext == 'csv' and not region:
+            table = csv_to_markdown_table(raw_content)
+            # Wrap in optional title
+            if title:
+                return f"**{title}**\n\n{table}"
+            return table
+        
+        # Build result with optional title
+        result = ''
+        if title:
+            result += f"**{title}**\n\n"
+        
+        # If we formatted with HTML line numbers, return as-is (no code block wrapper)
+        if line_numbers == 'html':
+            result += raw_content
+        else:
+            # Standard markdown code block (for text line numbers or no line numbers)
+            result += f"```{ext}\n{raw_content.rstrip()}\n```"
+        
+        return result
+    
+    # Case B: Embedding another Markdown file recursively
+    embedded_md = resolve_content(target_path, set(processing_stack))
+    
+    # Add title if specified
+    if title:
+        return f"**{title}**\n\n{embedded_md}"
+    
+    return embedded_md
+
+
 def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]] = None) -> str:
     """
     Recursive Resolver with Path Scoping
@@ -336,10 +430,10 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
         processing_stack = set()
     
     if absolute_file_path in processing_stack:
-        return f"> [!CAUTION]\n> **MdEmbed Error:** Infinite loop detected! `{os.path.basename(absolute_file_path)}` is trying to embed a parent."
+        return f"> [!CAUTION]\n> **Embed Error:** Infinite loop detected! `{os.path.basename(absolute_file_path)}` is trying to embed a parent."
     
     if not os.path.exists(absolute_file_path) or os.path.isdir(absolute_file_path):
-        return f"> [!CAUTION]\n> **MdEmbed Error:** File not found: `{absolute_file_path}`"
+        return f"> [!CAUTION]\n> **Embed Error:** File not found: `{absolute_file_path}`"
     
     processing_stack.add(absolute_file_path)
     
@@ -348,93 +442,31 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
     
     current_file_dir = os.path.dirname(absolute_file_path)
     
-    # Regex to find ```embed file:path.ext#fragment ... ```
-    embed_regex = re.compile(r'^```embed\s+([\s\S]*?)```', re.MULTILINE)
+    # Regex to find ```yaml ... ``` blocks
+    yaml_regex = re.compile(r'^```yaml\s*\n([\s\S]*?)```', re.MULTILINE)
     
     def replace_embed(match):
-        embed_content = match.group(1)
-        lines = embed_content.strip().split('\n')
-        first_line = lines[0].strip()
+        yaml_content = match.group(1)
         
-        # Parse the file reference from first line
-        file_match = re.match(r'^file:\s*([^\s]+)', first_line)
-        if not file_match:
-            # Not a file embed (might be table_of_contents)
+        # Try to parse as YAML embed block
+        parsed = parse_yaml_embed_block(yaml_content)
+        
+        if not parsed:
+            # Not an embed block, leave as-is
             return match.group(0)
         
-        file_reference = file_match.group(1)
-        options = parse_embed_options(embed_content)
+        embed_type, properties = parsed
         
-        clean_ref = file_reference.strip()
-        parts = clean_ref.split('#', 1)
-        rel_path = parts[0]
-        fragment = parts[1] if len(parts) > 1 else None
-        
-        target_path = os.path.abspath(os.path.join(current_file_dir, rel_path))
-        is_markdown = target_path.endswith('.md')
-        
-        if not os.path.exists(target_path):
-            return f"> [!CAUTION]\n> File not found: `{rel_path}` relative to `{current_file_dir}`"
-        
-        with open(target_path, 'r', encoding='utf-8') as f:
-            raw_content = f.read()
-        
-        # Case A: Embedding specific part (Fragment) or non-Markdown file
-        if fragment or not is_markdown:
-            result_data = None
-            ext = os.path.splitext(target_path)[1][1:] or 'text'
-            
-            if fragment:
-                # Try L10-20 format first
-                result_data = extract_lines(raw_content, fragment)
-                # If not L-format, try named region tags
-                if not result_data:
-                    result_data = extract_region(raw_content, fragment)
-                
-                if not result_data:
-                    return f"> [!CAUTION]\n> Fragment `{fragment}` not found in `{rel_path}`"
-                
-                # Apply line numbers if requested
-                if options['line_numbers'] == 'html':
-                    raw_content = format_with_line_numbers(result_data['lines'], result_data['startLine'], ext)
-                elif options['line_numbers'] == 'text':
-                    raw_content = format_with_line_numbers_text(result_data['lines'], result_data['startLine'])
-                else:
-                    # Just dedent the lines without numbers
-                    raw_content = dedent_lines(result_data['lines'])
-            
-            # Special handling for CSV files - convert to markdown table
-            if ext == 'csv' and not fragment:
-                table = csv_to_markdown_table(raw_content)
-                # Wrap in optional title
-                if options['title']:
-                    return f"**{options['title']}**\n\n{table}"
-                return table
-            
-            # Build result with optional title
-            result = ''
-            if options['title']:
-                result += f"**{options['title']}**\n\n"
-            
-            # If we formatted with HTML line numbers, return as-is (no code block wrapper)
-            if options['line_numbers'] == 'html' and fragment:
-                result += raw_content
-            else:
-                # Standard markdown code block (for text line numbers or no line numbers)
-                result += f"```{ext}\n{raw_content.rstrip()}\n```"
-            
-            return result
-        
-        # Case B: Embedding another Markdown file recursively
-        embedded_md = resolve_content(target_path, set(processing_stack))
-        
-        # Add title if specified
-        if options['title']:
-            return f"**{options['title']}**\n\n{embedded_md}"
-        
-        return embedded_md
+        # Route to appropriate handler based on type
+        if embed_type == 'file':
+            return process_file_embed(properties, current_file_dir, processing_stack)
+        elif embed_type == 'toc' or embed_type == 'table_of_contents':
+            # TOC is handled in a second pass, leave marker
+            return match.group(0)
+        else:
+            return f"> [!CAUTION]\n> **Embed Error:** Unknown embed type: `{embed_type}`"
     
-    resolved = embed_regex.sub(replace_embed, content)
+    resolved = yaml_regex.sub(replace_embed, content)
     return resolved
 
 
@@ -442,23 +474,33 @@ def resolve_table_of_contents(content: str) -> str:
     """
     Post-process to resolve table_of_contents embeds
     """
-    # Match ```embed\ntable_of_contents\n``` or ```embed table_of_contents```
-    # Use [\s\S] to match any character including newlines
-    toc_regex = re.compile(r'```embed[\s]+table_of_contents[\s]*```', re.MULTILINE)
+    # Regex to find YAML blocks
+    yaml_regex = re.compile(r'^```yaml\s*\n([\s\S]*?)```', re.MULTILINE)
     
-    # First, remove all table_of_contents embeds temporarily to get the "final" content
-    content_without_toc_embeds = toc_regex.sub('', content)
+    def replace_toc(match):
+        yaml_content = match.group(1)
+        parsed = parse_yaml_embed_block(yaml_content)
+        
+        if not parsed:
+            return match.group(0)
+        
+        embed_type, properties = parsed
+        
+        if embed_type in ('toc', 'table_of_contents'):
+            # Generate TOC from current content (without TOC markers)
+            # First remove all TOC embeds to avoid including them
+            temp_content = yaml_regex.sub(lambda m: '' if parse_yaml_embed_block(m.group(1)) and parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents') else m.group(0), content)
+            return generate_table_of_contents(temp_content)
+        
+        return match.group(0)
     
-    # Generate TOC from the content without the embed markers
-    toc = generate_table_of_contents(content_without_toc_embeds)
-    
-    # Now replace all table_of_contents embeds with the generated TOC
-    return toc_regex.sub(lambda m: toc, content)
+    return yaml_regex.sub(replace_toc, content)
+
 
 # --- Entry Point ---
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage:\n  Single file: python mdembed.py <file.md>\n  Directory:   python mdembed.py <source_dir> <output_dir>")
+        print("Usage:\n  Single file: python embedm.py <file.md>\n  Directory:   python embedm.py <source_dir> <output_dir>")
         sys.exit(1)
     
     source_path = sys.argv[1]

@@ -1,13 +1,13 @@
 # EmbedM 
-version 0.1
+version 0.2
 
 A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents.
 
-EmbedM is part of a bigger initiative to explore how far we can push the current state of the art LLMs. This project has been build mainly using [Claude Sonnet 4.5](https://claude.ai/) and [Google Gemini 3](https://gemini.google.com/app).
+EmbedM is part of a bigger initiative to explore how far we can push the current state of the art LLMs. This project has been built mainly using [Claude Sonnet 4.5](https://claude.ai/) and [Google Gemini 3](https://gemini.google.com/app).
 
 ## What is EmbedM?
 
-EmbedM processes Markdown files by resolving special `embed` blocks that reference external files or generate content dynamically. It enables you to maintain a single source of truth for code examples, documentation snippets, and structured data while keeping your Markdown files clean and maintainable.
+EmbedM processes Markdown files by resolving special embed blocks that reference external files or generate content dynamically. It enables you to maintain a single source of truth for code examples, documentation snippets, and structured data while keeping your Markdown files clean and maintainable.
 
 ## Features
 
@@ -18,7 +18,7 @@ EmbedM processes Markdown files by resolving special `embed` blocks that referen
 - **CSV to Table**: Automatically convert CSV files to Markdown tables
 - **Table of Contents**: Generate GitHub-style table of contents from document headings
 - **Recursive Embedding**: Embed Markdown files that contain their own embeds
-- **Safety Limits**: Configurable limits for file size, recursion depth, and embed count
+- **YAML-Based Syntax**: Clean, extensible YAML format with syntax highlighting
 - **Batch Processing**: Process individual files or entire directories
 
 ## Installation
@@ -26,9 +26,13 @@ EmbedM processes Markdown files by resolving special `embed` blocks that referen
 ```bash
 git clone https://github.com/Fultslop/embedm.git
 cd embedm
+pip install -r requirements.txt
 ```
 
-No additional dependencies required - uses Python standard library only.
+### Requirements
+
+- Python 3.8+
+- PyYAML
 
 ## Usage
 
@@ -36,50 +40,58 @@ No additional dependencies required - uses Python standard library only.
 
 Process a single file:
 ```bash
-python embedm.py input.md
+python src/embedm.py input.md
 ```
 
 Process a single file with custom output:
 ```bash
-python embedm.py input.md output.md
+python src/embedm.py input.md output.md
 ```
 
 Process a directory:
 ```bash
-python embedm.py source_dir/ output_dir/
+python src/embedm.py source_dir/ output_dir/
 ```
 
-
 ## Embed Syntax
+
+EmbedM uses YAML code blocks with `type: embed.*` to define embeds. This provides syntax highlighting and a clean, extensible format.
 
 ### Embed Entire File
 
 ```markdown
-```embed
-file: path/to/file.py
+```yaml
+type: embed.file
+source: path/to/file.py
 ```
 ```
 
 ### Embed with Line Numbers
 
 ```markdown
-```embed
-file: path/to/file.py
+```yaml
+type: embed.file
+source: path/to/file.py
 line_numbers: html
 ```
 ```
 
-Options: `text` (plain text), `html` (styled HTML), `false` (none)
+**Line number options:**
+- `text` - Plain text line numbers (e.g., `1 | code here`)
+- `html` - Styled HTML with non-selectable line numbers
+- `false` - No line numbers (default)
 
 ### Embed Specific Lines
 
 ```markdown
-```embed
-file: path/to/file.py#L10-20
+```yaml
+type: embed.file
+source: path/to/file.py
+region: L10-20
 ```
 ```
 
-Formats supported:
+**Region formats supported:**
 - `L10` - Single line
 - `L10-20` - Line range
 - `L10-L20` - Line range (alternative syntax)
@@ -88,8 +100,10 @@ Formats supported:
 ### Embed Named Region
 
 ```markdown
-```embed
-file: path/to/file.py#myfunction
+```yaml
+type: embed.file
+source: path/to/file.py
+region: myfunction
 ```
 ```
 
@@ -104,25 +118,112 @@ def my_function():
 ### Embed with Title
 
 ```markdown
-```embed
-file: path/to/file.py
+```yaml
+type: embed.file
+source: path/to/file.py
 title: Example Implementation
+```
+```
+
+### Combine Multiple Options
+
+```markdown
+```yaml
+type: embed.file
+source: path/to/file.py
+region: L10-50
+line_numbers: html
+title: Core Implementation
 ```
 ```
 
 ### Generate Table of Contents
 
 ```markdown
-```embed
-table_of_contents
+```yaml
+type: embed.toc
+```
+```
+
+Alternative (both work):
+```markdown
+```yaml
+type: embed.table_of_contents
 ```
 ```
 
 ### Embed CSV as Table
 
 ```markdown
-```embed
-file: data.csv
+```yaml
+type: embed.file
+source: data.csv
+```
+```
+
+CSV files are automatically converted to Markdown tables.
+
+## Examples
+
+### Example 1: Documentation with Code Examples
+
+```markdown
+# API Documentation
+
+## Authentication
+
+```yaml
+type: embed.file
+source: examples/auth.py
+region: L15-30
+line_numbers: text
+title: Authentication Example
+```
+
+## Error Handling
+
+```yaml
+type: embed.file
+source: examples/errors.py
+region: error_handler
+```
+```
+
+### Example 2: Project README with TOC
+
+```markdown
+# My Project
+
+```yaml
+type: embed.toc
+```
+
+## Installation
+...
+
+## Usage
+...
+```
+
+### Example 3: Recursive Embedding
+
+Create reusable sections:
+
+**sections/features.md:**
+```markdown
+## Key Features
+
+- Fast processing
+- Easy to use
+```
+
+**README.md:**
+```markdown
+# Product
+
+```yaml
+type: embed.file
+source: sections/features.md
 ```
 ```
 
@@ -130,13 +231,23 @@ file: data.csv
 
 Run the test suite:
 ```bash
-python test_embedm.py
+python tests/test_embedm.py
 ```
 
 Run with verbose output:
 ```bash
-python test_embedm.py -v
+python tests/test_embedm.py -v
 ```
+
+## Why YAML Format?
+
+The YAML-based syntax provides several advantages:
+
+1. **Syntax Highlighting**: YAML blocks get proper syntax highlighting in editors and on GitHub
+2. **Clean Structure**: Properties are clearly defined with key-value pairs
+3. **Extensibility**: Easy to add new embed types (e.g., `embed.layout`) without breaking existing syntax
+4. **Type Safety**: The `type` field clearly identifies what kind of embed it is
+5. **Familiar**: YAML is widely used and understood by developers
 
 ## License
 
