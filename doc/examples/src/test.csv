@@ -1,0 +1,4 @@
+column_a, column_b, column_c
+"foo", 123, 5.0
+"bar", 456, -3.14
+"baz", 789, 0
