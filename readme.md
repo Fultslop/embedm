@@ -397,19 +397,61 @@ sections:
 ```
 ````
 
+**Scrollable Sidebar Layout:**
+
+````markdown
+```yaml
+type: embed.layout
+orientation: row
+gap: 20px
+sections:
+  - size: 250px
+    max-height: 600px
+    overflow-y: auto
+    overflow-x: hidden
+    padding: 15px
+    border: "1px solid #ddd"
+    background: "#f8f9fa"
+    embed:
+      type: embed.toc
+  - size: auto
+    embed:
+      type: embed.file
+      source: content.md
+```
+````
+
+This creates a fixed-width sidebar (250px) with scrollable overflow when the table of contents exceeds 600px height, while the main content area takes up remaining space.
+
 **Layout Properties:**
 
+Container-level properties:
 - `orientation`: `row` (horizontal) or `column` (vertical) - default: `row`
 - `gap`: Space between sections (e.g., `20px`, `10%`) - default: `0`
 - `border`: Container border (e.g., `"1px solid #ccc"`, `true`) - optional
 - `padding`: Container padding (e.g., `20px`, `5%`) - optional
 - `background`: Container background color or CSS background - optional
-- `sections`: List of sections, each with:
-  - `size`: Section size (`auto`, `50%`, `300px`) - default: `auto`
-  - `border`: Section border - optional
-  - `padding`: Section padding - optional
-  - `background`: Section background - optional
-  - `embed`: Nested embed directive (file, toc, or another layout)
+- `overflow`: Overflow behavior (`auto`, `scroll`, `hidden`, `visible`) - optional
+- `overflow-x`: Horizontal overflow (overrides `overflow` for x-axis) - optional
+- `overflow-y`: Vertical overflow (overrides `overflow` for y-axis) - optional
+- `max-height`: Maximum height (e.g., `500px`, `80vh`) - optional
+- `max-width`: Maximum width (e.g., `1200px`, `90%`) - optional
+- `min-height`: Minimum height (e.g., `300px`) - optional
+- `min-width`: Minimum width (e.g., `200px`) - optional
+
+Section properties (per section in `sections` list):
+- `size`: Section size (`auto`, `50%`, `300px`) - default: `auto`
+- `border`: Section border - optional
+- `padding`: Section padding - optional
+- `background`: Section background - optional
+- `overflow`: Section overflow behavior - optional
+- `overflow-x`: Section horizontal overflow - optional
+- `overflow-y`: Section vertical overflow - optional
+- `max-height`: Section maximum height - optional
+- `max-width`: Section maximum width - optional
+- `min-height`: Section minimum height - optional
+- `min-width`: Section minimum width - optional
+- `embed`: Nested embed directive (file, toc, or another layout) - required
 
 **Size Specifications:**
 
@@ -424,13 +466,18 @@ sections:
 - **Border Shorthand**: `border: true` uses default `1px solid #ccc`
 - **Nested Layouts**: Layouts can contain other layouts for complex grid structures
 - **Rendering**: Uses inline CSS flexbox, compatible with most markdown renderers
+- **Overflow Defaults**: Overflow defaults to `visible` (no scrollbars). Use `overflow: auto` to add scrollbars when content exceeds size
+- **Scrollable Sections**: Combine `max-height` or `max-width` with `overflow: auto` for scrollable regions
+- **Viewport Units**: You can use viewport units like `80vh` (80% of viewport height) for responsive max-height values
 
 **Use Cases:**
 
 - Side-by-side code comparisons
-- Documentation with sidebar navigation
+- Documentation with scrollable sidebar navigation
 - Dashboard-style layouts with multiple panels
 - Multi-column feature lists
+- Fixed-height content previews with scroll
+- Responsive layouts with viewport-based dimensions
 
 ## Examples
 

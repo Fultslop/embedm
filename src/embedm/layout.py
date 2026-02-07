@@ -105,6 +105,13 @@ def process_layout_embed(properties: Dict, current_file_dir: str, processing_sta
     border = properties.get('border')
     padding = properties.get('padding')
     background = properties.get('background')
+    overflow = properties.get('overflow')
+    overflow_x = properties.get('overflow-x')
+    overflow_y = properties.get('overflow-y')
+    max_height = properties.get('max-height')
+    max_width = properties.get('max-width')
+    min_height = properties.get('min-height')
+    min_width = properties.get('min-width')
     sections = properties.get('sections', [])
 
     if not sections:
@@ -139,6 +146,37 @@ def process_layout_embed(properties: Dict, current_file_dir: str, processing_sta
     # Add background if specified
     if background:
         container_style += f" background: {background};"
+
+    # Add overflow if specified
+    if overflow:
+        container_style += f" overflow: {overflow};"
+
+    # Add separate overflow-x and overflow-y if specified (overrides overflow)
+    if overflow_x:
+        container_style += f" overflow-x: {overflow_x};"
+    if overflow_y:
+        container_style += f" overflow-y: {overflow_y};"
+
+    # Add dimension constraints
+    if max_height:
+        mh_value, mh_unit = parse_size(str(max_height))
+        if mh_value != 'auto':
+            container_style += f" max-height: {mh_value}{mh_unit};"
+
+    if max_width:
+        mw_value, mw_unit = parse_size(str(max_width))
+        if mw_value != 'auto':
+            container_style += f" max-width: {mw_value}{mw_unit};"
+
+    if min_height:
+        mih_value, mih_unit = parse_size(str(min_height))
+        if mih_value != 'auto':
+            container_style += f" min-height: {mih_value}{mih_unit};"
+
+    if min_width:
+        miw_value, miw_unit = parse_size(str(min_width))
+        if miw_value != 'auto':
+            container_style += f" min-width: {miw_value}{miw_unit};"
 
     # Process each section
     section_html_parts = []
@@ -175,6 +213,44 @@ def process_layout_embed(properties: Dict, current_file_dir: str, processing_sta
         section_background = section.get('background')
         if section_background:
             section_style += f" background: {section_background};"
+
+        # Add section overflow
+        section_overflow = section.get('overflow')
+        if section_overflow:
+            section_style += f" overflow: {section_overflow};"
+
+        section_overflow_x = section.get('overflow-x')
+        if section_overflow_x:
+            section_style += f" overflow-x: {section_overflow_x};"
+
+        section_overflow_y = section.get('overflow-y')
+        if section_overflow_y:
+            section_style += f" overflow-y: {section_overflow_y};"
+
+        # Add section dimension constraints
+        section_max_height = section.get('max-height')
+        if section_max_height:
+            smh_value, smh_unit = parse_size(str(section_max_height))
+            if smh_value != 'auto':
+                section_style += f" max-height: {smh_value}{smh_unit};"
+
+        section_max_width = section.get('max-width')
+        if section_max_width:
+            smw_value, smw_unit = parse_size(str(section_max_width))
+            if smw_value != 'auto':
+                section_style += f" max-width: {smw_value}{smw_unit};"
+
+        section_min_height = section.get('min-height')
+        if section_min_height:
+            smih_value, smih_unit = parse_size(str(section_min_height))
+            if smih_value != 'auto':
+                section_style += f" min-height: {smih_value}{smih_unit};"
+
+        section_min_width = section.get('min-width')
+        if section_min_width:
+            smiw_value, smiw_unit = parse_size(str(section_min_width))
+            if smiw_value != 'auto':
+                section_style += f" min-width: {smiw_value}{smiw_unit};"
 
         # Get embedded content
         embed = section.get('embed')
