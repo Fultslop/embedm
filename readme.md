@@ -227,6 +227,8 @@ source: sections/features.md
 ```
 ````
 
+For more examples see the [examples directory](https://github.com/Fultslop/embedm/tree/main/doc/examples/src)
+
 ## Testing
 
 Run the test suite:
