@@ -1,13 +1,17 @@
-loop protection - the following embeddings should yield a warning
+# loop protection - the following embeddings should yield a warning
 
--- loop via parent
+## loop via parent
 
-```embed
-file:./full_example.md
+```yaml
+type: embed.file
+title: cannot include parent
+file: ./include_loops.md
 ```
 
--- loop via self
+## loop via self
 
-```embed
-file:./loop.md
+```yaml
+type: embed.file
+title: cannot include self
+file: ./loop.md
 ```

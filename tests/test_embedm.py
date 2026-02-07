@@ -1,13 +1,15 @@
 import unittest
 import tempfile
 import os
+import sys
 import shutil
-from pathlib import Path
 
-# Assuming the main script is named mdembed.py
+# Add the src directory to the path so we can import embedm
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 # Import all functions we want to test
-from mdembed import (
-    parse_embed_options,
+from embedm import (
+    parse_yaml_embed_block,
     extract_region,
     extract_lines,
     format_with_line_numbers_text,
@@ -21,39 +23,48 @@ from mdembed import (
 )
 
 
-class TestParseEmbedOptions(unittest.TestCase):
-    """Tests for parse_embed_options function"""
+class TestParseYamlEmbedBlock(unittest.TestCase):
+    """Tests for parse_yaml_embed_block function"""
     
-    def test_empty_content(self):
-        result = parse_embed_options("")
-        self.assertIsNone(result['title'])
-        self.assertFalse(result['line_numbers'])
+    def test_valid_file_embed(self):
+        yaml_content = """type: embed.file
+source: test.py
+region: L10-20
+line_numbers: html
+title: My Code"""
+        result = parse_yaml_embed_block(yaml_content)
+        self.assertIsNotNone(result)
+        embed_type, properties = result
+        self.assertEqual(embed_type, 'file')
+        self.assertEqual(properties['source'], 'test.py')
+        self.assertEqual(properties['region'], 'L10-20')
+        self.assertEqual(properties['line_numbers'], 'html')
+        self.assertEqual(properties['title'], 'My Code')
     
-    def test_title_only(self):
-        result = parse_embed_options("title: My Title")
-        self.assertEqual(result['title'], "My Title")
-        self.assertFalse(result['line_numbers'])
+    def test_valid_toc_embed(self):
+        yaml_content = "type: embed.toc"
+        result = parse_yaml_embed_block(yaml_content)
+        self.assertIsNotNone(result)
+        embed_type, properties = result
+        self.assertEqual(embed_type, 'toc')
     
-    def test_line_numbers_html(self):
-        result = parse_embed_options("line_numbers: html")
-        self.assertEqual(result['line_numbers'], 'html')
+    def test_not_an_embed(self):
+        yaml_content = "type: something_else\nkey: value"
+        result = parse_yaml_embed_block(yaml_content)
+        self.assertIsNone(result)
     
-    def test_line_numbers_text(self):
-        result = parse_embed_options("line_numbers: text")
-        self.assertEqual(result['line_numbers'], 'text')
+    def test_invalid_yaml(self):
+        yaml_content = "this is not: valid: yaml:"
+        result = parse_yaml_embed_block(yaml_content)
+        self.assertIsNone(result)
     
-    def test_line_numbers_true(self):
-        result = parse_embed_options("line_numbers: true")
-        self.assertEqual(result['line_numbers'], 'html')  # Defaults to html
-    
-    def test_line_numbers_false(self):
-        result = parse_embed_options("line_numbers: false")
-        self.assertFalse(result['line_numbers'])
-    
-    def test_both_options(self):
-        result = parse_embed_options("title: Test Title\nline_numbers: text")
-        self.assertEqual(result['title'], "Test Title")
-        self.assertEqual(result['line_numbers'], 'text')
+    def test_minimal_embed(self):
+        yaml_content = "type: embed.file\nsource: file.py"
+        result = parse_yaml_embed_block(yaml_content)
+        self.assertIsNotNone(result)
+        embed_type, properties = result
+        self.assertEqual(embed_type, 'file')
+        self.assertEqual(properties['source'], 'file.py')
 
 
 class TestExtractRegion(unittest.TestCase):
@@ -298,8 +309,13 @@ class TestResolveContentIntegration(unittest.TestCase):
         # Create source file
         code_path = self.create_file('code.py', 'def hello():\n    print("world")')
         
-        # Create markdown with embed
-        md_content = f'# Test\n\n```embed\nfile: code.py\n```'
+        # Create markdown with new YAML embed format
+        md_content = '''# Test
+
+```yaml
+type: embed.file
+source: code.py
+```'''
         md_path = self.create_file('test.md', md_content)
         
         result = resolve_content(md_path)
@@ -308,7 +324,11 @@ class TestResolveContentIntegration(unittest.TestCase):
     
     def test_embed_with_line_range(self):
         code_path = self.create_file('code.py', 'line1\nline2\nline3\nline4\nline5')
-        md_content = f'```embed\nfile: code.py#L2-4\n```'
+        md_content = '''```yaml
+type: embed.file
+source: code.py
+region: L2-4
+```'''
         md_path = self.create_file('test.md', md_content)
         
         result = resolve_content(md_path)
@@ -320,15 +340,36 @@ class TestResolveContentIntegration(unittest.TestCase):
     
     def test_embed_with_title(self):
         code_path = self.create_file('code.py', 'print("test")')
-        md_content = f'```embed\nfile: code.py\ntitle: My Code\n```'
+        md_content = '''```yaml
+type: embed.file
+source: code.py
+title: My Code
+```'''
         md_path = self.create_file('test.md', md_content)
         
         result = resolve_content(md_path)
         self.assertIn('**My Code**', result)
     
+    def test_embed_with_line_numbers(self):
+        code_path = self.create_file('code.py', 'line1\nline2\nline3')
+        md_content = '''```yaml
+type: embed.file
+source: code.py
+region: L1-2
+line_numbers: text
+```'''
+        md_path = self.create_file('test.md', md_content)
+        
+        result = resolve_content(md_path)
+        self.assertIn('1 |', result)
+        self.assertIn('2 |', result)
+    
     def test_csv_embed(self):
         csv_path = self.create_file('data.csv', 'Name,Age\nAlice,30\nBob,25')
-        md_content = f'```embed\nfile: data.csv\n```'
+        md_content = '''```yaml
+type: embed.file
+source: data.csv
+```'''
         md_path = self.create_file('test.md', md_content)
         
         result = resolve_content(md_path)
@@ -340,7 +381,12 @@ class TestResolveContentIntegration(unittest.TestCase):
         nested_path = self.create_file('nested.md', '## Nested Section\n\nSome content')
         
         # Create main markdown that embeds it
-        md_content = f'# Main\n\n```embed\nfile: nested.md\n```'
+        md_content = '''# Main
+
+```yaml
+type: embed.file
+source: nested.md
+```'''
         md_path = self.create_file('main.md', md_content)
         
         result = resolve_content(md_path)
@@ -348,7 +394,10 @@ class TestResolveContentIntegration(unittest.TestCase):
         self.assertIn('Some content', result)
     
     def test_file_not_found(self):
-        md_content = '```embed\nfile: nonexistent.py\n```'
+        md_content = '''```yaml
+type: embed.file
+source: nonexistent.py
+```'''
         md_path = self.create_file('test.md', md_content)
         
         result = resolve_content(md_path)
@@ -357,11 +406,30 @@ class TestResolveContentIntegration(unittest.TestCase):
     
     def test_infinite_loop_detection(self):
         # Create file that tries to embed itself
-        md_content = '# Test\n\n```embed\nfile: self.md\n```'
+        md_content = '''# Test
+
+```yaml
+type: embed.file
+source: self.md
+```'''
         md_path = self.create_file('self.md', md_content)
         
         result = resolve_content(md_path)
         self.assertIn('Infinite loop detected', result)
+    
+    def test_non_embed_yaml_ignored(self):
+        # YAML block that's not an embed should be left alone
+        md_content = '''# Test
+
+```yaml
+type: config
+name: value
+```'''
+        md_path = self.create_file('test.md', md_content)
+        
+        result = resolve_content(md_path)
+        self.assertIn('```yaml', result)
+        self.assertIn('type: config', result)
 
 
 class TestResolveTableOfContents(unittest.TestCase):
@@ -369,9 +437,10 @@ class TestResolveTableOfContents(unittest.TestCase):
     
     def test_toc_generation(self):
         content = """# Main Title
-````embed
-table_of_contents
-````
+
+```yaml
+type: embed.toc
+```
 
 ## Section 1
 ## Section 2"""
@@ -381,23 +450,51 @@ table_of_contents
         self.assertIn('  - [Section 1](#section-1)', result)
         self.assertIn('  - [Section 2](#section-2)', result)
         # Should not contain the embed marker
-        self.assertNotIn('```embed', result)
+        self.assertNotIn('```yaml', result)
+    
+    def test_toc_with_table_of_contents_type(self):
+        content = """# Title
+
+```yaml
+type: embed.table_of_contents
+```
+
+## Section"""
+        
+        result = resolve_table_of_contents(content)
+        self.assertIn('- [Title](#title)', result)
+        self.assertIn('  - [Section](#section)', result)
     
     def test_multiple_toc_embeds(self):
         content = """# Title
-````embed
-table_of_contents
-````
+
+```yaml
+type: embed.toc
+```
 
 ## Section
-````embed
-table_of_contents
+
+```yaml
+type: embed.toc
 ```"""
         
         result = resolve_table_of_contents(content)
         # Both embeds should be replaced with the same TOC
         toc_count = result.count('- [Title](#title)')
         self.assertEqual(toc_count, 2)
+    
+    def test_non_toc_yaml_preserved(self):
+        content = """# Title
+
+```yaml
+type: embed.file
+source: test.py
+```"""
+        
+        result = resolve_table_of_contents(content)
+        # Non-TOC embeds should be left alone
+        self.assertIn('```yaml', result)
+        self.assertIn('type: embed.file', result)
 
 
 class TestFormatWithLineNumbersHTML(unittest.TestCase):
