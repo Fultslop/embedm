@@ -1,19 +1,31 @@
 """File embed processing logic."""
 
 import os
-from typing import Dict, Set
+from typing import Dict, Set, Optional, TYPE_CHECKING
 
 from .extraction import extract_lines, extract_region
 from .formatting import format_with_line_numbers, format_with_line_numbers_text, dedent_lines
 from .converters import csv_to_markdown_table
 
+if TYPE_CHECKING:
+    from .resolver import ProcessingContext
 
-def process_file_embed(properties: Dict, current_file_dir: str, processing_stack: Set[str]) -> str:
+
+def process_file_embed(properties: Dict, current_file_dir: str, processing_stack: Set[str], context: Optional['ProcessingContext'] = None) -> str:
     """
     Process a file embed with the given properties
+
+    Args:
+        properties: Embed properties from YAML
+        current_file_dir: Directory of the file containing the embed
+        processing_stack: Set of files being processed (for cycle detection)
+        context: Processing context with limits
     """
     # Import here to avoid circular dependency
-    from .resolver import resolve_content
+    from .resolver import resolve_content, ProcessingContext
+
+    if context is None:
+        context = ProcessingContext()
 
     source = properties.get('source')
     if not source:
@@ -37,7 +49,14 @@ def process_file_embed(properties: Dict, current_file_dir: str, processing_stack
     is_markdown = target_path.endswith('.md')
 
     if not os.path.exists(target_path):
-        return f"> [!CAUTION]\n> File not found: `{source}` relative to `{current_file_dir}`"
+        return f"> [!CAUTION]\n> **Embed Error:** File not found: `{source}`"
+
+    # Check file size limit
+    if context.limits and context.limits.max_file_size > 0:
+        file_size = os.path.getsize(target_path)
+        if file_size > context.limits.max_file_size:
+            from .models import Limits
+            return f"> [!CAUTION]\n> **File Size Limit Exceeded:** Source file `{os.path.basename(target_path)}` size {Limits.format_size(file_size)} exceeds limit {Limits.format_size(context.limits.max_file_size)}. Use `--max-file-size` to increase this limit."
 
     with open(target_path, 'r', encoding='utf-8') as f:
         raw_content = f.read()
@@ -82,6 +101,13 @@ def process_file_embed(properties: Dict, current_file_dir: str, processing_stack
                 return f"**{title}**\n\n{table}"
             return table
 
+        # Check embedded text size limit
+        if context.limits and context.limits.max_embed_text > 0:
+            text_size = len(raw_content.encode('utf-8'))
+            if text_size > context.limits.max_embed_text:
+                from .models import Limits
+                return f"> [!CAUTION]\n> **Embed Text Limit Exceeded:** Embedded content size {Limits.format_size(text_size)} exceeds limit {Limits.format_size(context.limits.max_embed_text)}. Use `--max-embed-text` to increase this limit."
+
         # Build result with optional title
         result = ''
         if title:
@@ -97,7 +123,7 @@ def process_file_embed(properties: Dict, current_file_dir: str, processing_stack
         return result
 
     # Case B: Embedding another Markdown file recursively
-    embedded_md = resolve_content(target_path, set(processing_stack))
+    embedded_md = resolve_content(target_path, set(processing_stack), context)
 
     # Add title if specified
     if title:

@@ -17,7 +17,7 @@ if sys.platform == 'win32':
 
 from .models import Limits, ProcessingStats
 from .validation import validate_all
-from .resolver import resolve_content, resolve_table_of_contents
+from .resolver import resolve_content, resolve_table_of_contents, ProcessingContext
 
 
 def parse_arguments():
@@ -105,6 +105,12 @@ Size formats: 1024, 1KB, 1K, 1MB, 1M, 1GB, 1G
     )
 
     parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Force processing even with validation errors (warnings will be embedded in output)'
+    )
+
+    parser.add_argument(
         '--verbose', '-v',
         action='store_true',
         help='Verbose output'
@@ -124,7 +130,7 @@ def create_limits_from_args(args) -> Limits:
     )
 
 
-def process_files(validation_result, output_path: str, limits: Limits, verbose: bool = False) -> ProcessingStats:
+def process_files(validation_result, output_path: str, limits: Limits, verbose: bool = False, force: bool = False) -> ProcessingStats:
     """
     Execute the processing phase - resolve embeds and write output files.
 
@@ -133,6 +139,7 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
         output_path: Output file or directory (or None for auto-generated)
         limits: Processing limits
         verbose: Verbose output flag
+        force: Force processing with embedded warnings
 
     Returns:
         ProcessingStats with processing metrics
@@ -148,6 +155,9 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
     # Determine if we're in directory mode
     is_dir_mode = len(files) > 1 or (output_path and os.path.isdir(output_path))
 
+    # Create processing context with limits (only if force mode is enabled)
+    context = ProcessingContext(limits if force else None)
+
     if is_dir_mode:
         # Directory mode
         if not output_path:
@@ -158,8 +168,8 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
         os.makedirs(absolute_output, exist_ok=True)
 
         for file_path in files:
-            # First pass: resolve file embeds
-            final_content = resolve_content(file_path)
+            # First pass: resolve file embeds with limit checking
+            final_content = resolve_content(file_path, context=context)
 
             # Second pass: resolve table of contents
             final_content = resolve_table_of_contents(final_content)
@@ -182,8 +192,8 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
         # Single file mode
         file_path = files[0]
 
-        # First pass: resolve file embeds
-        final_content = resolve_content(file_path)
+        # First pass: resolve file embeds with limit checking
+        final_content = resolve_content(file_path, context=context)
 
         # Second pass: resolve table of contents
         final_content = resolve_table_of_contents(final_content)
@@ -233,16 +243,21 @@ def main():
                 print("\nTip: Override limits with flags like:")
                 print("  --max-file-size 5MB --max-recursion 10 --max-embeds 200")
 
-            sys.exit(1)
+            # Exit unless --force is specified
+            if not args.force:
+                sys.exit(1)
+            else:
+                print("\n⚠️  --force enabled: Processing will continue with errors.")
+                print("    Warnings will be embedded in the compiled output.\n")
 
         # Exit if dry-run
         if args.dry_run:
             print("\n✅ Dry run complete - no files were modified")
             sys.exit(0)
 
-        # PHASE 3: Execute Processing
-        if not validation.has_errors():
-            stats = process_files(validation, args.output, limits, args.verbose)
+        # PHASE 3: Execute Processing (always run if no errors, or if --force is set)
+        if not validation.has_errors() or args.force:
+            stats = process_files(validation, args.output, limits, args.verbose, args.force)
             print(f"\n{stats.format_summary()}")
 
     except KeyboardInterrupt:

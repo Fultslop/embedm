@@ -10,7 +10,7 @@ from .models import Limits, ValidationError, ValidationResult, EmbedDirective, P
 from .discovery import discover_files, discover_embeds_in_file, discover_all_embeds, build_dependency_graph
 from .validation import validate_all
 
-__version__ = '1.0.0'
+__version__ = '0.4.0'
 
 __all__ = [
     # Core resolution functions
