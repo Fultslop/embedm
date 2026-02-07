@@ -267,6 +267,41 @@ line_numbers: html
 - `html` - Styled HTML with non-selectable line numbers
 - `false` - No line numbers (default)
 
+**Customize line number styling:**
+
+Use `line_numbers_style` to customize the appearance of HTML line numbers:
+
+````markdown
+```yaml
+type: embed.file
+source: code.py
+line_numbers: html
+line_numbers_style: dark
+```
+````
+
+**Built-in themes:**
+- `default` - GitHub-style light theme (used if not specified)
+- `dark` - Dark theme with high contrast
+- `minimal` - Minimal styling with simple borders
+
+**Custom CSS:**
+
+You can also specify a path to your own CSS file:
+
+````markdown
+```yaml
+type: embed.file
+source: code.py
+line_numbers: html
+line_numbers_style: styles/my-theme.css
+```
+````
+
+The CSS file should define styles for `.code-block-with-lines`, `.line`, and `.line-number` classes. Use `{{max_digits}}` as a placeholder for dynamic line number width. See `src/embedm/styles/default.css` for a complete example.
+
+**Note:** The `line_numbers_style` property only applies when `line_numbers: html` is set. It is ignored for `line_numbers: text`.
+
 ### Embed Specific Lines
 
 ````markdown
