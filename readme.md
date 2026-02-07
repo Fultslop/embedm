@@ -59,22 +59,22 @@ EmbedM uses YAML code blocks with `type: embed.*` to define embeds. This provide
 
 ### Embed Entire File
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: path/to/file.py
 ```
-```
+````
 
 ### Embed with Line Numbers
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: path/to/file.py
 line_numbers: html
 ```
-```
+````
 
 **Line number options:**
 - `text` - Plain text line numbers (e.g., `1 | code here`)
@@ -83,13 +83,13 @@ line_numbers: html
 
 ### Embed Specific Lines
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: path/to/file.py
 region: L10-20
 ```
-```
+````
 
 **Region formats supported:**
 - `L10` - Single line
@@ -99,13 +99,13 @@ region: L10-20
 
 ### Embed Named Region
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: path/to/file.py
 region: myfunction
 ```
-```
+````
 
 Mark regions in your source files:
 ```python
@@ -117,17 +117,17 @@ def my_function():
 
 ### Embed with Title
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: path/to/file.py
 title: Example Implementation
 ```
-```
+````
 
 ### Combine Multiple Options
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: path/to/file.py
@@ -135,31 +135,31 @@ region: L10-50
 line_numbers: html
 title: Core Implementation
 ```
-```
+````
 
 ### Generate Table of Contents
 
-```markdown
+````markdown
 ```yaml
 type: embed.toc
 ```
-```
+````
 
 Alternative (both work):
-```markdown
+````markdown
 ```yaml
 type: embed.table_of_contents
 ```
-```
+````
 
 ### Embed CSV as Table
 
-```markdown
+````markdown
 ```yaml
 type: embed.file
 source: data.csv
 ```
-```
+````
 
 CSV files are automatically converted to Markdown tables.
 
@@ -167,7 +167,7 @@ CSV files are automatically converted to Markdown tables.
 
 ### Example 1: Documentation with Code Examples
 
-```markdown
+````markdown
 # API Documentation
 
 ## Authentication
@@ -187,11 +187,11 @@ type: embed.file
 source: examples/errors.py
 region: error_handler
 ```
-```
+````
 
 ### Example 2: Project README with TOC
 
-```markdown
+````markdown
 # My Project
 
 ```yaml
@@ -203,29 +203,29 @@ type: embed.toc
 
 ## Usage
 ...
-```
+````
 
 ### Example 3: Recursive Embedding
 
 Create reusable sections:
 
 **sections/features.md:**
-```markdown
+````markdown
 ## Key Features
 
 - Fast processing
 - Easy to use
-```
+````
 
 **README.md:**
-```markdown
+````markdown
 # Product
 
 ```yaml
 type: embed.file
 source: sections/features.md
 ```
-```
+````
 
 ## Testing
 
