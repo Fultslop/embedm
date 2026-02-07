@@ -284,6 +284,9 @@ def process_layout_embed(properties: Dict, current_file_dir: str, processing_sta
             else:
                 # No source specified - cannot generate TOC in layout context
                 embedded_content = "> [!CAUTION]\n> **TOC Error:** 'source' property is required for TOC in layouts. Specify which file to generate TOC from."
+        elif embed_type == 'comment':
+            # Comments are placeholders, create empty section
+            embedded_content = ''
         else:
             embedded_content = f"> [!CAUTION]\n> **Layout Error:** Unknown embed type in section {i+1}: '{embed_type}'"
 

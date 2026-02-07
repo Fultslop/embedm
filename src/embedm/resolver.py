@@ -151,6 +151,9 @@ def resolve_table_of_contents(content: str, source_file_path: str = None) -> str
                 # First remove all TOC embeds to avoid including them
                 temp_content = yaml_regex.sub(lambda m: '' if parse_yaml_embed_block(m.group(1)) and parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents') else m.group(0), content)
                 return generate_table_of_contents(temp_content)
+        elif embed_type == 'comment':
+            # Remove comments in second pass (in case they weren't caught in first pass)
+            return ''
 
         return match.group(0)
 

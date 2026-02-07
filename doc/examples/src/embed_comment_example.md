@@ -36,14 +36,14 @@ sections:
 
 ```yaml
 type: embed.comment
-text: TODO: Replace the comment placeholders above with actual content embeds once the source files are created (guide-content.md, toc-links.md, related-links.md)
+text: "TODO: Replace the comment placeholders above with actual content embeds once the source files are created"
 ```
 
 ## Additional Examples
 
 ```yaml
 type: embed.comment
-text: This section will contain code examples demonstrating the API. Using line_numbers: html for better readability.
+text: "This section will contain code examples demonstrating the API. Using line_numbers: html for better readability."
 ```
 
 ```yaml
