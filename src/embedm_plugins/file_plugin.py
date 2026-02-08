@@ -19,20 +19,24 @@ Usage in markdown:
     ```
 """
 
+import os
 from typing import Dict, Set, Optional, List
 
 # Import from embedm core
 from embedm.plugin import EmbedPlugin
 from embedm.phases import ProcessingPhase
-from embedm.resolver import ProcessingContext
+from embedm.resolver import ProcessingContext, resolve_content
+from embedm.extraction import extract_lines, extract_region
+from embedm.formatting import (
+    format_with_line_numbers,
+    format_with_line_numbers_text,
+    dedent_lines
+)
+from embedm.converters import csv_to_markdown_table
 
 
 class FilePlugin(EmbedPlugin):
     """Plugin that handles file and code embeds.
-
-    This plugin wraps the existing process_file_embed() function from
-    embedm.processors. It provides backward compatibility while enabling
-    the plugin architecture.
 
     Handles embed types:
     - embed.file: Standard file embedding
@@ -61,7 +65,7 @@ class FilePlugin(EmbedPlugin):
         processing_stack: Set[str],
         context: Optional[ProcessingContext] = None
     ) -> str:
-        """Process file embed by delegating to existing handler.
+        """Process file embed.
 
         Args:
             properties: YAML properties (source, region, line_numbers, title)
@@ -72,13 +76,125 @@ class FilePlugin(EmbedPlugin):
         Returns:
             Embedded file content or error message
         """
-        # Import the existing handler
-        from embedm.processors import process_file_embed
+        if context is None:
+            context = ProcessingContext()
 
-        # Delegate to the existing implementation
-        return process_file_embed(
-            properties,
-            current_file_dir,
-            processing_stack,
-            context
-        )
+        source = properties.get('source')
+        if not source:
+            return "> [!CAUTION]\n> **Embed Error:** 'source' property is required for file embeds"
+
+        region = properties.get('region')
+        title = properties.get('title')
+        line_numbers = properties.get('line_numbers', False)
+        line_numbers_style = properties.get('line_numbers_style', 'default')
+
+        # Normalize line_numbers value
+        if isinstance(line_numbers, str):
+            line_numbers = line_numbers.lower()
+            if line_numbers not in ('text', 'html', 'false'):
+                line_numbers = 'html' if line_numbers in ('true', 'yes', '1') else False
+        elif isinstance(line_numbers, bool):
+            line_numbers = 'html' if line_numbers else False
+        else:
+            line_numbers = False
+
+        target_path = os.path.abspath(os.path.join(current_file_dir, source))
+        is_markdown = target_path.endswith('.md')
+
+        if not os.path.exists(target_path):
+            return f"> [!CAUTION]\n> **Embed Error:** File not found: `{source}`"
+
+        # Check file size limit
+        if context.limits and context.limits.max_file_size > 0:
+            file_size = os.path.getsize(target_path)
+            if file_size > context.limits.max_file_size:
+                from embedm.models import Limits
+                return f"> [!CAUTION]\n> **File Size Limit Exceeded:** Source file `{os.path.basename(target_path)}` size {Limits.format_size(file_size)} exceeds limit {Limits.format_size(context.limits.max_file_size)}. Use `--max-file-size` to increase this limit."
+
+        with open(target_path, 'r', encoding='utf-8') as f:
+            raw_content = f.read()
+
+        # Case A: Embedding specific part (region) or non-Markdown file
+        if region or not is_markdown:
+            result_data = None
+            ext = os.path.splitext(target_path)[1][1:] or 'text'
+
+            if region:
+                # Try L10-20 format first
+                result_data = extract_lines(raw_content, region)
+                # If not L-format, try named region tags
+                if not result_data:
+                    result_data = extract_region(raw_content, region)
+
+                if not result_data:
+                    return f"> [!CAUTION]\n> Region `{region}` not found in `{source}`"
+
+                # Apply line numbers if requested
+                if line_numbers == 'html':
+                    raw_content = format_with_line_numbers(
+                        result_data['lines'],
+                        result_data['startLine'],
+                        ext,
+                        line_numbers_style,
+                        current_file_dir
+                    )
+                elif line_numbers == 'text':
+                    raw_content = format_with_line_numbers_text(
+                        result_data['lines'],
+                        result_data['startLine']
+                    )
+                else:
+                    # Just dedent the lines without numbers
+                    raw_content = dedent_lines(result_data['lines'])
+            else:
+                # Whole file without region - apply line numbers if requested
+                if line_numbers:
+                    lines = raw_content.split('\n')
+                    if line_numbers == 'html':
+                        raw_content = format_with_line_numbers(
+                            lines,
+                            1,
+                            ext,
+                            line_numbers_style,
+                            current_file_dir
+                        )
+                    elif line_numbers == 'text':
+                        raw_content = format_with_line_numbers_text(lines, 1)
+
+            # Special handling for CSV files - convert to markdown table
+            if ext == 'csv' and not region:
+                table = csv_to_markdown_table(raw_content)
+                # Wrap in optional title
+                if title:
+                    return f"**{title}**\n\n{table}"
+                return table
+
+            # Check embedded text size limit
+            if context.limits and context.limits.max_embed_text > 0:
+                text_size = len(raw_content.encode('utf-8'))
+                if text_size > context.limits.max_embed_text:
+                    from embedm.models import Limits
+                    return f"> [!CAUTION]\n> **Embed Text Limit Exceeded:** Embedded content size {Limits.format_size(text_size)} exceeds limit {Limits.format_size(context.limits.max_embed_text)}. Use `--max-embed-text` to increase this limit."
+
+            # Build result with optional title
+            result = ''
+            if title:
+                result += f"**{title}**\n\n"
+
+            # If we formatted with HTML line numbers, return as-is (no code block wrapper)
+            if line_numbers == 'html':
+                result += raw_content
+            else:
+                # Standard markdown code block (for text line numbers or no line numbers)
+                result += f"```{ext}\n{raw_content.rstrip()}\n```"
+
+            return result
+
+        # Case B: Embedding another Markdown file recursively
+        embedded_md = resolve_content(target_path, set(processing_stack), context)
+
+        # Add title if specified
+        if title:
+            return f"**{title}**\n\n{embedded_md}"
+
+        return embedded_md

@@ -15,20 +15,19 @@ in the POST_PROCESS phase and is not yet fully supported through the plugin
 interface. This plugin currently handles TOC generation from external files.
 """
 
+import os
+import re
 from typing import Dict, Set, Optional, List
 
 # Import from embedm core
 from embedm.plugin import EmbedPlugin
 from embedm.phases import ProcessingPhase
 from embedm.resolver import ProcessingContext
+from embedm.converters import slugify
 
 
 class TOCPlugin(EmbedPlugin):
     """Plugin that handles table of contents generation.
-
-    This plugin wraps the existing generate_table_of_contents() function
-    from embedm.converters. Currently supports TOC generation from external
-    files specified via 'source' property.
 
     Handles embed types:
     - embed.toc: Table of contents generation
@@ -74,21 +73,66 @@ class TOCPlugin(EmbedPlugin):
             requires special handling and is deferred to POST_PROCESS phase
             handler.
         """
-        # Import the existing handler
-        from embedm.converters import generate_table_of_contents
-
         # Check if source file is specified
         source = properties.get('source')
 
         if source:
             # Generate TOC from specified file
-            return generate_table_of_contents(
-                '',
-                source_file=source,
-                current_file_dir=current_file_dir
-            )
+            target_path = os.path.abspath(os.path.join(current_file_dir, source))
+
+            if not os.path.exists(target_path):
+                return f"> [!CAUTION]\n> **TOC Error:** Source file not found: `{source}`"
+
+            try:
+                with open(target_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except Exception as e:
+                return f"> [!CAUTION]\n> **TOC Error:** Could not read `{source}`: {str(e)}"
+
+            return self._generate_toc(content)
         else:
             # This case requires full document content which isn't available
             # in the plugin interface yet. Return None to signal that this
             # should be handled by the POST_PROCESS phase handler.
             return None
+
+    def _generate_toc(self, content: str) -> str:
+        """Generate table of contents from markdown content.
+
+        Args:
+            content: Markdown content to parse for headings
+
+        Returns:
+            Generated table of contents as markdown list
+        """
+        # Normalize line endings first
+        lines = content.replace('\r\n', '\n').replace('\r', '\n').split('\n')
+        toc_lines = []
+        heading_counts = {}  # Track duplicate headings for unique anchors
+
+        for line in lines:
+            # Match markdown headings (# through ######)
+            match = re.match(r'^(#{1,6})\s+(.+)$', line)
+            if not match:
+                continue
+
+            level = len(match.group(1))
+            text = match.group(2).strip()
+
+            # Generate slug (GitHub style)
+            slug = slugify(text)
+
+            # Handle duplicate headings by appending -1, -2, etc.
+            if slug in heading_counts:
+                heading_counts[slug] += 1
+                slug = f"{slug}-{heading_counts[slug]}"
+            else:
+                heading_counts[slug] = 0
+
+            # Create indentation (2 spaces per level beyond h1)
+            indent = '  ' * (level - 1)
+
+            # Add to TOC
+            toc_lines.append(f"{indent}- [{text}](#{slug})")
+
+        return '\n'.join(toc_lines) if toc_lines else '> [!NOTE]\n> No headings found in document.'

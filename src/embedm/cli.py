@@ -21,6 +21,9 @@ from .validation import validate_all
 from .resolver import ProcessingContext
 from .phases import PhaseProcessor
 
+# Import embedm_plugins to trigger auto-registration of built-in plugins
+import embedm_plugins
+
 
 def parse_arguments():
     """Parse command line arguments."""

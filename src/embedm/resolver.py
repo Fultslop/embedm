@@ -5,9 +5,8 @@ import re
 from typing import Optional, Set, Dict
 
 from .parsing import parse_yaml_embed_block
-from .processors import process_file_embed
-from .converters import generate_table_of_contents
-from .layout import process_layout_embed
+from .registry import dispatch_embed
+from .phases import ProcessingPhase
 
 
 class ProcessingContext:
@@ -97,19 +96,21 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
         if limit_warning:
             return limit_warning
 
-        # Route to appropriate handler based on type
-        if embed_type == 'file':
-            return process_file_embed(properties, current_file_dir, processing_stack, context)
-        elif embed_type == 'layout':
-            return process_layout_embed(properties, current_file_dir, processing_stack, context)
-        elif embed_type == 'comment':
-            # Comments are removed from compiled output
-            return ''
-        elif embed_type == 'toc' or embed_type == 'table_of_contents':
-            # TOC is handled in a second pass, leave marker
+        # Route to appropriate handler via plugin dispatcher
+        result = dispatch_embed(
+            embed_type=embed_type,
+            properties=properties,
+            current_file_dir=current_file_dir,
+            processing_stack=processing_stack,
+            context=context,
+            phase=ProcessingPhase.EMBED
+        )
+
+        # If result is None, it means defer to POST_PROCESS phase (e.g., TOC)
+        if result is None:
             return match.group(0)
-        else:
-            return f"> [!CAUTION]\n> **Embed Error:** Unknown embed type: `{embed_type}`"
+
+        return result
 
     resolved = yaml_regex.sub(replace_embed, content)
     return resolved
@@ -141,16 +142,26 @@ def resolve_table_of_contents(content: str, source_file_path: str = None) -> str
         embed_type, properties = parsed
 
         if embed_type in ('toc', 'table_of_contents'):
-            # Check if source file is specified
-            source = properties.get('source')
-            if source:
-                # Generate TOC from specified file
-                return generate_table_of_contents('', source_file=source, current_file_dir=current_file_dir)
-            else:
+            # Try plugin dispatcher first
+            result = dispatch_embed(
+                embed_type=embed_type,
+                properties=properties,
+                current_file_dir=current_file_dir,
+                processing_stack=set(),  # POST_PROCESS doesn't track cycles
+                context=None,
+                phase=ProcessingPhase.POST_PROCESS
+            )
+
+            # If plugin returns None (no source specified), generate from current content
+            if result is None:
+                # Import here to avoid circular dependency
+                from .converters import generate_table_of_contents
                 # Generate TOC from current content (without TOC markers)
                 # First remove all TOC embeds to avoid including them
                 temp_content = yaml_regex.sub(lambda m: '' if parse_yaml_embed_block(m.group(1)) and parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents') else m.group(0), content)
                 return generate_table_of_contents(temp_content)
+
+            return result
         elif embed_type == 'comment':
             # Remove comments in second pass (in case they weren't caught in first pass)
             return ''
