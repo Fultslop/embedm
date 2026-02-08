@@ -5,13 +5,14 @@ import os
 import argparse
 import time
 
-# Fix Windows console encoding for emojis
-if sys.platform == 'win32':
+# Fix Windows console encoding for emojis (but not during testing)
+if sys.platform == 'win32' and 'pytest' not in sys.modules:
     try:
         # Try to set UTF-8 encoding for Windows console
         import io
-        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        if hasattr(sys.stdout, 'buffer') and hasattr(sys.stderr, 'buffer'):
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
     except Exception:
         pass
 
@@ -60,41 +61,41 @@ Size formats: 1024, 1KB, 1K, 1MB, 1M, 1GB, 1G
     limits_group.add_argument(
         '--max-file-size',
         type=str,
-        default='1MB',
+        default=None,
         metavar='SIZE',
-        help='Maximum input file size (default: 1MB, use 0 for unlimited)'
+        help='Maximum input file size (default: 1MB or from config, use 0 for unlimited)'
     )
 
     limits_group.add_argument(
         '--max-recursion',
         type=int,
-        default=8,
+        default=None,
         metavar='N',
-        help='Maximum recursion depth (default: 8, use 0 for unlimited)'
+        help='Maximum recursion depth (default: 8 or from config, use 0 for unlimited)'
     )
 
     limits_group.add_argument(
         '--max-embeds',
         type=int,
-        default=100,
+        default=None,
         metavar='N',
-        help='Maximum embeds per file (default: 100, use 0 for unlimited)'
+        help='Maximum embeds per file (default: 100 or from config, use 0 for unlimited)'
     )
 
     limits_group.add_argument(
         '--max-output-size',
         type=str,
-        default='10MB',
+        default=None,
         metavar='SIZE',
-        help='Maximum output file size (default: 10MB, use 0 for unlimited)'
+        help='Maximum output file size (default: 10MB or from config, use 0 for unlimited)'
     )
 
     limits_group.add_argument(
         '--max-embed-text',
         type=str,
-        default='2KB',
+        default=None,
         metavar='SIZE',
-        help='Maximum embedded text length (default: 2KB, use 0 for unlimited)'
+        help='Maximum embedded text length (default: 2KB or from config, use 0 for unlimited)'
     )
 
     # Other flags
@@ -119,14 +120,55 @@ Size formats: 1024, 1KB, 1K, 1MB, 1M, 1GB, 1G
     return parser.parse_args()
 
 
-def create_limits_from_args(args) -> Limits:
-    """Create Limits object from parsed arguments."""
+def create_limits(args, config=None) -> Limits:
+    """Create Limits object with precedence: CLI > config > defaults.
+
+    Args:
+        args: Parsed command-line arguments
+        config: Optional loaded config file (EmbedMConfig)
+
+    Returns:
+        Limits object with merged values
+    """
+    from .config import EmbedMConfig
+
+    # Helper to get value with precedence
+    def get_value(cli_val, config_val, default_val):
+        # CLI arg was explicitly set (not None)
+        if cli_val is not None:
+            return cli_val
+        # Config has value
+        if config and config_val is not None:
+            return config_val
+        # Use default
+        return default_val
+
     return Limits(
-        max_file_size=Limits.parse_size(args.max_file_size),
-        max_recursion=args.max_recursion,
-        max_embeds_per_file=args.max_embeds,
-        max_output_size=Limits.parse_size(args.max_output_size),
-        max_embed_text=Limits.parse_size(args.max_embed_text)
+        max_file_size=Limits.parse_size(
+            get_value(args.max_file_size,
+                     config.max_file_size if config else None,
+                     "1MB")
+        ),
+        max_recursion=get_value(
+            args.max_recursion,
+            config.max_recursion if config else None,
+            8
+        ),
+        max_embeds_per_file=get_value(
+            args.max_embeds,
+            config.max_embeds_per_file if config else None,
+            100
+        ),
+        max_output_size=Limits.parse_size(
+            get_value(args.max_output_size,
+                     config.max_output_size if config else None,
+                     "10MB")
+        ),
+        max_embed_text=Limits.parse_size(
+            get_value(args.max_embed_text,
+                     config.max_embed_text if config else None,
+                     "2KB")
+        )
     )
 
 
@@ -222,13 +264,50 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
 
 
 def main():
-    """Main CLI entry point with new pipeline architecture."""
+    """Main CLI entry point with config file support."""
     try:
         # Parse arguments
         args = parse_arguments()
 
-        # Create limits from arguments
-        limits = create_limits_from_args(args)
+        # Load config file if processing a directory
+        config = None
+        config_path = None
+        if os.path.isdir(args.source):
+            from .config import find_config_file, load_config, prompt_create_config, ConfigValidationError
+
+            config_path = find_config_file(args.source)
+
+            if config_path:
+                try:
+                    config = load_config(config_path)
+                    print(f"📄 Using config: {os.path.relpath(config_path)}\n")
+                except ConfigValidationError as e:
+                    print(f"❌ Config file error: {e}")
+                    sys.exit(1)
+            else:
+                # Prompt to create config (Option B: continue if declined)
+                if prompt_create_config(args.source):
+                    config_path = os.path.join(args.source, 'embedm_config.yaml')
+                    try:
+                        config = load_config(config_path)
+                        print(f"✅ Created config: {os.path.relpath(config_path)}\n")
+                    except ConfigValidationError as e:
+                        print(f"⚠️  Warning: Created config has errors: {e}")
+                        config = None
+
+        # Create limits with precedence: CLI > config > defaults
+        limits = create_limits(args, config)
+
+        # Determine output path with config fallback
+        output_path = args.output
+        if not output_path and config and config.output_directory:
+            # Make config output directory relative to config file location
+            config_dir = os.path.dirname(config_path)
+            output_path = os.path.join(config_dir, config.output_directory)
+            # Create the directory if it came from config and source is a directory
+            # This ensures directory mode is detected correctly in process_files()
+            if os.path.isdir(args.source):
+                os.makedirs(output_path, exist_ok=True)
 
         # PHASE 1: Validation
         validation = validate_all(args.source, limits)
@@ -257,7 +336,7 @@ def main():
 
         # PHASE 3: Execute Processing (always run if no errors, or if --force is set)
         if not validation.has_errors() or args.force:
-            stats = process_files(validation, args.output, limits, args.verbose, args.force)
+            stats = process_files(validation, output_path, limits, args.verbose, args.force)
             print(f"\n{stats.format_summary()}")
 
     except KeyboardInterrupt:
