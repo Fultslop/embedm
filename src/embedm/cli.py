@@ -18,7 +18,8 @@ if sys.platform == 'win32' and 'pytest' not in sys.modules:
 
 from .models import Limits, ProcessingStats
 from .validation import validate_all
-from .resolver import resolve_content, resolve_table_of_contents, ProcessingContext
+from .resolver import ProcessingContext
+from .phases import PhaseProcessor
 
 
 def parse_arguments():
@@ -210,11 +211,9 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
         os.makedirs(absolute_output, exist_ok=True)
 
         for file_path in files:
-            # First pass: resolve file embeds with limit checking
-            final_content = resolve_content(file_path, context=context)
-
-            # Second pass: resolve table of contents
-            final_content = resolve_table_of_contents(final_content, source_file_path=file_path)
+            # Process all phases
+            processor = PhaseProcessor(context=context)
+            final_content = processor.process_all_phases(file_path)
 
             # Check output size limit
             output_size = len(final_content.encode('utf-8'))
@@ -234,11 +233,9 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
         # Single file mode
         file_path = files[0]
 
-        # First pass: resolve file embeds with limit checking
-        final_content = resolve_content(file_path, context=context)
-
-        # Second pass: resolve table of contents
-        final_content = resolve_table_of_contents(final_content, source_file_path=file_path)
+        # Process all phases
+        processor = PhaseProcessor(context=context)
+        final_content = processor.process_all_phases(file_path)
 
         # Check output size limit
         output_size = len(final_content.encode('utf-8'))
