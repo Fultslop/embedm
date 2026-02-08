@@ -1,0 +1,25 @@
+# EmbedM Configuration File
+# This file configures default processing limits and output settings.
+# CLI arguments will override these values.
+
+# Safety Limits
+limits:
+  # Maximum size of input files (supports: 1MB, 1KB, 1024, etc.)
+  max_file_size: "1MB"
+
+  # Maximum recursion depth for embedded markdown files
+  max_recursion: 8
+
+  # Maximum number of embeds per file
+  max_embeds_per_file: 100
+
+  # Maximum size of generated output files
+  max_output_size: "10MB"
+
+  # Maximum size of embedded text snippets
+  max_embed_text: "2KB"
+
+# Output Configuration
+output:
+  # Output directory for compiled files (relative to this config file)
+  directory: "compiled"

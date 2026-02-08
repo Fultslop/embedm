@@ -208,4 +208,6 @@ marimo/_lsp/
 __marimo__/
 
 # embedm
+claude.md
+notes.md
 compiled/
