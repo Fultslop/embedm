@@ -42,6 +42,11 @@ Issues = "https://github.com/Fultslop/embedm/issues"
 [project.scripts]
 embedm = "embedm.cli:main"
 
+[project.entry-points."embedm.plugins"]
+file = "embedm_plugins.file_plugin:FilePlugin"
+layout = "embedm_plugins.layout_plugin:LayoutPlugin"
+toc = "embedm_plugins.toc_plugin:TOCPlugin"
+
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"

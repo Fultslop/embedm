@@ -33,6 +33,9 @@ class EmbedMConfig:
     # Output section
     output_directory: Optional[str] = None
 
+    # Plugin section
+    plugins: Optional[Any] = None  # Can be "*" (all), list of names, or dict with enabled/disabled
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'EmbedMConfig':
         """Create config from parsed YAML dictionary.
@@ -43,9 +46,10 @@ class EmbedMConfig:
         Returns:
             EmbedMConfig instance
         """
-        # Extract limits section
+        # Extract sections
         limits = data.get('limits', {})
         output = data.get('output', {})
+        plugins = data.get('plugins')
 
         return cls(
             max_file_size=limits.get('max_file_size'),
@@ -54,6 +58,7 @@ class EmbedMConfig:
             max_output_size=limits.get('max_output_size'),
             max_embed_text=limits.get('max_embed_text'),
             output_directory=output.get('directory'),
+            plugins=plugins,
         )
 
 
@@ -155,7 +160,44 @@ def validate_config(config: EmbedMConfig) -> List[str]:
             elif value < 0:
                 errors.append(f"{field_name} must be >= 0, got {value}")
 
+    # Validate plugins config
+    if config.plugins is not None:
+        if isinstance(config.plugins, str):
+            if config.plugins != "*":
+                errors.append("plugins must be '*' (enable all) or a list of plugin names")
+        elif isinstance(config.plugins, list):
+            if not all(isinstance(p, str) for p in config.plugins):
+                errors.append("plugins list must contain only strings")
+        else:
+            errors.append("plugins must be '*' or a list, got " + type(config.plugins).__name__)
+
     return errors
+
+
+def parse_plugins_config(plugins_config: Any) -> Optional[List[str]]:
+    """Parse plugins configuration into list of enabled plugin names.
+
+    Args:
+        plugins_config: Plugin configuration from config file
+                       Can be "*" (all plugins), list of names, or None
+
+    Returns:
+        None if all plugins should be enabled ("*" or None)
+        List of plugin names if specific plugins should be enabled
+
+    Examples:
+        parse_plugins_config("*") -> None (enable all)
+        parse_plugins_config(None) -> None (enable all)
+        parse_plugins_config(["file", "toc"]) -> ["file", "toc"]
+    """
+    if plugins_config is None or plugins_config == "*":
+        return None  # Enable all plugins
+
+    if isinstance(plugins_config, list):
+        return plugins_config  # Enable specific plugins
+
+    # Invalid format (should have been caught by validate_config)
+    return None
 
 
 def generate_default_config() -> str:
@@ -189,6 +231,15 @@ limits:
 output:
   # Output directory for compiled files (relative to this config file)
   directory: "compiled"
+
+# Plugin Configuration
+# Controls which plugins are enabled for processing embeds
+plugins: "*"  # "*" = enable all discovered plugins (default)
+# Alternatively, specify a list of plugin names to enable:
+# plugins:
+#   - file
+#   - layout
+#   - toc
 """
 
 

@@ -21,9 +21,6 @@ from .validation import validate_all
 from .resolver import ProcessingContext
 from .phases import PhaseProcessor
 
-# Import embedm_plugins to trigger auto-registration of built-in plugins
-import embedm_plugins
-
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -297,6 +294,20 @@ def main():
 
         # Create limits with precedence: CLI > config > defaults
         limits = create_limits(args, config)
+
+        # Initialize plugin registry with config-specified plugins
+        if config and config.plugins is not None:
+            from .config import parse_plugins_config
+            from .registry import get_default_registry
+
+            enabled_plugins = parse_plugins_config(config.plugins)
+            if enabled_plugins is not None:
+                # Convert list to set for faster lookup
+                enabled_plugins = set(enabled_plugins)
+
+            # Initialize registry with enabled plugins
+            # This sets up the default registry for all subsequent operations
+            get_default_registry(enabled_plugins=enabled_plugins)
 
         # Determine output path with config fallback
         output_path = args.output

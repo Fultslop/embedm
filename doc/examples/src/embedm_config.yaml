@@ -23,3 +23,12 @@ limits:
 output:
   # Output directory for compiled files (relative to this config file)
   directory: "compiled"
+
+# Plugin Configuration
+# Controls which plugins are enabled for processing embeds
+plugins: "*"  # "*" = enable all discovered plugins (default)
+# Alternatively, specify a list of plugin names to enable:
+# plugins:
+#   - file
+#   - layout
+#   - toc

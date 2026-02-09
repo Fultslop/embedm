@@ -63,6 +63,62 @@ if TYPE_CHECKING:
     from .resolver import ProcessingContext
 
 
+def discover_plugins(enabled_plugins: Optional[Set[str]] = None) -> List['EmbedPlugin']:
+    """Discover plugins via entry points.
+
+    Args:
+        enabled_plugins: Optional set of plugin names to enable. If None, all discovered plugins are enabled.
+
+    Returns:
+        List of instantiated plugin objects
+
+    Example:
+        # Discover all plugins
+        plugins = discover_plugins()
+
+        # Discover only specific plugins
+        plugins = discover_plugins(enabled_plugins={'file', 'toc'})
+    """
+    try:
+        from importlib.metadata import entry_points
+    except ImportError:
+        # Python < 3.8 fallback
+        from importlib_metadata import entry_points
+
+    discovered = []
+
+    # Discover plugins registered under "embedm.plugins" entry point group
+    try:
+        # Python 3.10+ API
+        eps = entry_points(group='embedm.plugins')
+    except TypeError:
+        # Python 3.9 and earlier API
+        eps = entry_points().get('embedm.plugins', [])
+
+    for entry_point in eps:
+        plugin_name = entry_point.name
+
+        # Skip if filtering and this plugin is not enabled
+        if enabled_plugins is not None and plugin_name not in enabled_plugins:
+            continue
+
+        try:
+            # Load the plugin class
+            plugin_class = entry_point.load()
+
+            # Instantiate the plugin
+            plugin_instance = plugin_class()
+
+            discovered.append(plugin_instance)
+
+        except Exception as e:
+            # Log error but continue discovering other plugins
+            import sys
+            print(f"Warning: Failed to load plugin '{plugin_name}': {e}", file=sys.stderr)
+
+    return discovered
+
+
 class PluginRegistry:
     """Registry for managing embed plugins.
 
@@ -169,15 +225,47 @@ class PluginRegistry:
 _default_registry: Optional[PluginRegistry] = None
 
 
-def get_default_registry() -> PluginRegistry:
+def get_default_registry(enabled_plugins: Optional[Set[str]] = None, auto_discover: bool = True) -> PluginRegistry:
     """Get or create the default plugin registry.
+
+    Args:
+        enabled_plugins: Optional set of plugin names to enable. If None, all discovered plugins are enabled.
+        auto_discover: Whether to automatically discover and register plugins via entry points (default: True)
 
     Returns:
         Default PluginRegistry instance
+
+    Note:
+        On first call, plugins are automatically discovered via entry points and registered.
+        Subsequent calls return the same registry instance unless set_default_registry() is called.
+
+        If no plugins are discovered via entry points (e.g., during development), built-in
+        plugins are registered manually as a fallback.
     """
     global _default_registry
     if _default_registry is None:
         _default_registry = PluginRegistry()
+
+        # Auto-discover and register plugins on first initialization
+        if auto_discover:
+            plugins = discover_plugins(enabled_plugins)
+
+            # Fallback: If no plugins discovered (e.g., development mode), manually register built-ins
+            if not plugins:
+                try:
+                    from embedm_plugins import FilePlugin, LayoutPlugin, TOCPlugin
+                    plugins = [FilePlugin(), LayoutPlugin(), TOCPlugin()]
+                except ImportError:
+                    pass  # embedm_plugins not available
+
+            for plugin in plugins:
+                try:
+                    _default_registry.register(plugin)
+                except Exception as e:
+                    # Log error but continue with other plugins
+                    import sys
+                    print(f"Warning: Failed to register plugin '{plugin.name}': {e}", file=sys.stderr)
+
     return _default_registry
 
 
