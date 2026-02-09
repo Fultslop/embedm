@@ -46,6 +46,7 @@ embedm = "embedm.cli:main"
 file = "embedm_plugins.file_plugin:FilePlugin"
 layout = "embedm_plugins.layout_plugin:LayoutPlugin"
 toc = "embedm_plugins.toc_plugin:TOCPlugin"
+table = "embedm_plugins.table_plugin:TablePlugin"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
