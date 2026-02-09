@@ -499,14 +499,16 @@ type: toc
 
 ## Section 1
 ## Section 2"""
-        
+
         result = resolve_table_of_contents(content)
-        self.assertIn('- [Main Title](#main-title)', result)
+        # TOC should NOT include the main title (appears before TOC)
+        self.assertNotIn('- [Main Title](#main-title)', result)
+        # TOC should include sections that appear after it
         self.assertIn('  - [Section 1](#section-1)', result)
         self.assertIn('  - [Section 2](#section-2)', result)
         # Should not contain the embed marker
         self.assertNotIn('```yaml', result)
-    
+
     def test_toc_with_table_of_contents_type(self):
         content = """# Title
 
@@ -515,11 +517,13 @@ type: table_of_contents
 ```
 
 ## Section"""
-        
+
         result = resolve_table_of_contents(content)
-        self.assertIn('- [Title](#title)', result)
+        # TOC should NOT include the title (appears before TOC)
+        self.assertNotIn('- [Title](#title)', result)
+        # TOC should include sections that appear after it
         self.assertIn('  - [Section](#section)', result)
-    
+
     def test_multiple_toc_embeds(self):
         content = """# Title
 
@@ -532,11 +536,12 @@ type: toc
 ```yaml embedm
 type: toc
 ```"""
-        
+
         result = resolve_table_of_contents(content)
-        # Both embeds should be replaced with the same TOC
-        toc_count = result.count('- [Title](#title)')
-        self.assertEqual(toc_count, 2)
+        # First TOC should include Section, second TOC should be empty
+        # Count Section entries - should be 1 (from first TOC only)
+        section_count = result.count('- [Section](#section)')
+        self.assertEqual(section_count, 1)
     
     def test_non_toc_yaml_preserved(self):
         content = """# Title

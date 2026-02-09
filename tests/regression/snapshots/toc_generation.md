@@ -4,8 +4,6 @@ This document tests table of contents generation, especially the bug fix where H
 
 ## Table of Contents
 
-- [TOC Generation Test](#toc-generation-test)
-  - [Table of Contents](#table-of-contents)
   - [Introduction](#introduction)
     - [Background](#background)
   - [Features](#features)
