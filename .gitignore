@@ -212,3 +212,5 @@ claude.md
 notes.md
 compiled/
 .claude/
+
+tests/regression/actual/

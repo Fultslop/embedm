@@ -1,4 +1,4 @@
-# Layout example
+# Layout test
 
 ```yaml
 type: embed.layout
@@ -8,9 +8,9 @@ sections:
   - size: 50%
     embed:
       type: embed.file
-      source: embed_csv_table.md
+      source: table_csv.md
   - size: 50%
     embed:
       type: embed.file
-      source: embed_file.md
+      source: line_numbers.md
 ```
