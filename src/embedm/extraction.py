@@ -8,22 +8,32 @@ def extract_region(content: str, tag_name: str) -> Optional[Dict]:
     """
     Extracts a specific region marked by md.start:tagName and md.end:tagName
     Returns {'lines': list[str], 'startLine': int} or None
+
+    Markers must be in comments (lines starting with #, //, etc.) to avoid
+    matching mentions of markers in docstrings or regular text.
     """
     lines = content.replace('\r\n', '\n').split('\n')
-    start_marker = f"md.start:{tag_name.strip()}"
-    end_marker = f"md.end:{tag_name.strip()}"
+    tag_name_clean = tag_name.strip()
 
-    def normalize_marker(s):
-        return re.sub(r'\s', '', s)
+    # Regex pattern to match region markers in comments
+    # Matches: # md.start:name or // md.start:name or <!-- md.start:name -->
+    # Allows optional whitespace after colon and comment markers
+    start_pattern = re.compile(
+        r'^\s*(?:#|//|<!--|/\*)\s*md\.start\s*:\s*' + re.escape(tag_name_clean) + r'\b',
+        re.IGNORECASE
+    )
+    end_pattern = re.compile(
+        r'^\s*(?:#|//|<!--|/\*)\s*md\.end\s*:\s*' + re.escape(tag_name_clean) + r'\b',
+        re.IGNORECASE
+    )
 
     start_index = -1
     end_index = -1
 
     for i, line in enumerate(lines):
-        clean_line = normalize_marker(line)
-        if normalize_marker(start_marker) in clean_line:
+        if start_pattern.match(line):
             start_index = i + 1
-        elif normalize_marker(end_marker) in clean_line:
+        elif end_pattern.match(line):
             end_index = i
             break
 
