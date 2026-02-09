@@ -9,6 +9,7 @@ gap: 20px
 padding: 20px
 border: "1px solid #e0e0e0"
 background: "#fafafa"
+comment: "Two-column layout: fixed-width TOC sidebar (250px) + flexible content area"
 sections:
   - size: 250px
     max-height: 600px

@@ -306,15 +306,17 @@ def dispatch_embed(
     if registry is None:
         registry = get_default_registry()
 
+    # Filter out 'comment' property before passing to plugin
+    # The 'comment' property is for documentation only
+    properties_for_plugin = {k: v for k, v in properties.items() if k != 'comment'}
+
     # Try plugin registry
     plugin = registry.get_plugin(embed_type, phase)
     if plugin:
-        return plugin.process(properties, current_file_dir, processing_stack, context)
+        return plugin.process(properties_for_plugin, current_file_dir, processing_stack, context)
 
     # Handle special cases
-    if embed_type == 'comment':
-        return ''  # Comments removed immediately
-    elif embed_type in ('toc', 'table_of_contents') and phase == ProcessingPhase.EMBED:
+    if embed_type in ('toc', 'table_of_contents') and phase == ProcessingPhase.EMBED:
         return None  # Deferred to POST_PROCESS phase
 
     # Unknown embed type (no plugin registered)

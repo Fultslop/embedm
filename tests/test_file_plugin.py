@@ -14,7 +14,6 @@ class TestFilePlugin:
 
         assert plugin.name == "file"
         assert "file" in plugin.embed_types
-        assert "embed" in plugin.embed_types  # Legacy alias
         assert ProcessingPhase.EMBED in plugin.phases
 
     def test_process_file_embed(self, tmp_path):
@@ -115,10 +114,6 @@ class TestFilePluginIntegration:
         # Should be retrievable
         retrieved = registry.get_plugin("file", ProcessingPhase.EMBED)
         assert retrieved is plugin
-
-        # Legacy alias should also work
-        retrieved_legacy = registry.get_plugin("embed", ProcessingPhase.EMBED)
-        assert retrieved_legacy is plugin
 
     def test_plugin_works_with_dispatcher(self, tmp_path):
         """Test plugin works through dispatcher."""

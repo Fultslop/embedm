@@ -59,6 +59,15 @@ class TablePlugin(EmbedPlugin):
         """Processing phases when this plugin runs."""
         return [ProcessingPhase.EMBED]
 
+    @property
+    def valid_properties(self) -> List[str]:
+        """Valid properties for table embeds."""
+        return [
+            "source",   # Required: path to CSV/JSON file
+            "title",    # Optional: title displayed above the table
+            "columns",  # Optional: for JSON, list of columns to include
+        ]
+
     def process(
         self,
         properties: Dict,

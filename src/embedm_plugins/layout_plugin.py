@@ -52,6 +52,25 @@ class LayoutPlugin(EmbedPlugin):
         """Processing phases when this plugin runs."""
         return [ProcessingPhase.EMBED]
 
+    @property
+    def valid_properties(self) -> List[str]:
+        """Valid properties for layout embeds."""
+        return [
+            "orientation",   # Optional: "row" or "column"
+            "sections",      # Required: list of section configurations
+            "gap",           # Optional: gap between sections
+            "border",        # Optional: CSS border style
+            "padding",       # Optional: CSS padding
+            "background",    # Optional: CSS background
+            "overflow",      # Optional: CSS overflow
+            "overflow-x",    # Optional: CSS overflow-x
+            "overflow-y",    # Optional: CSS overflow-y
+            "max-height",    # Optional: CSS max-height
+            "max-width",     # Optional: CSS max-width
+            "min-height",    # Optional: CSS min-height
+            "min-width",     # Optional: CSS min-width
+        ]
+
     def process(
         self,
         properties: Dict,

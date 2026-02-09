@@ -70,6 +70,10 @@ class MockPlugin(EmbedPlugin):
     def phases(self):
         return [ProcessingPhase.EMBED]
 
+    @property
+    def valid_properties(self):
+        return ["source", "title"]
+
     def process(self, properties, current_file_dir, processing_stack, context=None):
         return "mock content"
 
@@ -194,6 +198,10 @@ class TestEmbedPluginInterface:
             def phases(self):
                 return [ProcessingPhase.EMBED, ProcessingPhase.POST_PROCESS]
 
+            @property
+            def valid_properties(self):
+                return ["source"]
+
             def process(self, properties, current_file_dir, processing_stack, context=None):
                 return "multi phase content"
 
@@ -301,6 +309,10 @@ class TestPluginProcessMethod:
             def phases(self):
                 return [ProcessingPhase.EMBED]
 
+            @property
+            def valid_properties(self):
+                return ["source"]
+
             def process(self, properties, current_file_dir, processing_stack, context=None):
                 TestPlugin.received_args = (properties, current_file_dir, processing_stack, context)
                 return "result"
@@ -336,6 +348,10 @@ class TestRealWorldPluginExample:
             @property
             def phases(self):
                 return [ProcessingPhase.EMBED]
+
+            @property
+            def valid_properties(self):
+                return ["source"]
 
             def process(self, properties, current_file_dir, processing_stack, context=None):
                 source = properties.get('source')
@@ -383,6 +399,10 @@ class TestRealWorldPluginExample:
             def phases(self):
                 return [ProcessingPhase.EMBED]
 
+            @property
+            def valid_properties(self):
+                return ["source"]
+
             def process(self, properties, current_file_dir, processing_stack, context=None):
                 source = properties.get('source')
                 if not source:
@@ -417,6 +437,10 @@ class TestRealWorldPluginExample:
             @property
             def phases(self):
                 return [ProcessingPhase.EMBED]
+
+            @property
+            def valid_properties(self):
+                return ["source"]
 
             def process(self, properties, current_file_dir, processing_stack, context=None):
                 source = properties.get('source')

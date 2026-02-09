@@ -124,27 +124,6 @@ class TestPhaseExecution:
         assert "- [Section 1](#section-1)" in result
         assert "- [Section 2](#section-2)" in result
 
-    def test_process_with_comment_removal(self, tmp_path):
-        """Test that comments are removed."""
-        test_file = tmp_path / "test.md"
-        test_file.write_text(
-            "# Test\n\n"
-            "Before comment.\n\n"
-            "```yaml\n"
-            "type: embed.comment\n"
-            "```\n\n"
-            "After comment.\n"
-        )
-
-        processor = PhaseProcessor()
-        result = processor.process_all_phases(str(test_file))
-
-        # Content before and after should remain
-        assert "Before comment" in result
-        assert "After comment" in result
-        # Comment block should be removed (empty line remains)
-        assert "type: embed.comment" not in result
-
     def test_phases_execute_in_order(self, tmp_path):
         """Test that EMBED phase runs before POST_PROCESS."""
         # Create a file with both embed and TOC
