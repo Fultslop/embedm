@@ -91,6 +91,89 @@ def format_with_line_numbers_text(lines: List[str], start_line: int) -> str:
     return '\n'.join(result)
 
 
+def _get_inline_styles(theme: str, max_digits: int) -> dict:
+    """Get inline styles for HTML line numbers (GitHub-compatible).
+
+    Args:
+        theme: Theme name ('default', 'dark', 'minimal')
+        max_digits: Number of digits for line numbers (for width calculation)
+
+    Returns:
+        Dict with 'container', 'pre', and 'line_number' inline style strings
+    """
+    styles = {}
+
+    if theme == 'default':
+        styles['container'] = (
+            'background: #f6f8fa; '
+            'border: 1px solid #d0d7de; '
+            'border-radius: 6px; '
+            'padding: 16px; '
+            'overflow-x: auto; '
+            'font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; '
+            'font-size: 12px; '
+            'line-height: 1.5;'
+        )
+        styles['pre'] = 'margin: 0; overflow: visible;'
+        styles['line_number'] = (
+            f'display: inline-block; '
+            f'width: {max_digits}ch; '
+            f'color: #57606a; '
+            f'user-select: none; '
+            f'text-align: right; '
+            f'padding-right: 1em; '
+            f'margin-right: 1em; '
+            f'border-right: 1px solid #d0d7de;'
+        )
+    elif theme == 'dark':
+        styles['container'] = (
+            'background: #0d1117; '
+            'border: 1px solid #30363d; '
+            'border-radius: 6px; '
+            'padding: 16px; '
+            'overflow-x: auto; '
+            'font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; '
+            'font-size: 12px; '
+            'line-height: 1.5; '
+            'color: #c9d1d9;'
+        )
+        styles['pre'] = 'margin: 0; overflow: visible;'
+        styles['line_number'] = (
+            f'display: inline-block; '
+            f'width: {max_digits}ch; '
+            f'color: #8b949e; '
+            f'user-select: none; '
+            f'text-align: right; '
+            f'padding-right: 1em; '
+            f'margin-right: 1em; '
+            f'border-right: 1px solid #30363d;'
+        )
+    elif theme == 'minimal':
+        styles['container'] = (
+            'border-left: 2px solid #0969da; '
+            'padding-left: 16px; '
+            'overflow-x: auto; '
+            'font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; '
+            'font-size: 12px; '
+            'line-height: 1.5;'
+        )
+        styles['pre'] = 'margin: 0; overflow: visible;'
+        styles['line_number'] = (
+            f'display: inline-block; '
+            f'width: {max_digits}ch; '
+            f'color: #656d76; '
+            f'user-select: none; '
+            f'text-align: right; '
+            f'padding-right: 1em; '
+            f'margin-right: 1em;'
+        )
+    else:
+        # Unknown theme, use default
+        return _get_inline_styles('default', max_digits)
+
+    return styles
+
+
 def format_with_line_numbers(lines: List[str], start_line: int, language: str = 'text',
                              style: str = 'default', current_file_dir: str = None) -> str:
     """
@@ -104,7 +187,7 @@ def format_with_line_numbers(lines: List[str], start_line: int, language: str = 
         current_file_dir: Directory of the file containing the embed (for resolving relative CSS paths)
 
     Returns:
-        HTML string with line numbers and styling
+        HTML string with inline styles (GitHub-compatible)
     """
     if not lines:
         return ""
@@ -129,33 +212,30 @@ def format_with_line_numbers(lines: List[str], start_line: int, language: str = 
                  .replace('"', '&quot;')
                  .replace("'", '&#039;'))
 
-    # Build HTML
+    # Determine theme name (for built-in themes, use as-is; for custom CSS, fallback to default)
+    if style in ('default', 'dark', 'minimal'):
+        theme_name = style
+    else:
+        # Custom CSS files not supported for inline styles, use default
+        theme_name = 'default'
+
+    # Get inline styles for theme
+    inline_styles = _get_inline_styles(theme_name, max_digits + 1)
+
+    # Build HTML with inline styles
     code_lines = []
     for index, line in enumerate(clean_lines):
         current_num = str(start_line + index).rjust(max_digits)
         escaped_line = escape_html(line)
-        code_lines.append(f'<span class="line"><span class="line-number">{current_num}</span>{escaped_line}\n</span>')
+        code_lines.append(
+            f'<span style="display: block;"><span style="{inline_styles["line_number"]}">{current_num}</span>{escaped_line}\n</span>'
+        )
 
     code_lines_str = ''.join(code_lines)
 
-    # Load CSS and replace placeholder
-    css_content = load_line_number_style(style, current_file_dir)
-    css_content = css_content.replace('{{max_digits}}', str(max_digits + 1))
-
-    # Determine theme name for class
-    # Extract basename without extension for custom CSS files, otherwise use style name
-    if style in ('default', 'dark', 'minimal'):
-        theme_name = style
-    else:
-        # For custom CSS paths, extract the filename without extension
-        theme_name = Path(style).stem if '.' in style else style
-
-    # Return HTML with embedded CSS
-    return f'''<div class="code-block-{theme_name}">
-<style>
-{css_content}
-</style>
-<pre><code class="language-{language}">{code_lines_str}</code></pre>
+    # Return HTML with inline styles (no <style> block - GitHub compatible)
+    return f'''<div style="{inline_styles["container"]}">
+<pre style="{inline_styles["pre"]}"><code class="language-{language}">{code_lines_str}</code></pre>
 </div>'''
 
 

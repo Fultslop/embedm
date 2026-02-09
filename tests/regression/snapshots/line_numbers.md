@@ -84,71 +84,39 @@ This document demonstrates the different line number styles available in embedm.
 
 The default style uses GitHub's color scheme with a light background:
 
-<div class="code-block-default">
-<style>
-/* Default GitHub-style theme for code blocks with line numbers */
-.code-block-default {
-  background: #f6f8fa;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  overflow-x: auto;
-}
-.code-block-default pre {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.code-block-default .line {
-  display: block;
-}
-.code-block-default .line-number {
-  display: inline-block;
-  width: 3ch;
-  margin-right: 16px;
-  color: #57606a;
-  text-align: right;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-</style>
-<pre><code class="language-py"><span class="line"><span class="line-number"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
-</span><span class="line"><span class="line-number"> 2</span>
-</span><span class="line"><span class="line-number"> 3</span>
-</span><span class="line"><span class="line-number"> 4</span>def greet(name: str) -&gt; str:
-</span><span class="line"><span class="line-number"> 5</span>    &quot;&quot;&quot;Greet someone by name.
-</span><span class="line"><span class="line-number"> 6</span>
-</span><span class="line"><span class="line-number"> 7</span>    Args:
-</span><span class="line"><span class="line-number"> 8</span>        name: Person&#039;s name
-</span><span class="line"><span class="line-number"> 9</span>
-</span><span class="line"><span class="line-number">10</span>    Returns:
-</span><span class="line"><span class="line-number">11</span>        Greeting message
-</span><span class="line"><span class="line-number">12</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">13</span>    return f&quot;Hello, {name}!&quot;
-</span><span class="line"><span class="line-number">14</span>
-</span><span class="line"><span class="line-number">15</span>
-</span><span class="line"><span class="line-number">16</span>def calculate_sum(a: int, b: int) -&gt; int:
-</span><span class="line"><span class="line-number">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
-</span><span class="line"><span class="line-number">18</span>
-</span><span class="line"><span class="line-number">19</span>    Args:
-</span><span class="line"><span class="line-number">20</span>        a: First number
-</span><span class="line"><span class="line-number">21</span>        b: Second number
-</span><span class="line"><span class="line-number">22</span>
-</span><span class="line"><span class="line-number">23</span>    Returns:
-</span><span class="line"><span class="line-number">24</span>        Sum of a and b
-</span><span class="line"><span class="line-number">25</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">26</span>    return a + b
-</span><span class="line"><span class="line-number">27</span>
-</span><span class="line"><span class="line-number">28</span>
-</span><span class="line"><span class="line-number">29</span>if __name__ == &quot;__main__&quot;:
-</span><span class="line"><span class="line-number">30</span>    print(greet(&quot;World&quot;))
-</span><span class="line"><span class="line-number">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
-</span><span class="line"><span class="line-number">32</span>
+<div style="background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.5;">
+<pre style="margin: 0; overflow: visible;"><code class="language-py"><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 2</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 3</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 4</span>def greet(name: str) -&gt; str:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 5</span>    &quot;&quot;&quot;Greet someone by name.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 6</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 7</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 8</span>        name: Person&#039;s name
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 9</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">10</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">11</span>        Greeting message
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">12</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">13</span>    return f&quot;Hello, {name}!&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">14</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">15</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">16</span>def calculate_sum(a: int, b: int) -&gt; int:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">18</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">19</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">20</span>        a: First number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">21</span>        b: Second number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">22</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">23</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">24</span>        Sum of a and b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">25</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">26</span>    return a + b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">27</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">28</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">29</span>if __name__ == &quot;__main__&quot;:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">30</span>    print(greet(&quot;World&quot;))
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">32</span>
 </span></code></pre>
 </div>
 
@@ -158,73 +126,39 @@ The `line_numbers_style` property is optional. If omitted, the `default` theme i
 
 The dark style features a dark background suitable for dark-themed documentation:
 
-<div class="code-block-dark">
-<style>
-/* Dark theme for code blocks with line numbers */
-.code-block-dark {
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  overflow-x: auto;
-  color: #e6edf3;
-}
-.code-block-dark pre {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #e6edf3;
-}
-.code-block-dark .line {
-  display: block;
-}
-.code-block-dark .line-number {
-  display: inline-block;
-  width: 3ch;
-  margin-right: 16px;
-  color: #7d8590;
-  text-align: right;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-</style>
-<pre><code class="language-py"><span class="line"><span class="line-number"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
-</span><span class="line"><span class="line-number"> 2</span>
-</span><span class="line"><span class="line-number"> 3</span>
-</span><span class="line"><span class="line-number"> 4</span>def greet(name: str) -&gt; str:
-</span><span class="line"><span class="line-number"> 5</span>    &quot;&quot;&quot;Greet someone by name.
-</span><span class="line"><span class="line-number"> 6</span>
-</span><span class="line"><span class="line-number"> 7</span>    Args:
-</span><span class="line"><span class="line-number"> 8</span>        name: Person&#039;s name
-</span><span class="line"><span class="line-number"> 9</span>
-</span><span class="line"><span class="line-number">10</span>    Returns:
-</span><span class="line"><span class="line-number">11</span>        Greeting message
-</span><span class="line"><span class="line-number">12</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">13</span>    return f&quot;Hello, {name}!&quot;
-</span><span class="line"><span class="line-number">14</span>
-</span><span class="line"><span class="line-number">15</span>
-</span><span class="line"><span class="line-number">16</span>def calculate_sum(a: int, b: int) -&gt; int:
-</span><span class="line"><span class="line-number">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
-</span><span class="line"><span class="line-number">18</span>
-</span><span class="line"><span class="line-number">19</span>    Args:
-</span><span class="line"><span class="line-number">20</span>        a: First number
-</span><span class="line"><span class="line-number">21</span>        b: Second number
-</span><span class="line"><span class="line-number">22</span>
-</span><span class="line"><span class="line-number">23</span>    Returns:
-</span><span class="line"><span class="line-number">24</span>        Sum of a and b
-</span><span class="line"><span class="line-number">25</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">26</span>    return a + b
-</span><span class="line"><span class="line-number">27</span>
-</span><span class="line"><span class="line-number">28</span>
-</span><span class="line"><span class="line-number">29</span>if __name__ == &quot;__main__&quot;:
-</span><span class="line"><span class="line-number">30</span>    print(greet(&quot;World&quot;))
-</span><span class="line"><span class="line-number">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
-</span><span class="line"><span class="line-number">32</span>
+<div style="background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.5; color: #c9d1d9;">
+<pre style="margin: 0; overflow: visible;"><code class="language-py"><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 2</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 3</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 4</span>def greet(name: str) -&gt; str:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 5</span>    &quot;&quot;&quot;Greet someone by name.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 6</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 7</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 8</span>        name: Person&#039;s name
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;"> 9</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">10</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">11</span>        Greeting message
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">12</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">13</span>    return f&quot;Hello, {name}!&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">14</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">15</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">16</span>def calculate_sum(a: int, b: int) -&gt; int:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">18</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">19</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">20</span>        a: First number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">21</span>        b: Second number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">22</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">23</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">24</span>        Sum of a and b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">25</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">26</span>    return a + b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">27</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">28</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">29</span>if __name__ == &quot;__main__&quot;:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">30</span>    print(greet(&quot;World&quot;))
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">32</span>
 </span></code></pre>
 </div>
 
@@ -234,69 +168,39 @@ This theme uses high-contrast colors optimized for readability on dark backgroun
 
 The minimal style provides simple, lightweight styling:
 
-<div class="code-block-minimal">
-<style>
-/* Minimal theme for code blocks with line numbers */
-.code-block-minimal {
-  border: 1px solid #ccc;
-  padding: 12px;
-  margin: 12px 0;
-  overflow-x: auto;
-}
-.code-block-minimal pre {
-  margin: 0;
-  font-family: monospace;
-  font-size: 13px;
-  line-height: 1.4;
-}
-.code-block-minimal .line {
-  display: block;
-}
-.code-block-minimal .line-number {
-  display: inline-block;
-  width: 3ch;
-  margin-right: 12px;
-  color: #888;
-  text-align: right;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-</style>
-<pre><code class="language-py"><span class="line"><span class="line-number"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
-</span><span class="line"><span class="line-number"> 2</span>
-</span><span class="line"><span class="line-number"> 3</span>
-</span><span class="line"><span class="line-number"> 4</span>def greet(name: str) -&gt; str:
-</span><span class="line"><span class="line-number"> 5</span>    &quot;&quot;&quot;Greet someone by name.
-</span><span class="line"><span class="line-number"> 6</span>
-</span><span class="line"><span class="line-number"> 7</span>    Args:
-</span><span class="line"><span class="line-number"> 8</span>        name: Person&#039;s name
-</span><span class="line"><span class="line-number"> 9</span>
-</span><span class="line"><span class="line-number">10</span>    Returns:
-</span><span class="line"><span class="line-number">11</span>        Greeting message
-</span><span class="line"><span class="line-number">12</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">13</span>    return f&quot;Hello, {name}!&quot;
-</span><span class="line"><span class="line-number">14</span>
-</span><span class="line"><span class="line-number">15</span>
-</span><span class="line"><span class="line-number">16</span>def calculate_sum(a: int, b: int) -&gt; int:
-</span><span class="line"><span class="line-number">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
-</span><span class="line"><span class="line-number">18</span>
-</span><span class="line"><span class="line-number">19</span>    Args:
-</span><span class="line"><span class="line-number">20</span>        a: First number
-</span><span class="line"><span class="line-number">21</span>        b: Second number
-</span><span class="line"><span class="line-number">22</span>
-</span><span class="line"><span class="line-number">23</span>    Returns:
-</span><span class="line"><span class="line-number">24</span>        Sum of a and b
-</span><span class="line"><span class="line-number">25</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">26</span>    return a + b
-</span><span class="line"><span class="line-number">27</span>
-</span><span class="line"><span class="line-number">28</span>
-</span><span class="line"><span class="line-number">29</span>if __name__ == &quot;__main__&quot;:
-</span><span class="line"><span class="line-number">30</span>    print(greet(&quot;World&quot;))
-</span><span class="line"><span class="line-number">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
-</span><span class="line"><span class="line-number">32</span>
+<div style="border-left: 2px solid #0969da; padding-left: 16px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.5;">
+<pre style="margin: 0; overflow: visible;"><code class="language-py"><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 2</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 3</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 4</span>def greet(name: str) -&gt; str:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 5</span>    &quot;&quot;&quot;Greet someone by name.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 6</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 7</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 8</span>        name: Person&#039;s name
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;"> 9</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">10</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">11</span>        Greeting message
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">12</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">13</span>    return f&quot;Hello, {name}!&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">14</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">15</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">16</span>def calculate_sum(a: int, b: int) -&gt; int:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">18</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">19</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">20</span>        a: First number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">21</span>        b: Second number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">22</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">23</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">24</span>        Sum of a and b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">25</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">26</span>    return a + b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">27</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">28</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">29</span>if __name__ == &quot;__main__&quot;:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">30</span>    print(greet(&quot;World&quot;))
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #656d76; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em;">32</span>
 </span></code></pre>
 </div>
 
@@ -306,76 +210,39 @@ This theme is ideal when you want code blocks to blend naturally with your docum
 
 You can create your own custom CSS file for unique styling. This example uses a custom blue theme:
 
-<div class="code-block-custom-blue-theme">
-<style>
-/* Custom blue theme for code blocks with line numbers */
-.code-block-custom-blue-theme {
-  background: #e8f4f8;
-  border: 2px solid #0066cc;
-  border-radius: 8px;
-  padding: 20px;
-  margin: 20px 0;
-  overflow-x: auto;
-  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
-}
-.code-block-custom-blue-theme pre {
-  margin: 0;
-  font-family: "Courier New", monospace;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #003366;
-}
-.code-block-custom-blue-theme .line {
-  display: block;
-}
-.code-block-custom-blue-theme .line-number {
-  display: inline-block;
-  width: 3ch;
-  margin-right: 20px;
-  padding-right: 12px;
-  color: #0066cc;
-  font-weight: bold;
-  text-align: right;
-  border-right: 2px solid #0066cc;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-</style>
-<pre><code class="language-py"><span class="line"><span class="line-number"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
-</span><span class="line"><span class="line-number"> 2</span>
-</span><span class="line"><span class="line-number"> 3</span>
-</span><span class="line"><span class="line-number"> 4</span>def greet(name: str) -&gt; str:
-</span><span class="line"><span class="line-number"> 5</span>    &quot;&quot;&quot;Greet someone by name.
-</span><span class="line"><span class="line-number"> 6</span>
-</span><span class="line"><span class="line-number"> 7</span>    Args:
-</span><span class="line"><span class="line-number"> 8</span>        name: Person&#039;s name
-</span><span class="line"><span class="line-number"> 9</span>
-</span><span class="line"><span class="line-number">10</span>    Returns:
-</span><span class="line"><span class="line-number">11</span>        Greeting message
-</span><span class="line"><span class="line-number">12</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">13</span>    return f&quot;Hello, {name}!&quot;
-</span><span class="line"><span class="line-number">14</span>
-</span><span class="line"><span class="line-number">15</span>
-</span><span class="line"><span class="line-number">16</span>def calculate_sum(a: int, b: int) -&gt; int:
-</span><span class="line"><span class="line-number">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
-</span><span class="line"><span class="line-number">18</span>
-</span><span class="line"><span class="line-number">19</span>    Args:
-</span><span class="line"><span class="line-number">20</span>        a: First number
-</span><span class="line"><span class="line-number">21</span>        b: Second number
-</span><span class="line"><span class="line-number">22</span>
-</span><span class="line"><span class="line-number">23</span>    Returns:
-</span><span class="line"><span class="line-number">24</span>        Sum of a and b
-</span><span class="line"><span class="line-number">25</span>    &quot;&quot;&quot;
-</span><span class="line"><span class="line-number">26</span>    return a + b
-</span><span class="line"><span class="line-number">27</span>
-</span><span class="line"><span class="line-number">28</span>
-</span><span class="line"><span class="line-number">29</span>if __name__ == &quot;__main__&quot;:
-</span><span class="line"><span class="line-number">30</span>    print(greet(&quot;World&quot;))
-</span><span class="line"><span class="line-number">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
-</span><span class="line"><span class="line-number">32</span>
+<div style="background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.5;">
+<pre style="margin: 0; overflow: visible;"><code class="language-py"><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 2</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 3</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 4</span>def greet(name: str) -&gt; str:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 5</span>    &quot;&quot;&quot;Greet someone by name.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 6</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 7</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 8</span>        name: Person&#039;s name
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;"> 9</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">10</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">11</span>        Greeting message
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">12</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">13</span>    return f&quot;Hello, {name}!&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">14</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">15</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">16</span>def calculate_sum(a: int, b: int) -&gt; int:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">17</span>    &quot;&quot;&quot;Calculate sum of two numbers.
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">18</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">19</span>    Args:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">20</span>        a: First number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">21</span>        b: Second number
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">22</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">23</span>    Returns:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">24</span>        Sum of a and b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">25</span>    &quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">26</span>    return a + b
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">27</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">28</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">29</span>if __name__ == &quot;__main__&quot;:
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">30</span>    print(greet(&quot;World&quot;))
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">31</span>    print(f&quot;Sum: {calculate_sum(10, 20)}&quot;)
+</span><span style="display: block;"><span style="display: inline-block; width: 3ch; color: #57606a; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #d0d7de;">32</span>
 </span></code></pre>
 </div>
 
@@ -391,46 +258,12 @@ The custom CSS file ([custom-blue-theme.css](custom-blue-theme.css)) defines sty
 
 You can combine line number styles with region selection:
 
-<div class="code-block-dark">
-<style>
-/* Dark theme for code blocks with line numbers */
-.code-block-dark {
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  padding: 16px;
-  margin: 16px 0;
-  overflow-x: auto;
-  color: #e6edf3;
-}
-.code-block-dark pre {
-  margin: 0;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #e6edf3;
-}
-.code-block-dark .line {
-  display: block;
-}
-.code-block-dark .line-number {
-  display: inline-block;
-  width: 2ch;
-  margin-right: 16px;
-  color: #7d8590;
-  text-align: right;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
-
-</style>
-<pre><code class="language-py"><span class="line"><span class="line-number">1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
-</span><span class="line"><span class="line-number">2</span>
-</span><span class="line"><span class="line-number">3</span>
-</span><span class="line"><span class="line-number">4</span>def greet(name: str) -&gt; str:
-</span><span class="line"><span class="line-number">5</span>    &quot;&quot;&quot;Greet someone by name.
+<div style="background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 16px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.5; color: #c9d1d9;">
+<pre style="margin: 0; overflow: visible;"><code class="language-py"><span style="display: block;"><span style="display: inline-block; width: 2ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">1</span>&quot;&quot;&quot;Sample Python file for regression testing.&quot;&quot;&quot;
+</span><span style="display: block;"><span style="display: inline-block; width: 2ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">2</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 2ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">3</span>
+</span><span style="display: block;"><span style="display: inline-block; width: 2ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">4</span>def greet(name: str) -&gt; str:
+</span><span style="display: block;"><span style="display: inline-block; width: 2ch; color: #8b949e; user-select: none; text-align: right; padding-right: 1em; margin-right: 1em; border-right: 1px solid #30363d;">5</span>    &quot;&quot;&quot;Greet someone by name.
 </span></code></pre>
 </div>
 
