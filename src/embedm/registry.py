@@ -253,8 +253,8 @@ def get_default_registry(enabled_plugins: Optional[Set[str]] = None, auto_discov
             # Fallback: If no plugins discovered (e.g., development mode), manually register built-ins
             if not plugins:
                 try:
-                    from embedm_plugins import FilePlugin, LayoutPlugin, TOCPlugin
-                    plugins = [FilePlugin(), LayoutPlugin(), TOCPlugin()]
+                    from embedm_plugins import FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin
+                    plugins = [FilePlugin(), LayoutPlugin(), TOCPlugin(), TablePlugin()]
                 except ImportError:
                     pass  # embedm_plugins not available
 

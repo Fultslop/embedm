@@ -367,11 +367,11 @@ line_numbers: text
     def test_csv_embed(self):
         csv_path = self.create_file('data.csv', 'Name,Age\nAlice,30\nBob,25')
         md_content = '''```yaml
-type: embed.file
+type: embed.table
 source: data.csv
 ```'''
         md_path = self.create_file('test.md', md_content)
-        
+
         result = resolve_content(md_path)
         self.assertIn('| Name | Age |', result)
         self.assertIn('| Alice | 30 |', result)

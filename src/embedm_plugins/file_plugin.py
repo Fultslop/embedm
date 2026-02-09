@@ -7,7 +7,6 @@ Handles file and code embeds, including:
 - Line range selection (L10-20)
 - Named region extraction (md.start:name / md.end:name)
 - Line number display (text or HTML)
-- CSV to table conversion
 
 Usage in markdown:
     ```yaml
@@ -32,7 +31,6 @@ from embedm.formatting import (
     format_with_line_numbers_text,
     dedent_lines
 )
-from embedm.converters import csv_to_markdown_table
 
 
 class FilePlugin(EmbedPlugin):
@@ -160,14 +158,6 @@ class FilePlugin(EmbedPlugin):
                         )
                     elif line_numbers == 'text':
                         raw_content = format_with_line_numbers_text(lines, 1)
-
-            # Special handling for CSV files - convert to markdown table
-            if ext == 'csv' and not region:
-                table = csv_to_markdown_table(raw_content)
-                # Wrap in optional title
-                if title:
-                    return f"**{title}**\n\n{table}"
-                return table
 
             # Check embedded text size limit
             if context.limits and context.limits.max_embed_text > 0:
