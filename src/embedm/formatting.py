@@ -159,6 +159,44 @@ def format_with_line_numbers(lines: List[str], start_line: int, language: str = 
 </div>'''
 
 
+def format_with_line_numbers_table(lines: List[str], start_line: int, language: str = 'text') -> str:
+    """
+    Formats code with line numbers in a markdown table (GitHub-compatible)
+
+    Args:
+        lines: Code lines to format
+        start_line: Starting line number
+        language: Language for syntax highlighting hint
+
+    Returns:
+        Markdown table with line numbers and code
+    """
+    if not lines:
+        return ""
+
+    # Remove common leading whitespace
+    non_empty_lines = [line for line in lines if line.strip()]
+    if non_empty_lines:
+        min_indent = min(len(re.match(r'^(\s*)', line).group(0)) for line in non_empty_lines)
+    else:
+        min_indent = 0
+
+    clean_lines = [line[min_indent:] if len(line) >= min_indent else line for line in lines]
+
+    # Build markdown table
+    table_lines = ['| Line | Code |', '|-----:|------|']
+
+    for index, line in enumerate(clean_lines):
+        current_num = start_line + index
+        # Escape pipe characters in code to avoid breaking table
+        escaped_line = line.replace('|', '\\|')
+        # Wrap code in backticks for inline code formatting
+        code_cell = f'`{escaped_line}`' if escaped_line.strip() else ''
+        table_lines.append(f'| {current_num} | {code_cell} |')
+
+    return '\n'.join(table_lines)
+
+
 def dedent_lines(lines: List[str]) -> str:
     """
     Removes common leading whitespace from lines and returns as string

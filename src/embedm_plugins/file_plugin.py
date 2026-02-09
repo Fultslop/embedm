@@ -13,7 +13,7 @@ Usage in markdown:
     type: file
     source: path/to/file.py
     lines: L10-20  # Optional
-    line_numbers: html  # Optional: text, html, or omit
+    line_numbers: html  # Optional: text, html, table, or omit
     title: My Code  # Optional
     ```
 """
@@ -29,6 +29,7 @@ from embedm.extraction import extract_lines, extract_region
 from embedm.formatting import (
     format_with_line_numbers,
     format_with_line_numbers_text,
+    format_with_line_numbers_table,
     dedent_lines
 )
 
@@ -100,7 +101,7 @@ class FilePlugin(EmbedPlugin):
         # Normalize line_numbers value
         if isinstance(line_numbers, str):
             line_numbers = line_numbers.lower()
-            if line_numbers not in ('text', 'html', 'false'):
+            if line_numbers not in ('text', 'html', 'table', 'false'):
                 line_numbers = 'html' if line_numbers in ('true', 'yes', '1') else False
         elif isinstance(line_numbers, bool):
             line_numbers = 'html' if line_numbers else False
@@ -152,6 +153,12 @@ class FilePlugin(EmbedPlugin):
                         result_data['lines'],
                         result_data['startLine']
                     )
+                elif line_numbers == 'table':
+                    raw_content = format_with_line_numbers_table(
+                        result_data['lines'],
+                        result_data['startLine'],
+                        ext
+                    )
                 else:
                     # Just dedent the lines without numbers
                     raw_content = dedent_lines(result_data['lines'])
@@ -169,6 +176,8 @@ class FilePlugin(EmbedPlugin):
                         )
                     elif line_numbers == 'text':
                         raw_content = format_with_line_numbers_text(lines, 1)
+                    elif line_numbers == 'table':
+                        raw_content = format_with_line_numbers_table(lines, 1, ext)
 
             # Check embedded text size limit
             if context.limits and context.limits.max_embed_text > 0:
@@ -182,8 +191,8 @@ class FilePlugin(EmbedPlugin):
             if title:
                 result += f"**{title}**\n\n"
 
-            # If we formatted with HTML line numbers, return as-is (no code block wrapper)
-            if line_numbers == 'html':
+            # If we formatted with HTML or table line numbers, return as-is (no code block wrapper)
+            if line_numbers in ('html', 'table'):
                 result += raw_content
             else:
                 # Standard markdown code block (for text line numbers or no line numbers)
