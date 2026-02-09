@@ -6,11 +6,11 @@ Handles embedding tabular data as markdown tables.
 
 Currently supports:
 - CSV files
+- JSON files (arrays of objects)
 
 Future support planned for:
 - TSV files
 - Excel files
-- JSON arrays
 
 Usage in markdown:
     ```yaml
@@ -18,10 +18,17 @@ Usage in markdown:
     source: data/users.csv
     title: User List  # Optional
     ```
+
+    ```yaml
+    type: embed.table
+    source: data/users.json
+    columns: [name, email, role]  # Optional: select specific columns
+    ```
 """
 
 import os
-from typing import Dict, Set, Optional, List
+import json
+from typing import Dict, Set, Optional, List, Any
 
 # Import from embedm core
 from embedm.plugin import EmbedPlugin
@@ -31,10 +38,10 @@ from embedm.converters import csv_to_markdown_table
 
 
 class TablePlugin(EmbedPlugin):
-    """Plugin that handles table embeds from CSV and other tabular formats.
+    """Plugin that handles table embeds from CSV, JSON, and other tabular formats.
 
     Handles embed types:
-    - embed.table: Convert CSV/TSV/etc. to markdown tables
+    - embed.table: Convert CSV/JSON/TSV/etc. to markdown tables
     """
 
     @property
@@ -109,11 +116,25 @@ class TablePlugin(EmbedPlugin):
         # Convert to markdown table based on format
         if ext == 'csv':
             table = csv_to_markdown_table(content)
+        elif ext == 'json':
+            # Parse JSON
+            try:
+                data = json.loads(content)
+            except json.JSONDecodeError as e:
+                return f"> [!CAUTION]\n> **Table Error:** Invalid JSON in `{source}`: {str(e)}"
+
+            # Get optional column selection
+            columns = properties.get('columns')
+
+            # Convert JSON to table
+            table = self._json_to_markdown_table(data, columns)
+            if table.startswith("> [!CAUTION]"):
+                return table  # Error message
         elif ext == 'tsv':
             # TSV support - future enhancement
-            return f"> [!CAUTION]\n> **Table Error:** TSV format not yet supported. Use CSV for now."
+            return f"> [!CAUTION]\n> **Table Error:** TSV format not yet supported. Use CSV or JSON for now."
         else:
-            return f"> [!CAUTION]\n> **Table Error:** Unsupported file format `.{ext}`. Currently only CSV is supported."
+            return f"> [!CAUTION]\n> **Table Error:** Unsupported file format `.{ext}`. Currently CSV and JSON are supported."
 
         # Check embedded table size limit
         if context.limits and context.limits.max_embed_text > 0:
@@ -127,3 +148,74 @@ class TablePlugin(EmbedPlugin):
             return f"**{title}**\n\n{table}"
 
         return table
+
+    def _json_to_markdown_table(self, data: Any, columns: Optional[List[str]] = None) -> str:
+        """Convert JSON data to markdown table.
+
+        Args:
+            data: Parsed JSON data (array of objects, single object, or dict)
+            columns: Optional list of column names to include (in order)
+
+        Returns:
+            Markdown table string or error message
+        """
+        # Case 1: Array of objects (most common)
+        if isinstance(data, list):
+            if not data:
+                return "> [!CAUTION]\n> **Table Error:** JSON array is empty"
+
+            # Check if all items are objects
+            if not all(isinstance(item, dict) for item in data):
+                return "> [!CAUTION]\n> **Table Error:** JSON array must contain objects for table conversion"
+
+            # Determine columns
+            if columns:
+                # Use specified columns
+                cols = columns
+            else:
+                # Use keys from first object
+                cols = list(data[0].keys())
+
+            # Build table header
+            lines = ['| ' + ' | '.join(cols) + ' |']
+            lines.append('| ' + ' | '.join(['---'] * len(cols)) + ' |')
+
+            # Build table rows
+            for item in data:
+                row = []
+                for col in cols:
+                    value = item.get(col, '')
+                    # Convert value to string and escape pipes
+                    if isinstance(value, bool):
+                        value_str = 'true' if value else 'false'
+                    elif value is None:
+                        value_str = ''
+                    else:
+                        value_str = str(value)
+                    value_str = value_str.replace('|', '\\|').replace('\n', ' ')
+                    row.append(value_str)
+                lines.append('| ' + ' | '.join(row) + ' |')
+
+            return '\n'.join(lines)
+
+        # Case 2: Single object (convert to key-value table)
+        elif isinstance(data, dict):
+            lines = ['| Key | Value |']
+            lines.append('| --- | --- |')
+            for key, value in data.items():
+                # Convert value to string and escape pipes
+                if isinstance(value, bool):
+                    value_str = 'true' if value else 'false'
+                elif value is None:
+                    value_str = ''
+                elif isinstance(value, (list, dict)):
+                    value_str = json.dumps(value)
+                else:
+                    value_str = str(value)
+                value_str = value_str.replace('|', '\\|').replace('\n', ' ')
+                lines.append(f'| {key} | {value_str} |')
+            return '\n'.join(lines)
+
+        # Case 3: Other types not supported
+        else:
+            return f"> [!CAUTION]\n> **Table Error:** JSON must be an array of objects or a single object for table conversion, got {type(data).__name__}"
