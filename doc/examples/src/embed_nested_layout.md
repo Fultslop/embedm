@@ -1,17 +1,17 @@
 # Nested Layout example
 
-```yaml
-type: embed.layout
+```yaml embedm
+type: layout
 orientation: column
 sections:
   - size: 30%
     border: "1px #BBCCBB"
     embed:
-      type: embed.file
+      type: file
       source: embed_layout.md
   - size: auto
     border: "2px #BBCC0B" 
     embed:
-      type: embed.file
+      type: file
       source: lorem-ipsum.md
 ```

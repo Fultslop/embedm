@@ -4,8 +4,8 @@ This tests JSON to markdown table conversion.
 
 ## Product Catalog
 
-```yaml
-type: embed.table
+```yaml embedm
+type: table
 source: data/sample.json
 title: Available Products
 ```

@@ -4,8 +4,8 @@ This tests basic file embedding functionality.
 
 ## Python Code
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: data/sample.py
 ```
 

@@ -4,8 +4,8 @@ This test verifies that circular dependencies are properly detected and reported
 
 ## Triggering the Cycle
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: file_a.md
 ```
 

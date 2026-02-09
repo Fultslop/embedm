@@ -5,8 +5,8 @@ TOC Plugin for EmbedM
 Handles table of contents generation from markdown headings.
 
 Usage in markdown:
-    ```yaml
-    type: embed.toc
+    ```yaml embedm
+    type: toc
     source: document.md  # Optional: generate TOC from specific file
     ```
 

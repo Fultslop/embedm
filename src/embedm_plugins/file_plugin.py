@@ -9,10 +9,10 @@ Handles file and code embeds, including:
 - Line number display (text or HTML)
 
 Usage in markdown:
-    ```yaml
-    type: embed.file
+    ```yaml embedm
+    type: file
     source: path/to/file.py
-    region: L10-20  # Optional
+    lines: L10-20  # Optional
     line_numbers: html  # Optional: text, html, or omit
     title: My Code  # Optional
     ```

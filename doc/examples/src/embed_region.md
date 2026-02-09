@@ -1,15 +1,15 @@
 # Include Region 
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 title: "region: doSomething"
 source: Hello.cs
 region: doSomething
 line_numbers: html
 ```
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 title: "region: doSomething"
 source: Hello.cs
 region: doSomethingElse

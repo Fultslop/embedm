@@ -109,7 +109,7 @@ git commit -m "Update regression test snapshots"
    # My New Feature Test
 
    ```yaml
-   type: embed.newfeature
+   type: newfeature
    source: data/example.txt
    ```
    ```

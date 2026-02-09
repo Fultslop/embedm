@@ -1,7 +1,7 @@
 # Include CSV
 
-```yaml
-type: embed.table
+```yaml embedm
+type: table
 title: CSV example
 source: test.csv
 ```

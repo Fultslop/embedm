@@ -6,8 +6,8 @@ This document demonstrates the different line number styles available in embedm.
 
 The default style uses GitHub's color scheme with a light background:
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sample_code.py
 line_numbers: html
 ```
@@ -18,8 +18,8 @@ The `line_numbers_style` property is optional. If omitted, the `default` theme i
 
 The dark style features a dark background suitable for dark-themed documentation:
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sample_code.py
 line_numbers: html
 line_numbers_style: dark
@@ -31,8 +31,8 @@ This theme uses high-contrast colors optimized for readability on dark backgroun
 
 The minimal style provides simple, lightweight styling:
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sample_code.py
 line_numbers: html
 line_numbers_style: minimal
@@ -44,8 +44,8 @@ This theme is ideal when you want code blocks to blend naturally with your docum
 
 You can create your own custom CSS file for unique styling. This example uses a custom blue theme:
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sample_code.py
 line_numbers: html
 line_numbers_style: custom-blue-theme.css
@@ -63,8 +63,8 @@ The custom CSS file ([custom-blue-theme.css](custom-blue-theme.css)) defines sty
 
 You can combine line number styles with region selection:
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sample_code.py
 region: L1-5
 line_numbers: html
@@ -75,8 +75,8 @@ line_numbers_style: dark
 
 For comparison, here's how text-based line numbers look (no styling customization available):
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sample_code.py
 region: L7-9
 line_numbers: text

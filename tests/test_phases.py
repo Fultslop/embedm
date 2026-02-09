@@ -90,8 +90,8 @@ class TestPhaseExecution:
         test_file = tmp_path / "test.md"
         test_file.write_text(
             "# Test\n\n"
-            "```yaml\n"
-            "type: embed.file\n"
+            "```yaml embedm\n"
+            "type: file\n"
             f"source: {source_file.name}\n"
             "```\n"
         )
@@ -107,8 +107,8 @@ class TestPhaseExecution:
         test_file = tmp_path / "test.md"
         test_file.write_text(
             "# Main Title\n\n"
-            "```yaml\n"
-            "type: embed.toc\n"
+            "```yaml embedm\n"
+            "type: toc\n"
             "```\n\n"
             "## Section 1\n\n"
             "Content 1\n\n"
@@ -135,11 +135,11 @@ class TestPhaseExecution:
         test_file = tmp_path / "test.md"
         test_file.write_text(
             "# Main\n\n"
-            "```yaml\n"
-            "type: embed.toc\n"
+            "```yaml embedm\n"
+            "type: toc\n"
             "```\n\n"
-            "```yaml\n"
-            "type: embed.file\n"
+            "```yaml embedm\n"
+            "type: file\n"
             f"source: {source_file.name}\n"
             "```\n"
         )
@@ -182,8 +182,8 @@ class TestPhaseExecution:
         test_file = tmp_path / "test.md"
         test_file.write_text(
             "# Test\n\n"
-            "```yaml\n"
-            "type: embed.toc\n"
+            "```yaml embedm\n"
+            "type: toc\n"
             "```\n\n"
             "## Section\n"
         )
@@ -216,7 +216,7 @@ class TestPhaseProcessorBackwardCompatibility:
         test_file.write_text(
             "# Title\n\n"
             "```yaml\n"
-            "type: embed.toc\n"
+            "type: toc\n"
             "```\n\n"
             "## Section\n"
         )

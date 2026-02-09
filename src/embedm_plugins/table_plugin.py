@@ -13,14 +13,14 @@ Future support planned for:
 - Excel files
 
 Usage in markdown:
-    ```yaml
-    type: embed.table
+    ```yaml embedm
+    type: table
     source: data/users.csv
     title: User List  # Optional
     ```
 
-    ```yaml
-    type: embed.table
+    ```yaml embedm
+    type: table
     source: data/users.json
     columns: [name, email, role]  # Optional: select specific columns
     ```
