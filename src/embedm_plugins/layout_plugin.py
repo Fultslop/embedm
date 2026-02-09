@@ -6,16 +6,16 @@ Handles layout embeds for creating multi-column/row arrangements with
 flexbox-based positioning and styling.
 
 Usage in markdown:
-    ```yaml
-    type: embed.layout
+    ```yaml embedm
+    type: layout
     orientation: row
     gap: 20px
     sections:
       - embed:
-          type: embed.file
+          type: file
           source: file1.py
       - embed:
-          type: embed.file
+          type: file
           source: file2.py
     ```
 """

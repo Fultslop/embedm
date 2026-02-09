@@ -109,13 +109,13 @@ class TestDiscovery(unittest.TestCase):
         with open(test_file, 'w') as f:
             f.write("""# Test
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: example.txt
 ```
 
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 ```
 
 Not an embed:
@@ -208,8 +208,8 @@ class TestValidation(unittest.TestCase):
         """Test validation catches missing source files."""
         test_file = os.path.join(self.temp_dir, 'test.md')
         with open(test_file, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: missing.txt
 ```""")
 
@@ -239,8 +239,8 @@ source: missing.txt
         # Create file with 5 embeds
         with open(test_file, 'w') as f:
             for i in range(5):
-                f.write(f"""```yaml
-type: embed.toc
+                f.write(f"""```yaml embedm
+type: toc
 ```
 
 """)
@@ -258,14 +258,14 @@ type: embed.toc
 
         # Create circular dependency: a -> b -> a
         with open(file1, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: b.md
 ```""")
 
         with open(file2, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: a.md
 ```""")
 
@@ -290,8 +290,8 @@ source: a.md
             f.write('Hello world')
 
         with open(test_file, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: source.txt
 ```""")
 
@@ -365,8 +365,8 @@ class TestForceMode(unittest.TestCase):
         """Test force mode embeds warning for missing files."""
         test_file = os.path.join(self.temp_dir, 'test.md')
         with open(test_file, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: missing.txt
 ```""")
 
@@ -388,8 +388,8 @@ source: missing.txt
             f.write('x' * 1000)
 
         with open(test_file, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: large.txt
 ```""")
 
@@ -408,16 +408,16 @@ source: large.txt
 
         # Create file with 3 TOC embeds
         with open(test_file, 'w') as f:
-            f.write("""```yaml
-type: embed.toc
+            f.write("""```yaml embedm
+type: toc
 ```
 
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 ```
 
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 ```""")
 
         # Process with limit of 2
@@ -437,14 +437,14 @@ type: embed.toc
 
         # Create chain: a -> b -> c
         with open(file1, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: b.md
 ```""")
 
         with open(file2, 'w') as f:
-            f.write("""```yaml
-type: embed.file
+            f.write("""```yaml embedm
+type: file
 source: c.md
 ```""")
 

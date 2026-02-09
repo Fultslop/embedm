@@ -76,8 +76,8 @@ def resolve_content(absolute_file_path: str, processing_stack: Optional[Set[str]
 
     current_file_dir = os.path.dirname(absolute_file_path)
 
-    # Regex to find ```yaml ... ``` blocks
-    yaml_regex = re.compile(r'^```yaml\s*\n([\s\S]*?)```', re.MULTILINE)
+    # Regex to find ```yaml embedm ... ``` blocks
+    yaml_regex = re.compile(r'^```yaml embedm\s*\n([\s\S]*?)```', re.MULTILINE)
 
     def replace_embed(match):
         yaml_content = match.group(1)
@@ -126,8 +126,8 @@ def resolve_table_of_contents(content: str, source_file_path: str = None) -> str
     """
     import os
 
-    # Regex to find YAML blocks
-    yaml_regex = re.compile(r'^```yaml\s*\n([\s\S]*?)```', re.MULTILINE)
+    # Regex to find EmbedM YAML blocks
+    yaml_regex = re.compile(r'^```yaml embedm\s*\n([\s\S]*?)```', re.MULTILINE)
 
     # Get directory of source file for resolving relative paths
     current_file_dir = os.path.dirname(os.path.abspath(source_file_path)) if source_file_path else None

@@ -54,8 +54,8 @@ def discover_embeds_in_file(file_path: str) -> List[EmbedDirective]:
     embeds = []
     current_file_dir = os.path.dirname(file_path)
 
-    # Find all YAML code blocks
-    yaml_regex = re.compile(r'^```yaml\s*\n([\s\S]*?)```', re.MULTILINE)
+    # Find all EmbedM YAML code blocks (marked with 'yaml embedm')
+    yaml_regex = re.compile(r'^```yaml embedm\s*\n([\s\S]*?)```', re.MULTILINE)
 
     for match in yaml_regex.finditer(content):
         yaml_content = match.group(1)

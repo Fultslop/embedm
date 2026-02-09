@@ -2,7 +2,7 @@
 
 The following should yield warnings
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: loop.md
 ```

@@ -1,7 +1,7 @@
 # Include CSV
 
-```yaml
-type: embed.table
+```yaml embedm
+type: table
 title: json example
 source: table.json
 ```

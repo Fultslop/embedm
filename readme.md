@@ -241,13 +241,13 @@ This architecture ensures:
 
 ## Embed Syntax
 
-EmbedM uses YAML code blocks with `type: embed.*` to define embeds. This provides syntax highlighting and a clean, extensible format.
+EmbedM uses YAML code blocks with `type: *` to define embeds. This provides syntax highlighting and a clean, extensible format.
 
 ### Embed Entire File
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: path/to/file.py
 ```
 ````
@@ -255,8 +255,8 @@ source: path/to/file.py
 ### Embed with Line Numbers
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: path/to/file.py
 line_numbers: html
 ```
@@ -272,8 +272,8 @@ line_numbers: html
 Use `line_numbers_style` to customize the appearance of HTML line numbers:
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: code.py
 line_numbers: html
 line_numbers_style: dark
@@ -290,8 +290,8 @@ line_numbers_style: dark
 You can also specify a path to your own CSS file:
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: code.py
 line_numbers: html
 line_numbers_style: styles/my-theme.css
@@ -305,8 +305,8 @@ The CSS file should define styles for `.code-block-with-lines`, `.line`, and `.l
 ### Embed Specific Lines
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: path/to/file.py
 region: L10-20
 ```
@@ -321,8 +321,8 @@ region: L10-20
 ### Embed Named Region
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: path/to/file.py
 region: myfunction
 ```
@@ -339,8 +339,8 @@ def my_function():
 ### Embed with Title
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: path/to/file.py
 title: Example Implementation
 ```
@@ -349,8 +349,8 @@ title: Example Implementation
 ### Combine Multiple Options
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: path/to/file.py
 region: L10-50
 line_numbers: html
@@ -363,23 +363,23 @@ title: Core Implementation
 Generate a table of contents from the current document's headings:
 
 ````markdown
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 ```
 ````
 
 Alternative (both work):
 ````markdown
-```yaml
-type: embed.table_of_contents
+```yaml embedm
+type: table_of_contents
 ```
 ````
 
 Generate a table of contents from a specific file:
 
 ````markdown
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 source: path/to/document.md
 ```
 ````
@@ -392,8 +392,8 @@ source: path/to/document.md
 ### Embed CSV as Table
 
 ````markdown
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: data.csv
 ```
 ````
@@ -405,8 +405,8 @@ CSV files are automatically converted to Markdown tables.
 Add documentation comments that describe your document structure. These comments are completely removed from the compiled output.
 
 ````markdown
-```yaml
-type: embed.comment
+```yaml embedm
+type: comment
 text: This section is for API documentation. The sidebar contains the table of contents, and the main area shows the detailed API reference.
 ```
 ````
@@ -429,18 +429,18 @@ Create multi-column or multi-row layouts using flexbox-based positioning.
 **Basic Two-Column Layout:**
 
 ````markdown
-```yaml
-type: embed.layout
+```yaml embedm
+type: layout
 orientation: row
 gap: 20px
 sections:
   - size: 50%
     embed:
-      type: embed.file
+      type: file
       source: left-content.md
   - size: 50%
     embed:
-      type: embed.file
+      type: file
       source: right-content.md
 ```
 ````
@@ -448,8 +448,8 @@ sections:
 **Layout with Styling:**
 
 ````markdown
-```yaml
-type: embed.layout
+```yaml embedm
+type: layout
 orientation: row
 gap: 15px
 border: "1px solid #ccc"
@@ -461,12 +461,12 @@ sections:
     padding: 15px
     background: "#e7f3ff"
     embed:
-      type: embed.toc
+      type: toc
       source: main-content.md
   - size: 70%
     padding: 15px
     embed:
-      type: embed.file
+      type: file
       source: main-content.md
 ```
 ````
@@ -474,8 +474,8 @@ sections:
 **Scrollable Sidebar Layout:**
 
 ````markdown
-```yaml
-type: embed.layout
+```yaml embedm
+type: layout
 orientation: row
 gap: 20px
 sections:
@@ -487,11 +487,11 @@ sections:
     border: "1px solid #ddd"
     background: "#f8f9fa"
     embed:
-      type: embed.toc
+      type: toc
       source: content.md
   - size: auto
     embed:
-      type: embed.file
+      type: file
       source: content.md
 ```
 ````
@@ -563,8 +563,8 @@ Section properties (per section in `sections` list):
 
 ## Authentication
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: examples/auth.py
 region: L15-30
 line_numbers: text
@@ -573,8 +573,8 @@ title: Authentication Example
 
 ## Error Handling
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: examples/errors.py
 region: error_handler
 ```
@@ -585,8 +585,8 @@ region: error_handler
 ````markdown
 # My Project
 
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 ```
 
 ## Installation
@@ -612,8 +612,8 @@ Create reusable sections:
 ````markdown
 # Product
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 source: sections/features.md
 ```
 ````
@@ -625,8 +625,8 @@ Create a documentation page with table of contents sidebar:
 ````markdown
 # User Guide
 
-```yaml
-type: embed.layout
+```yaml embedm
+type: layout
 orientation: row
 gap: 20px
 padding: 20px
@@ -637,12 +637,12 @@ sections:
     padding: 15px
     border: "1px solid #ddd"
     embed:
-      type: embed.toc
+      type: toc
       source: guide-content.md
   - size: 75%
     padding: 15px
     embed:
-      type: embed.file
+      type: file
       source: guide-content.md
 ```
 

@@ -2,16 +2,16 @@
 
 ## loop via parent
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 title: cannot include parent
 source: ./embed_loops.md
 ```
 
 ## loop via self
 
-```yaml
-type: embed.file
+```yaml embedm
+type: file
 title: cannot include self
 source: ./loop.md
 ```

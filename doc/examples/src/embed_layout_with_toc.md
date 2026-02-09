@@ -2,8 +2,8 @@
 
 This example demonstrates a layout with a scrollable table of contents sidebar that references another file.
 
-```yaml
-type: embed.layout
+```yaml embedm
+type: layout
 orientation: row
 gap: 20px
 padding: 20px
@@ -19,13 +19,13 @@ sections:
     border: "1px solid #ddd"
     background: "#f8f9fa"
     embed:
-      type: embed.toc
+      type: toc
       source: guide-content.md
   - size: auto
     padding: 15px
     background: white
     embed:
-      type: embed.file
+      type: file
       source: guide-content.md
 ```
 

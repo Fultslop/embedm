@@ -4,8 +4,8 @@ This document tests table of contents generation, especially the bug fix where H
 
 ## Table of Contents
 
-```yaml
-type: embed.toc
+```yaml embedm
+type: toc
 ```
 
 ## Introduction

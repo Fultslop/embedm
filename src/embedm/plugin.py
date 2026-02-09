@@ -22,7 +22,7 @@ class MyCustomPlugin(EmbedPlugin):
 
     @property
     def embed_types(self) -> List[str]:
-        return ["custom"]  # Handles type: embed.custom
+        return ["custom"]  # Handles type: custom
 
     @property
     def phases(self) -> List[ProcessingPhase]:
@@ -135,7 +135,7 @@ class EmbedPlugin(ABC):
     def embed_types(self) -> List[str]:
         """List of embed type strings this plugin handles.
 
-        Example: ['file', 'embed'] handles both 'embed.file' and 'embed.embed'
+        Example: ['file'] handles 'type: file' in yaml embedm blocks
         """
         pass
 
