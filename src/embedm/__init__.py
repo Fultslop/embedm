@@ -5,7 +5,6 @@ from .parsing import parse_yaml_embed_block
 from .extraction import extract_region, extract_lines
 from .formatting import format_with_line_numbers, format_with_line_numbers_text, dedent_lines
 from .converters import csv_to_markdown_table, slugify, generate_table_of_contents
-from .processors import process_file_embed
 from .models import Limits, ValidationError, ValidationResult, EmbedDirective, ProcessingStats
 from .discovery import discover_files, discover_embeds_in_file, discover_all_embeds, build_dependency_graph
 from .validation import validate_all
@@ -33,9 +32,6 @@ __all__ = [
     'csv_to_markdown_table',
     'slugify',
     'generate_table_of_contents',
-
-    # Processors
-    'process_file_embed',
 
     # Models
     'Limits',
