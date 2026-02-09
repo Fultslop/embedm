@@ -14,6 +14,7 @@ from embedm import (
     extract_lines,
     format_with_line_numbers_text,
     format_with_line_numbers,
+    format_with_line_numbers_table,
     dedent_lines,
     csv_to_markdown_table,
     slugify,
@@ -572,6 +573,48 @@ class TestFormatWithLineNumbersHTML(unittest.TestCase):
     
     def test_empty_lines_html(self):
         result = format_with_line_numbers([], 1, 'python')
+        self.assertEqual(result, "")
+
+
+class TestFormatWithLineNumbersTable(unittest.TestCase):
+    """Tests for format_with_line_numbers_table (markdown table) function"""
+
+    def test_table_generation(self):
+        lines = ['def hello():', '    print("world")']
+        result = format_with_line_numbers_table(lines, 1, 'python')
+
+        # Should generate markdown table
+        self.assertIn('| Line | Code |', result)
+        self.assertIn('|-----:|------|', result)
+        self.assertIn('| 1 | `def hello():` |', result)
+        self.assertIn('| 2 | `    print("world")` |', result)
+
+    def test_table_with_custom_start_line(self):
+        lines = ['x = 1', 'y = 2']
+        result = format_with_line_numbers_table(lines, 10, 'python')
+
+        self.assertIn('| 10 | `x = 1` |', result)
+        self.assertIn('| 11 | `y = 2` |', result)
+
+    def test_table_escapes_pipes(self):
+        lines = ['result = a | b', 'mask = x | y | z']
+        result = format_with_line_numbers_table(lines, 1, 'python')
+
+        # Pipes should be escaped to prevent breaking table
+        self.assertIn('\\|', result)
+        self.assertIn('`result = a \\| b`', result)
+
+    def test_table_empty_lines(self):
+        lines = ['code', '', 'more code']
+        result = format_with_line_numbers_table(lines, 1, 'python')
+
+        # Empty lines should have empty code cell
+        lines_in_result = result.split('\n')
+        # Header + separator + 3 data rows
+        self.assertEqual(len(lines_in_result), 5)
+
+    def test_empty_lines_table(self):
+        result = format_with_line_numbers_table([], 1, 'python')
         self.assertEqual(result, "")
 
 
