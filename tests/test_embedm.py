@@ -443,9 +443,9 @@ line_numbers: html
         md_path = self.create_file('test.md', md_content)
 
         result = resolve_content(md_path)
-        # Should have HTML structure with default class
-        self.assertIn('code-block-default', result)
-        self.assertIn('<style>', result)
+        # Should have HTML structure with inline styles (GitHub-compatible)
+        self.assertIn('<div style=', result)
+        self.assertNotIn('<style>', result)  # No CSS blocks for GitHub compatibility
         # Default style should have GitHub colors
         self.assertIn('#f6f8fa', result)  # Default background color
 
@@ -461,9 +461,9 @@ line_numbers_style: dark
         md_path = self.create_file('test.md', md_content)
 
         result = resolve_content(md_path)
-        # Should have HTML structure with dark class
-        self.assertIn('code-block-dark', result)
-        self.assertIn('<style>', result)
+        # Should have HTML structure with inline styles (GitHub-compatible)
+        self.assertIn('<div style=', result)
+        self.assertNotIn('<style>', result)  # No CSS blocks for GitHub compatibility
         # Dark style should have dark background
         self.assertIn('#0d1117', result)  # Dark background color
 
@@ -479,11 +479,11 @@ line_numbers_style: minimal
         md_path = self.create_file('test.md', md_content)
 
         result = resolve_content(md_path)
-        # Should have HTML structure with minimal class
-        self.assertIn('code-block-minimal', result)
-        self.assertIn('<style>', result)
-        # Minimal style should have simple border
-        self.assertIn('1px solid #ccc', result)
+        # Should have HTML structure with inline styles (GitHub-compatible)
+        self.assertIn('<div style=', result)
+        self.assertNotIn('<style>', result)  # No CSS blocks for GitHub compatibility
+        # Minimal style should have left border
+        self.assertIn('2px solid #0969da', result)  # Blue left border
 
 
 class TestResolveTableOfContents(unittest.TestCase):
@@ -558,9 +558,9 @@ class TestFormatWithLineNumbersHTML(unittest.TestCase):
         lines = ['def hello():', '    print("world")']
         result = format_with_line_numbers(lines, 1, 'python')
 
-        self.assertIn('<div class="code-block-default">', result)
-        self.assertIn('<style>', result)
-        self.assertIn('class="line-number"', result)
+        self.assertIn('<div style=', result)
+        self.assertNotIn('<style>', result)  # No CSS blocks for GitHub compatibility
+        self.assertIn('user-select: none', result)  # Line numbers should be non-selectable
         self.assertIn('language-python', result)
     
     def test_html_escaping(self):
