@@ -93,7 +93,8 @@ class FilePlugin(EmbedPlugin):
         if not source:
             return "> [!CAUTION]\n> **Embed Error:** 'source' property is required for file embeds"
 
-        region = properties.get('region')
+        lines = properties.get('lines')  # Line range (e.g., "L4-6")
+        region = properties.get('region')  # Named region
         title = properties.get('title')
         line_numbers = properties.get('line_numbers', False)
         line_numbers_style = properties.get('line_numbers_style', 'default')
@@ -124,13 +125,19 @@ class FilePlugin(EmbedPlugin):
         with open(target_path, 'r', encoding='utf-8') as f:
             raw_content = f.read()
 
-        # Case A: Embedding specific part (region) or non-Markdown file
-        if region or not is_markdown:
+        # Case A: Embedding specific part (lines/region) or non-Markdown file
+        if lines or region or not is_markdown:
             result_data = None
             ext = os.path.splitext(target_path)[1][1:] or 'text'
 
-            if region:
-                # Try L10-20 format first
+            # Extract specific lines or region
+            if lines:
+                # Extract line range (e.g., "L4-6")
+                result_data = extract_lines(raw_content, lines)
+                if not result_data:
+                    return f"> [!CAUTION]\n> Invalid line range `{lines}` in `{source}`"
+            elif region:
+                # Try L10-20 format first (for backward compatibility)
                 result_data = extract_lines(raw_content, region)
                 # If not L-format, try named region tags
                 if not result_data:
@@ -139,7 +146,8 @@ class FilePlugin(EmbedPlugin):
                 if not result_data:
                     return f"> [!CAUTION]\n> Region `{region}` not found in `{source}`"
 
-                # Apply line numbers if requested
+            # Apply line numbers if we extracted specific lines/region
+            if result_data:
                 if line_numbers == 'html':
                     raw_content = format_with_line_numbers(
                         result_data['lines'],
