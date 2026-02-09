@@ -190,8 +190,8 @@ class TestDispatcher:
 
         assert "MockA processed test.txt" in result
 
-    def test_dispatch_to_fallback_file_handler(self, tmp_path):
-        """Test dispatcher falls back to process_file_embed."""
+    def test_dispatch_without_plugin_returns_error(self, tmp_path):
+        """Test dispatcher returns error when no plugin registered."""
         # Create test file
         test_file = tmp_path / "test.txt"
         test_file.write_text("content")
@@ -201,13 +201,13 @@ class TestDispatcher:
             {"source": "test.txt"},
             str(tmp_path),
             set(),
-            registry=PluginRegistry(),  # Empty registry
+            registry=PluginRegistry(),  # Empty registry - no plugins registered
             phase=ProcessingPhase.EMBED
         )
 
-        # Should use fallback handler
-        assert "```" in result
-        assert "content" in result
+        # Should return error since no plugin is registered
+        assert "[!CAUTION]" in result
+        assert "Unknown embed type" in result
 
     def test_dispatch_unknown_type_returns_error(self):
         """Test dispatcher returns error for unknown type."""

@@ -218,23 +218,16 @@ def dispatch_embed(
     if registry is None:
         registry = get_default_registry()
 
-    # Try plugin registry first
+    # Try plugin registry
     plugin = registry.get_plugin(embed_type, phase)
     if plugin:
         return plugin.process(properties, current_file_dir, processing_stack, context)
 
-    # Fallback to existing hard-coded handlers for backward compatibility
-    if phase == ProcessingPhase.EMBED:
-        if embed_type == 'file':
-            from .processors import process_file_embed
-            return process_file_embed(properties, current_file_dir, processing_stack, context)
-        elif embed_type == 'layout':
-            from .layout import process_layout_embed
-            return process_layout_embed(properties, current_file_dir, processing_stack, context)
-        elif embed_type == 'comment':
-            return ''  # Comments removed immediately
-        elif embed_type in ('toc', 'table_of_contents'):
-            return None  # Deferred to POST_PROCESS phase
+    # Handle special cases
+    if embed_type == 'comment':
+        return ''  # Comments removed immediately
+    elif embed_type in ('toc', 'table_of_contents') and phase == ProcessingPhase.EMBED:
+        return None  # Deferred to POST_PROCESS phase
 
-    # Unknown embed type
+    # Unknown embed type (no plugin registered)
     return f"> [!CAUTION]\n> **Embed Error:** Unknown embed type: `{embed_type}`"
