@@ -4,12 +4,15 @@ import os
 import tempfile
 import pytest
 import yaml
+from unittest.mock import patch
 from embedm.config import (
     EmbedMConfig,
     find_config_file,
     load_config,
     validate_config,
     generate_default_config,
+    parse_plugins_config,
+    prompt_create_config,
     ConfigValidationError
 )
 from embedm.cli import create_limits
@@ -296,3 +299,117 @@ class TestOutputDirectory:
         """Test that output directory is None when not in config."""
         config = EmbedMConfig()
         assert config.output_directory is None
+
+
+class TestPluginsValidation:
+    """Test plugins configuration validation."""
+
+    def test_validate_plugins_star(self):
+        """Test that '*' is valid for plugins."""
+        config = EmbedMConfig(plugins="*")
+        errors = validate_config(config)
+        assert len(errors) == 0
+
+    def test_validate_plugins_valid_list(self):
+        """Test that a list of strings is valid for plugins."""
+        config = EmbedMConfig(plugins=["file", "toc", "layout"])
+        errors = validate_config(config)
+        assert len(errors) == 0
+
+    def test_validate_plugins_invalid_string(self):
+        """Test that a non-'*' string is invalid for plugins."""
+        config = EmbedMConfig(plugins="not_star")
+        errors = validate_config(config)
+        assert len(errors) > 0
+        assert any("plugins" in e for e in errors)
+
+    def test_validate_plugins_list_with_non_strings(self):
+        """Test that a list with non-string items is invalid."""
+        config = EmbedMConfig(plugins=["file", 123, True])
+        errors = validate_config(config)
+        assert len(errors) > 0
+        assert any("strings" in e for e in errors)
+
+    def test_validate_plugins_invalid_type(self):
+        """Test that a non-string, non-list type is invalid."""
+        config = EmbedMConfig(plugins=42)
+        errors = validate_config(config)
+        assert len(errors) > 0
+        assert any("int" in e for e in errors)
+
+    def test_validate_plugins_none(self):
+        """Test that None is valid (plugins not specified)."""
+        config = EmbedMConfig(plugins=None)
+        errors = validate_config(config)
+        assert len(errors) == 0
+
+
+class TestParsePluginsConfig:
+    """Test parse_plugins_config function."""
+
+    def test_parse_none(self):
+        """Test None returns None (enable all)."""
+        assert parse_plugins_config(None) is None
+
+    def test_parse_star(self):
+        """Test '*' returns None (enable all)."""
+        assert parse_plugins_config("*") is None
+
+    def test_parse_list(self):
+        """Test list returns the list."""
+        result = parse_plugins_config(["file", "toc"])
+        assert result == ["file", "toc"]
+
+    def test_parse_invalid_type(self):
+        """Test invalid type returns None (fallback)."""
+        assert parse_plugins_config(42) is None
+
+
+class TestPromptCreateConfig:
+    """Test prompt_create_config interactive function."""
+
+    @patch('builtins.input', return_value='y')
+    def test_create_config_yes(self, mock_input, tmp_path):
+        """Test config file is created when user says yes."""
+        result = prompt_create_config(str(tmp_path))
+        assert result is True
+        assert (tmp_path / "embedm_config.yaml").exists()
+
+    @patch('builtins.input', return_value='n')
+    def test_create_config_no(self, mock_input, tmp_path):
+        """Test config file is not created when user says no."""
+        result = prompt_create_config(str(tmp_path))
+        assert result is False
+        assert not (tmp_path / "embedm_config.yaml").exists()
+
+    @patch('builtins.input', side_effect=EOFError)
+    def test_create_config_eof(self, mock_input, tmp_path):
+        """Test graceful handling of EOFError."""
+        result = prompt_create_config(str(tmp_path))
+        assert result is False
+
+    @patch('builtins.input', side_effect=KeyboardInterrupt)
+    def test_create_config_keyboard_interrupt(self, mock_input, tmp_path):
+        """Test graceful handling of KeyboardInterrupt."""
+        result = prompt_create_config(str(tmp_path))
+        assert result is False
+
+    @patch('builtins.input', return_value='y')
+    def test_create_config_write_error(self, mock_input, tmp_path):
+        """Test graceful handling when file write fails."""
+        # Use a path that can't be written to
+        bad_dir = str(tmp_path / "nonexistent" / "deep" / "path")
+        result = prompt_create_config(bad_dir)
+        assert result is False
+
+    @patch('builtins.input', return_value='yes')
+    def test_create_config_yes_full_word(self, mock_input, tmp_path):
+        """Test config file is created when user types 'yes'."""
+        result = prompt_create_config(str(tmp_path))
+        assert result is True
+
+    @patch('builtins.input', return_value='')
+    def test_create_config_empty_input(self, mock_input, tmp_path):
+        """Test empty input defaults to no."""
+        result = prompt_create_config(str(tmp_path))
+        assert result is False

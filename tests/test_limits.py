@@ -507,5 +507,269 @@ class TestValidationResult(unittest.TestCase):
         self.assertIn('File not found', report)
 
 
+class TestValidationCoverage(unittest.TestCase):
+    """Additional validation tests for coverage improvement."""
+
+    def setUp(self):
+        """Create temporary test files."""
+        self.temp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        """Clean up temporary files."""
+        import shutil
+        shutil.rmtree(self.temp_dir)
+
+    def test_validate_no_files_found_empty_dir(self):
+        """Test validation error when directory has no markdown files."""
+        # Create an empty directory (no .md files)
+        empty_dir = os.path.join(self.temp_dir, 'empty')
+        os.makedirs(empty_dir)
+
+        limits = Limits()
+        result = validate_all(empty_dir, limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            err.error_type == 'no_files'
+            for err in result.errors
+        ))
+
+    def test_validate_no_files_nonexistent_path(self):
+        """Test validation error when path doesn't exist."""
+        limits = Limits()
+        result = validate_all(os.path.join(self.temp_dir, 'nonexistent'), limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            err.error_type == 'no_files'
+            for err in result.errors
+        ))
+
+    def test_validate_missing_source_property(self):
+        """Test validation catches file embed without source property."""
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            err.error_type == 'missing_property' and 'source' in err.message
+            for err in result.errors
+        ))
+
+    def test_validate_source_file_size_warning(self):
+        """Test validation warns when source file exceeds size limit."""
+        # Create a large source file
+        source_file = os.path.join(self.temp_dir, 'large.txt')
+        with open(source_file, 'w') as f:
+            f.write('x' * 5000)
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: large.txt
+```""")
+
+        # Set file size limit smaller than source
+        limits = Limits(max_file_size=100)
+        result = validate_all(test_file, limits)
+
+        # Should have a warning about source file size
+        self.assertTrue(any(
+            'size' in w.message.lower() and w.error_type == 'limit_warning'
+            for w in result.warnings
+        ))
+
+    def test_validate_region_valid(self):
+        """Test validation passes for valid region."""
+        source_file = os.path.join(self.temp_dir, 'source.py')
+        with open(source_file, 'w') as f:
+            f.write("# md.start:main\ndef main():\n    pass\n# md.end:main\n")
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.py
+region: main
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        # Should have no region errors
+        self.assertFalse(any(
+            err.error_type == 'invalid_region'
+            for err in result.errors
+        ))
+
+    def test_validate_region_not_found(self):
+        """Test validation catches invalid region."""
+        source_file = os.path.join(self.temp_dir, 'source.py')
+        with open(source_file, 'w') as f:
+            f.write("def hello():\n    pass\n")
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.py
+region: nonexistent
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            err.error_type == 'invalid_region'
+            for err in result.errors
+        ))
+
+    def test_validate_region_with_line_range(self):
+        """Test validation passes for region specified as line range."""
+        source_file = os.path.join(self.temp_dir, 'source.py')
+        with open(source_file, 'w') as f:
+            f.write("line1\nline2\nline3\nline4\nline5\n")
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.py
+region: 2-4
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        # Line range should be valid
+        self.assertFalse(any(
+            err.error_type == 'invalid_region'
+            for err in result.errors
+        ))
+
+    def test_validate_recursion_depth_exceeded(self):
+        """Test validation catches recursion depth exceeding limit."""
+        # Create a chain: a.md -> b.md -> c.md -> d.md (depth 4)
+        for name, embeds in [('a.md', 'b.md'), ('b.md', 'c.md'), ('c.md', 'd.md')]:
+            filepath = os.path.join(self.temp_dir, name)
+            with open(filepath, 'w') as f:
+                f.write(f"""```yaml embedm
+type: file
+source: {embeds}
+```""")
+
+        # Create terminal file
+        with open(os.path.join(self.temp_dir, 'd.md'), 'w') as f:
+            f.write("# End\n")
+
+        # Set recursion limit to 2 (chain depth is 4)
+        limits = Limits(max_recursion=2)
+        result = validate_all(self.temp_dir, limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            'depth' in err.message.lower() and 'exceeds' in err.message.lower()
+            for err in result.errors
+        ))
+
+    def test_validate_recursion_depth_approaching_limit(self):
+        """Test validation warns when depth approaches limit."""
+        # Create a chain: a.md -> b.md -> c.md (depth 3)
+        for name, embeds in [('a.md', 'b.md'), ('b.md', 'c.md')]:
+            filepath = os.path.join(self.temp_dir, name)
+            with open(filepath, 'w') as f:
+                f.write(f"""```yaml embedm
+type: file
+source: {embeds}
+```""")
+
+        with open(os.path.join(self.temp_dir, 'c.md'), 'w') as f:
+            f.write("# End\n")
+
+        # Set recursion limit to 4 (depth 3 is approaching 4)
+        limits = Limits(max_recursion=4)
+        result = validate_all(self.temp_dir, limits)
+
+        self.assertTrue(any(
+            'approaching' in w.message.lower()
+            for w in result.warnings
+        ))
+
+    def test_validate_embed_text_size_warning(self):
+        """Test validation warns when embed text exceeds limit."""
+        source_file = os.path.join(self.temp_dir, 'large.txt')
+        with open(source_file, 'w') as f:
+            f.write('x' * 5000)
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: large.txt
+```""")
+
+        # Set embed text limit smaller than file
+        limits = Limits(max_embed_text=100)
+        result = validate_all(test_file, limits)
+
+        self.assertTrue(any(
+            'embed text limit' in w.message.lower()
+            for w in result.warnings
+        ))
+
+    def test_validate_embed_text_size_disabled(self):
+        """Test validation skips embed text check when limit is 0."""
+        source_file = os.path.join(self.temp_dir, 'large.txt')
+        with open(source_file, 'w') as f:
+            f.write('x' * 5000)
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: large.txt
+```""")
+
+        # Disable embed text limit
+        limits = Limits(max_embed_text=0)
+        result = validate_all(test_file, limits)
+
+        # No embed text warnings
+        self.assertFalse(any(
+            'embed text limit' in w.message.lower()
+            for w in result.warnings
+        ))
+
+    def test_validate_unknown_property_warning(self):
+        """Test validation warns about unknown properties."""
+        source_file = os.path.join(self.temp_dir, 'source.txt')
+        with open(source_file, 'w') as f:
+            f.write('hello')
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.txt
+unknown_prop: value
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        self.assertTrue(any(
+            w.error_type == 'unknown_property' and 'unknown_prop' in w.message
+            for w in result.warnings
+        ))
+
+
 if __name__ == '__main__':
     unittest.main()

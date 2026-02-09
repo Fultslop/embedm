@@ -105,6 +105,45 @@ line 5"""
         result = extract_region(content, "test")
         self.assertIsNone(result)
 
+    def test_region_ignores_docstring_mentions(self):
+        """Test that markers mentioned in docstrings are not matched."""
+        content = '''"""
+This docstring mentions md.start:function and md.end:function
+but they should NOT be matched.
+"""
+
+# md.start:function
+def my_function():
+    return 42
+# md.end:function
+'''
+        result = extract_region(content, "function")
+        self.assertIsNotNone(result)
+        # Should only extract the actual function, not the docstring
+        self.assertEqual(result['lines'], ['def my_function():', '    return 42'])
+        self.assertEqual(result['startLine'], 7)
+
+    def test_region_different_comment_styles(self):
+        """Test region markers work with different comment styles."""
+        # C++ style
+        cpp_content = "// md.start:test\nint x = 10;\n// md.end:test"
+        result = extract_region(cpp_content, "test")
+        self.assertIsNotNone(result)
+        self.assertEqual(result['lines'], ['int x = 10;'])
+
+        # HTML style
+        html_content = "<!-- md.start:test -->\n<div>content</div>\n<!-- md.end:test -->"
+        result = extract_region(html_content, "test")
+        self.assertIsNotNone(result)
+        self.assertEqual(result['lines'], ['<div>content</div>'])
+
+    def test_region_case_insensitive(self):
+        """Test region extraction is case insensitive."""
+        content = "# MD.START:test\nline 2\n# MD.END:test"
+        result = extract_region(content, "test")
+        self.assertIsNotNone(result)
+        self.assertEqual(result['lines'], ['line 2'])
+
 
 class TestExtractLines(unittest.TestCase):
     """Tests for extract_lines function"""
@@ -145,6 +184,28 @@ class TestExtractLines(unittest.TestCase):
         result = extract_lines(content, "l2")
         self.assertIsNotNone(result)
         self.assertEqual(result['lines'], ['line 2'])
+
+    def test_new_format_without_l_prefix(self):
+        """Test new clean format without L prefix."""
+        content = "line 1\nline 2\nline 3\nline 4\nline 5"
+        result = extract_lines(content, "2-4")
+        self.assertIsNotNone(result)
+        self.assertEqual(result['lines'], ['line 2', 'line 3', 'line 4'])
+        self.assertEqual(result['startLine'], 2)
+
+    def test_new_format_single_line(self):
+        """Test new format for single line."""
+        content = "line 1\nline 2\nline 3"
+        result = extract_lines(content, "2")
+        self.assertIsNotNone(result)
+        self.assertEqual(result['lines'], ['line 2'])
+
+    def test_new_format_to_end(self):
+        """Test new format for line to end."""
+        content = "line 1\nline 2\nline 3\nline 4"
+        result = extract_lines(content, "3-")
+        self.assertIsNotNone(result)
+        self.assertEqual(result['lines'], ['line 3', 'line 4'])
 
 
 class TestFormatWithLineNumbersText(unittest.TestCase):

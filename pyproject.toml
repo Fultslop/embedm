@@ -65,6 +65,11 @@ python_files = "test_*.py"
 addopts = [
     "--verbose",
     "--color=yes",
+    "--cov=embedm",
+    "--cov=embedm_plugins",
+    "--cov-report=term-missing:skip-covered",
+    "--cov-report=html",
+    "--cov-report=json",
 ]
 
 [tool.coverage.run]
@@ -72,6 +77,8 @@ source = ["embedm"]
 omit = ["*/tests/*", "*/test_*.py"]
 
 [tool.coverage.report]
+fail_under = 70
+show_missing = true
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
