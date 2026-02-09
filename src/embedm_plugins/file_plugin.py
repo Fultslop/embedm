@@ -4,7 +4,7 @@ File Plugin for EmbedM
 
 Handles file and code embeds, including:
 - Complete file embedding
-- Line range selection (L10-20)
+- Line range selection (10-20)
 - Named region extraction (md.start:name / md.end:name)
 - Line number display (text or HTML)
 
@@ -12,7 +12,7 @@ Usage in markdown:
     ```yaml embedm
     type: file
     source: path/to/file.py
-    lines: L10-20  # Optional
+    lines: 10-20  # Optional
     line_numbers: html  # Optional: text, html, table, or omit
     title: My Code  # Optional
     ```
@@ -62,7 +62,7 @@ class FilePlugin(EmbedPlugin):
         return [
             "source",              # Required: file path
             "title",               # Optional: title for the embed
-            "lines",               # Optional: line range (e.g., "L10-20")
+            "lines",               # Optional: line range (e.g., "10-20", "15", "10-")
             "region",              # Optional: named region to extract
             "line_numbers",        # Optional: "text" or "html"
             "line_numbers_style",  # Optional: style for HTML line numbers

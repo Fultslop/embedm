@@ -39,26 +39,25 @@ This embeds the entire file wrapped in a markdown code block with automatic lang
 
 ### Line Ranges
 
-Use the `lines` property to embed specific line ranges using the `L` notation.
+Use the `lines` property to embed specific line ranges.
 
 **Input:**
 ```yaml
 type: file
 source: examples/sections_example.py
-lines: L10-20
+lines: 10-20
 ```
 
 **Output:**
 ```yaml embedm
 type: file
 source: examples/sections_example.py
-lines: L10-20
+lines: 10-20
 ```
 
 You can also use:
-- Single lines: `lines: L15`
-- From line to end: `lines: L10-`
-- Case insensitive: `lines: l10-20` works too
+- Single lines: `lines: 15`
+- From line to end: `lines: 10-`
 
 ### Named Regions
 
@@ -92,14 +91,14 @@ When `line_numbers` is omitted, the file is embedded as a standard markdown code
 ```yaml
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 ```
 
 **Output:**
 ```yaml embedm
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 ```
 
 **Use When:**
@@ -118,7 +117,7 @@ Add `line_numbers: text` for simple text-based line numbers.
 ```yaml
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 line_numbers: text
 ```
 
@@ -126,7 +125,7 @@ line_numbers: text
 ```yaml embedm
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 line_numbers: text
 ```
 
@@ -149,7 +148,7 @@ Add `line_numbers: html` for styled, non-selectable line numbers with theme supp
 ```yaml
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 line_numbers: html
 line_numbers_style: default
 ```
@@ -158,7 +157,7 @@ line_numbers_style: default
 ```yaml embedm
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 line_numbers: html
 line_numbers_style: default
 ```
@@ -191,7 +190,7 @@ Add `line_numbers: table` for GitHub-compatible line numbers in a markdown table
 ```yaml
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 line_numbers: table
 ```
 
@@ -199,7 +198,7 @@ line_numbers: table
 ```yaml embedm
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 line_numbers: table
 ```
 
@@ -239,7 +238,7 @@ Add a `title` property to include a bold title above the embedded content.
 ```yaml
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 title: "Example: Basic Function"
 ```
 
@@ -247,7 +246,7 @@ title: "Example: Basic Function"
 ```yaml embedm
 type: file
 source: examples/basic_example.py
-lines: L4-6
+lines: 4-6
 title: "Example: Basic Function"
 ```
 
@@ -290,7 +289,7 @@ type: file
 source: path/to/file.ext        # File path (relative to markdown file)
 
 # Optional - Content Selection
-lines: L10-20                    # Line range (e.g., L10-20, L15, L10-)
+lines: 10-20                    # Line range (e.g., 10-20, 15, 10-)
 region: function_name            # Named region between md.start/end markers
 
 # Optional - Line Numbers
