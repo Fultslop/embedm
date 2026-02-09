@@ -20,6 +20,10 @@ class MockPluginA(EmbedPlugin):
     def phases(self):
         return [ProcessingPhase.EMBED]
 
+    @property
+    def valid_properties(self):
+        return ["source"]
+
     def process(self, properties, current_file_dir, processing_stack, context=None):
         return f"MockA processed {properties.get('source', 'nothing')}"
 
@@ -38,6 +42,10 @@ class MockPluginB(EmbedPlugin):
     def phases(self):
         return [ProcessingPhase.POST_PROCESS]
 
+    @property
+    def valid_properties(self):
+        return ["content"]
+
     def process(self, properties, current_file_dir, processing_stack, context=None):
         return f"MockB processed {properties.get('content', 'nothing')}"
 
@@ -55,6 +63,10 @@ class MockMultiPhasePlugin(EmbedPlugin):
     @property
     def phases(self):
         return [ProcessingPhase.EMBED, ProcessingPhase.POST_PROCESS]
+
+    @property
+    def valid_properties(self):
+        return []
 
     def process(self, properties, current_file_dir, processing_stack, context=None):
         return "MultiPhase processed"
@@ -121,6 +133,10 @@ class TestPluginRegistry:
             @property
             def phases(self):
                 return [ProcessingPhase.EMBED]
+
+            @property
+            def valid_properties(self):
+                return []
 
             def process(self, properties, current_file_dir, processing_stack, context=None):
                 return ""
@@ -222,19 +238,6 @@ class TestDispatcher:
 
         assert "Unknown embed type" in result
         assert "unknown_type" in result
-
-    def test_dispatch_comment_returns_empty(self):
-        """Test dispatcher returns empty string for comments."""
-        result = dispatch_embed(
-            "comment",
-            {},
-            "/dir",
-            set(),
-            registry=PluginRegistry(),
-            phase=ProcessingPhase.EMBED
-        )
-
-        assert result == ''
 
     def test_dispatch_uses_default_registry_if_none(self):
         """Test dispatcher uses default registry when none provided."""

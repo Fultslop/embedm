@@ -28,6 +28,10 @@ class MyCustomPlugin(EmbedPlugin):
     def phases(self) -> List[ProcessingPhase]:
         return [ProcessingPhase.EMBED]
 
+    @property
+    def valid_properties(self) -> List[str]:
+        return ["source", "title"]
+
     def process(self, properties, current_file_dir, processing_stack, context):
         # Your implementation here
         source = properties.get('source')
@@ -102,11 +106,15 @@ class EmbedPlugin(ABC):
 
             @property
             def embed_types(self) -> List[str]:
-                return ["file", "embed"]
+                return ["file"]
 
             @property
             def phases(self) -> List[ProcessingPhase]:
                 return [ProcessingPhase.EMBED]
+
+            @property
+            def valid_properties(self) -> List[str]:
+                return ["source", "title", "lines", "region", "line_numbers"]
 
             def process(self, properties, current_file_dir, processing_stack, context):
                 # Implementation here
@@ -142,6 +150,22 @@ class EmbedPlugin(ABC):
         Returns:
             List of ProcessingPhase values (e.g., [ProcessingPhase.EMBED])
             or [ProcessingPhase.EMBED, ProcessingPhase.POST_PROCESS] for multi-phase
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def valid_properties(self) -> List[str]:
+        """List of valid property names for this plugin.
+
+        The 'type' and 'comment' properties are always valid and handled
+        separately - don't include them in this list.
+
+        Example:
+            return ["source", "title", "lines", "region", "line_numbers"]
+
+        Returns:
+            List of valid property names (strings)
         """
         pass
 

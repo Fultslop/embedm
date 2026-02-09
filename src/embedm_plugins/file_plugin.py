@@ -37,8 +37,7 @@ class FilePlugin(EmbedPlugin):
     """Plugin that handles file and code embeds.
 
     Handles embed types:
-    - embed.file: Standard file embedding
-    - embed.embed: Legacy alias for file embedding
+    - embed.file: File embedding with optional line numbers and regions
     """
 
     @property
@@ -49,12 +48,24 @@ class FilePlugin(EmbedPlugin):
     @property
     def embed_types(self) -> List[str]:
         """Embed types handled by this plugin."""
-        return ["file", "embed"]  # 'embed' is legacy alias
+        return ["file"]
 
     @property
     def phases(self) -> List[ProcessingPhase]:
         """Processing phases when this plugin runs."""
         return [ProcessingPhase.EMBED]
+
+    @property
+    def valid_properties(self) -> List[str]:
+        """Valid properties for file embeds."""
+        return [
+            "source",              # Required: file path
+            "title",               # Optional: title for the embed
+            "lines",               # Optional: line range (e.g., "L10-20")
+            "region",              # Optional: named region to extract
+            "line_numbers",        # Optional: "text" or "html"
+            "line_numbers_style",  # Optional: style for HTML line numbers
+        ]
 
     def process(
         self,

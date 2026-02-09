@@ -70,6 +70,9 @@ def validate_all(source_path: str, limits: Limits) -> ValidationResult:
     # Step 3: Discover all embeds across all valid files
     result.embeds_discovered = discover_all_embeds(result.files_to_process)
 
+    # Step 3.5: Validate embed properties
+    validate_embed_properties(result)
+
     # Step 4: Check embed count per file
     embed_counts = {}
     for embed in result.embeds_discovered:
@@ -243,3 +246,52 @@ def validate_embed_text_sizes(result: ValidationResult, limits: Limits):
                     ))
         except OSError:
             pass
+
+
+def validate_embed_properties(result: ValidationResult):
+    """
+    Validate that embed properties are recognized by their plugins.
+
+    Checks each embed's properties against the plugin's valid_properties list
+    and adds warnings for unknown properties (excluding 'type' and 'comment').
+
+    Args:
+        result: ValidationResult to append warnings to
+    """
+    from .registry import get_default_registry
+    from .phases import ProcessingPhase
+
+    registry = get_default_registry()
+
+    for embed in result.embeds_discovered:
+        # Get the plugin for this embed type
+        # Try EMBED phase first (most common)
+        plugin = registry.get_plugin(embed.embed_type, ProcessingPhase.EMBED)
+
+        if not plugin:
+            # Try POST_PROCESS phase (for TOC)
+            plugin = registry.get_plugin(embed.embed_type, ProcessingPhase.POST_PROCESS)
+
+        if not plugin:
+            # Unknown embed type - will be caught elsewhere
+            continue
+
+        # Get valid properties from plugin
+        valid_props = set(plugin.valid_properties)
+
+        # Add universal properties
+        valid_props.add('type')
+        valid_props.add('comment')
+
+        # Check each property in the embed
+        for prop_name in embed.properties.keys():
+            if prop_name not in valid_props:
+                # Found unknown property - add warning
+                valid_list = ', '.join(sorted(plugin.valid_properties))
+                result.warnings.append(ValidationError(
+                    file_path=embed.file_path,
+                    line_number=embed.line_number,
+                    error_type='unknown_property',
+                    message=f"Unknown property '{prop_name}' for embed type '{embed.embed_type}'. Valid properties: {valid_list}",
+                    severity='warning'
+                ))

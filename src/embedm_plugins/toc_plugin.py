@@ -49,6 +49,13 @@ class TOCPlugin(EmbedPlugin):
         """Processing phases when this plugin runs."""
         return [ProcessingPhase.POST_PROCESS]
 
+    @property
+    def valid_properties(self) -> List[str]:
+        """Valid properties for TOC embeds."""
+        return [
+            "source",  # Optional: file to generate TOC from
+        ]
+
     def process(
         self,
         properties: Dict,
