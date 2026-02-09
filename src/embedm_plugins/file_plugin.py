@@ -4,7 +4,7 @@ File Plugin for EmbedM
 
 Handles file and code embeds, including:
 - Complete file embedding
-- Line range selection (L10-20)
+- Line range selection (10-20)
 - Named region extraction (md.start:name / md.end:name)
 - Line number display (text or HTML)
 
@@ -12,7 +12,7 @@ Usage in markdown:
     ```yaml embedm
     type: file
     source: path/to/file.py
-    lines: L10-20  # Optional
+    lines: 10-20  # Optional
     line_numbers: html  # Optional: text, html, table, or omit
     title: My Code  # Optional
     ```
@@ -62,7 +62,7 @@ class FilePlugin(EmbedPlugin):
         return [
             "source",              # Required: file path
             "title",               # Optional: title for the embed
-            "lines",               # Optional: line range (e.g., "L10-20")
+            "lines",               # Optional: line range (e.g., "10-20", "15", "10-")
             "region",              # Optional: named region to extract
             "line_numbers",        # Optional: "text" or "html"
             "line_numbers_style",  # Optional: style for HTML line numbers
@@ -93,7 +93,8 @@ class FilePlugin(EmbedPlugin):
         if not source:
             return "> [!CAUTION]\n> **Embed Error:** 'source' property is required for file embeds"
 
-        region = properties.get('region')
+        lines = properties.get('lines')  # Line range (e.g., "L4-6")
+        region = properties.get('region')  # Named region
         title = properties.get('title')
         line_numbers = properties.get('line_numbers', False)
         line_numbers_style = properties.get('line_numbers_style', 'default')
@@ -124,13 +125,19 @@ class FilePlugin(EmbedPlugin):
         with open(target_path, 'r', encoding='utf-8') as f:
             raw_content = f.read()
 
-        # Case A: Embedding specific part (region) or non-Markdown file
-        if region or not is_markdown:
+        # Case A: Embedding specific part (lines/region) or non-Markdown file
+        if lines or region or not is_markdown:
             result_data = None
             ext = os.path.splitext(target_path)[1][1:] or 'text'
 
-            if region:
-                # Try L10-20 format first
+            # Extract specific lines or region
+            if lines:
+                # Extract line range (e.g., "L4-6")
+                result_data = extract_lines(raw_content, lines)
+                if not result_data:
+                    return f"> [!CAUTION]\n> Invalid line range `{lines}` in `{source}`"
+            elif region:
+                # Try L10-20 format first (for backward compatibility)
                 result_data = extract_lines(raw_content, region)
                 # If not L-format, try named region tags
                 if not result_data:
@@ -139,7 +146,8 @@ class FilePlugin(EmbedPlugin):
                 if not result_data:
                     return f"> [!CAUTION]\n> Region `{region}` not found in `{source}`"
 
-                # Apply line numbers if requested
+            # Apply line numbers if we extracted specific lines/region
+            if result_data:
                 if line_numbers == 'html':
                     raw_content = format_with_line_numbers(
                         result_data['lines'],
