@@ -119,8 +119,8 @@ class TestPhaseExecution:
         processor = PhaseProcessor()
         result = processor.process_all_phases(str(test_file))
 
-        # Should have TOC generated
-        assert "- [Main Title](#main-title)" in result
+        # Should have TOC generated - H1 is skipped, starts from H2
+        assert "- [Main Title](#main-title)" not in result
         assert "- [Section 1](#section-1)" in result
         assert "- [Section 2](#section-2)" in result
 
@@ -170,7 +170,8 @@ class TestPhaseExecution:
 
         # TOC should include the embedded heading
         # (because EMBED phase runs first, then POST_PROCESS generates TOC)
-        assert "- [Main](#main)" in result
+        # H1 is skipped, starts from H2
+        assert "- [Main](#main)" not in result
         assert "- [Embedded Heading](#embedded-heading)" in result
 
 
@@ -222,8 +223,9 @@ class TestPhaseExecution:
             str(test_file), content_after_embed
         )
         assert content_after_post is not None
-        # TOC should be generated
-        assert "- [Test](#test)" in content_after_post
+        # TOC should be generated - H1 is skipped, starts from H2
+        assert "- [Test](#test)" not in content_after_post
+        assert "- [Section](#section)" in content_after_post
 
 
 class TestPhaseProcessorBackwardCompatibility:

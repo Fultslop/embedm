@@ -91,8 +91,8 @@ class TestTOCPlugin:
             processing_stack=set()
         )
 
-        # Verify TOC structure
-        assert "- [Main Title](#main-title)" in result
+        # Verify TOC structure - H1 is skipped, starts from H2
+        assert "- [Main Title](#main-title)" not in result
         assert "- [Section 1](#section-1)" in result
         assert "- [Section 2](#section-2)" in result
 
@@ -176,7 +176,7 @@ class TestAllPluginsIntegration:
 
         # Create markdown for TOC
         doc_file = tmp_path / "doc.md"
-        doc_file.write_text("# Title\n")
+        doc_file.write_text("# Title\n\n## Section\n")
 
         # Test TOC plugin through dispatcher
         result_toc = dispatch_embed(
@@ -186,4 +186,6 @@ class TestAllPluginsIntegration:
             processing_stack=set(),
             phase=ProcessingPhase.POST_PROCESS
         )
-        assert "Title" in result_toc
+        # H1 is skipped, TOC starts from H2
+        assert "- [Section](#section)" in result_toc
+        assert "Title" not in result_toc or "[Title]" not in result_toc

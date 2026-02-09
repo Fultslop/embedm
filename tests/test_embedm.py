@@ -266,25 +266,29 @@ class TestGenerateTableOfContents(unittest.TestCase):
     def test_basic_headings(self):
         content = "# Title\n## Subtitle\n### Section"
         result = generate_table_of_contents(content)
-        self.assertIn('- [Title](#title)', result)
-        self.assertIn('  - [Subtitle](#subtitle)', result)
-        self.assertIn('    - [Section](#section)', result)
-    
+        # H1 is skipped, TOC starts from H2
+        self.assertNotIn('- [Title](#title)', result)
+        self.assertIn('- [Subtitle](#subtitle)', result)
+        self.assertIn('  - [Section](#section)', result)  # Now indented by level-2
+
     def test_duplicate_headings(self):
         content = "# Introduction\n## Details\n# Introduction"
         result = generate_table_of_contents(content)
-        self.assertIn('- [Introduction](#introduction)', result)
-        self.assertIn('- [Introduction](#introduction-1)', result)
-    
+        # H1s are skipped
+        self.assertNotIn('[Introduction]', result)
+        self.assertIn('- [Details](#details)', result)
+
     def test_no_headings(self):
         content = "Just some text\nNo headings here"
         result = generate_table_of_contents(content)
         self.assertIn('No headings found', result)
-    
+
     def test_heading_with_special_chars(self):
-        content = "# Hello, World!"
+        content = "# Hello, World!\n## Section"
         result = generate_table_of_contents(content)
-        self.assertIn('[Hello, World!](#hello-world)', result)
+        # H1 is skipped
+        self.assertNotIn('[Hello, World!](#hello-world)', result)
+        self.assertIn('- [Section](#section)', result)
 
 
 class TestResolveContentIntegration(unittest.TestCase):
@@ -527,14 +531,15 @@ type: embed.toc
 
 ## Section 1
 ## Section 2"""
-        
+
         result = resolve_table_of_contents(content)
-        self.assertIn('- [Main Title](#main-title)', result)
-        self.assertIn('  - [Section 1](#section-1)', result)
-        self.assertIn('  - [Section 2](#section-2)', result)
+        # H1 is now skipped in TOC
+        self.assertNotIn('- [Main Title](#main-title)', result)
+        self.assertIn('- [Section 1](#section-1)', result)
+        self.assertIn('- [Section 2](#section-2)', result)
         # Should not contain the embed marker
         self.assertNotIn('```yaml', result)
-    
+
     def test_toc_with_table_of_contents_type(self):
         content = """# Title
 
@@ -543,11 +548,12 @@ type: embed.table_of_contents
 ```
 
 ## Section"""
-        
+
         result = resolve_table_of_contents(content)
-        self.assertIn('- [Title](#title)', result)
-        self.assertIn('  - [Section](#section)', result)
-    
+        # H1 is now skipped in TOC
+        self.assertNotIn('- [Title](#title)', result)
+        self.assertIn('- [Section](#section)', result)
+
     def test_multiple_toc_embeds(self):
         content = """# Title
 
@@ -560,10 +566,10 @@ type: embed.toc
 ```yaml
 type: embed.toc
 ```"""
-        
+
         result = resolve_table_of_contents(content)
-        # Both embeds should be replaced with the same TOC
-        toc_count = result.count('- [Title](#title)')
+        # Both embeds should be replaced with the same TOC (H1 is skipped)
+        toc_count = result.count('- [Section](#section)')
         self.assertEqual(toc_count, 2)
     
     def test_non_toc_yaml_preserved(self):

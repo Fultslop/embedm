@@ -119,6 +119,14 @@ class TOCPlugin(EmbedPlugin):
             level = len(match.group(1))
             text = match.group(2).strip()
 
+            # Skip H1 (document title) - start TOC from H2
+            if level == 1:
+                continue
+
+            # Skip "Table of Contents" heading itself (case-insensitive)
+            if text.lower() == 'table of contents':
+                continue
+
             # Generate slug (GitHub style)
             slug = slugify(text)
 
@@ -129,8 +137,8 @@ class TOCPlugin(EmbedPlugin):
             else:
                 heading_counts[slug] = 0
 
-            # Create indentation (2 spaces per level beyond h1)
-            indent = '  ' * (level - 1)
+            # Create indentation (2 spaces per level beyond h2 now)
+            indent = '  ' * (level - 2)
 
             # Add to TOC
             toc_lines.append(f"{indent}- [{text}](#{slug})")

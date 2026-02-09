@@ -37,6 +37,7 @@ from embedm.resolver import ProcessingContext
 from embedm.converters import csv_to_markdown_table
 
 
+# md.start: table_plugin_class
 class TablePlugin(EmbedPlugin):
     """Plugin that handles table embeds from CSV, JSON, and other tabular formats.
 
@@ -58,6 +59,7 @@ class TablePlugin(EmbedPlugin):
     def phases(self) -> List[ProcessingPhase]:
         """Processing phases when this plugin runs."""
         return [ProcessingPhase.EMBED]
+    # md.end: table_plugin_class
 
     def process(
         self,
@@ -149,6 +151,7 @@ class TablePlugin(EmbedPlugin):
 
         return table
 
+    # md.start: json_conversion
     def _json_to_markdown_table(self, data: Any, columns: Optional[List[str]] = None) -> str:
         """Convert JSON data to markdown table.
 
@@ -219,3 +222,4 @@ class TablePlugin(EmbedPlugin):
         # Case 3: Other types not supported
         else:
             return f"> [!CAUTION]\n> **Table Error:** JSON must be an array of objects or a single object for table conversion, got {type(data).__name__}"
+    # md.end: json_conversion

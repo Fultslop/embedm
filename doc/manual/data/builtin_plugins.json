@@ -1,0 +1,22 @@
+[
+  {
+    "name": "FilePlugin",
+    "embed_type": "embed.file",
+    "description": "Embeds files and code snippets with line numbers and regions"
+  },
+  {
+    "name": "LayoutPlugin",
+    "embed_type": "embed.layout",
+    "description": "Creates multi-column/row flexbox layouts"
+  },
+  {
+    "name": "TOCPlugin",
+    "embed_type": "embed.toc",
+    "description": "Generates table of contents from markdown headings"
+  },
+  {
+    "name": "TablePlugin",
+    "embed_type": "embed.table",
+    "description": "Converts CSV/JSON data to markdown tables"
+  }
+]
