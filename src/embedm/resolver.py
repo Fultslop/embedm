@@ -156,9 +156,24 @@ def resolve_table_of_contents(content: str, source_file_path: str = None) -> str
             if result is None:
                 # Import here to avoid circular dependency
                 from .converters import generate_table_of_contents
-                # Generate TOC from current content (without TOC markers)
-                # First remove all TOC embeds to avoid including them
-                temp_content = yaml_regex.sub(lambda m: '' if parse_yaml_embed_block(m.group(1)) and parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents') else m.group(0), content)
+
+                # Get the position of the TOC embed in the content
+                toc_position = match.start()
+
+                # Extract only content AFTER the TOC embed to avoid including:
+                # 1. Document title (first H1)
+                # 2. "Table of Contents" heading itself
+                # 3. Any other headings before the TOC
+                content_after_toc = content[match.end():]
+
+                # Remove any remaining TOC embeds from the content after this one
+                temp_content = yaml_regex.sub(
+                    lambda m: '' if parse_yaml_embed_block(m.group(1)) and
+                    parse_yaml_embed_block(m.group(1))[0] in ('toc', 'table_of_contents')
+                    else m.group(0),
+                    content_after_toc
+                )
+
                 return generate_table_of_contents(temp_content)
 
             return result

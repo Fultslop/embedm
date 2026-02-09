@@ -6,7 +6,7 @@ def helper_function():
     return "helper"
 
 
-# md.start:main_function
+# md.start: main_function
 def main_function(name):
     """
     The main function that we want to embed.
@@ -17,7 +17,7 @@ def main_function(name):
     result = helper_function()
     print(f"Hello, {name}! Result: {result}")
     return result
-# md.end:main_function
+# md.end: main_function
 
 
 def another_function():

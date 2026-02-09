@@ -119,10 +119,10 @@ class TestPhaseExecution:
         processor = PhaseProcessor()
         result = processor.process_all_phases(str(test_file))
 
-        # Should have TOC generated
-        assert "- [Main Title](#main-title)" in result
-        assert "- [Section 1](#section-1)" in result
-        assert "- [Section 2](#section-2)" in result
+        # TOC should only include sections after it, not the main title
+        assert "- [Main Title](#main-title)" not in result
+        assert "  - [Section 1](#section-1)" in result
+        assert "  - [Section 2](#section-2)" in result
 
     def test_phases_execute_in_order(self, tmp_path):
         """Test that EMBED phase runs before POST_PROCESS."""
@@ -147,10 +147,11 @@ class TestPhaseExecution:
         processor = PhaseProcessor()
         result = processor.process_all_phases(str(test_file))
 
-        # TOC should include the embedded heading
+        # TOC should NOT include Main (appears before TOC)
+        # TOC should include the embedded heading that appears after TOC
         # (because EMBED phase runs first, then POST_PROCESS generates TOC)
-        assert "- [Main](#main)" in result
-        assert "- [Embedded Heading](#embedded-heading)" in result
+        assert "- [Main](#main)" not in result
+        assert "  - [Embedded Heading](#embedded-heading)" in result
 
 
     def test_process_with_limits(self, tmp_path):
@@ -201,8 +202,9 @@ class TestPhaseExecution:
             str(test_file), content_after_embed
         )
         assert content_after_post is not None
-        # TOC should be generated
-        assert "- [Test](#test)" in content_after_post
+        # TOC should be generated and include Section (after TOC) but not Test (before TOC)
+        assert "- [Test](#test)" not in content_after_post
+        assert "  - [Section](#section)" in content_after_post
 
 
 class TestPhaseProcessorBackwardCompatibility:
