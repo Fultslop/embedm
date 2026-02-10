@@ -123,6 +123,7 @@ class EmbedPlugin(ABC):
     """
 
     # === REQUIRED: Plugin Metadata ===
+    # md.start:abstract_properties
 
     @property
     @abstractmethod
@@ -168,8 +169,10 @@ class EmbedPlugin(ABC):
             List of valid property names (strings)
         """
         pass
+    # md.end:abstract_properties
 
     # === REQUIRED: Core Processing ===
+    # md.start:process_method
 
     @abstractmethod
     def process(
@@ -192,6 +195,7 @@ class EmbedPlugin(ABC):
             Error message in format: "> [!CAUTION]\n> **Error:** Message"
         """
         pass
+    # md.end:process_method
 
     # === OPTIONAL: Validation ===
 
@@ -218,6 +222,7 @@ class EmbedPlugin(ABC):
         return []
 
     # === UTILITY METHODS ===
+    # md.start:utility_methods
 
     def resolve_path(self, source: str, current_file_dir: str) -> str:
         """Resolve relative path to absolute path.
@@ -284,6 +289,7 @@ class EmbedPlugin(ABC):
                 f"{value_desc} exceeds limit {limit_desc}"
             )
         return None
+    # md.end:utility_methods
 
 
 # === HELPER FUNCTIONS ===
