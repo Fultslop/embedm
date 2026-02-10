@@ -10,7 +10,7 @@ type: toc
 
 ## Overview
 
-Plugins in EmbedM handle specific embed types like `embed.file`, `embed.layout`, or `embed.toc`. The plugin system is based on:
+Plugins in EmbedM handle specific embed types like `file`, `layout`, or `toc`. The plugin system is based on:
 
 1. **Plugin Interface**: All plugins implement the `EmbedPlugin` abstract base class
 2. **Entry Points**: Plugins are discovered automatically via Python entry points
@@ -21,9 +21,9 @@ Plugins in EmbedM handle specific embed types like `embed.file`, `embed.layout`,
 
 EmbedM includes three built-in plugins:
 
-- **FilePlugin**: Embeds files and code snippets (`embed.file`)
-- **LayoutPlugin**: Creates multi-column/row layouts (`embed.layout`)
-- **TOCPlugin**: Generates table of contents (`embed.toc`)
+- **FilePlugin**: Embeds files and code snippets (`file`)
+- **LayoutPlugin**: Creates multi-column/row layouts (`layout`)
+- **TOCPlugin**: Generates table of contents (`toc`)
 
 ## How Plugins Work
 
@@ -127,8 +127,7 @@ class QuotePlugin(EmbedPlugin):
             return self.format_error("Quote Error", "'text' property is required")
 
         # Build quote content
-        quote_lines = ["> [!NOTE]"]
-        quote_lines.append(f"> {text}")
+        quote_lines = [f"> *{text}*"]
 
         if author:
             attribution = f"— {author}"
@@ -145,15 +144,14 @@ class QuotePlugin(EmbedPlugin):
 In your markdown:
 
 ```yaml
-type: embed.quote
+type: quote
 text: "The only way to do great work is to love what you do."
 author: Steve Jobs
 ```
 
 ### Output
 
-> [!NOTE]
-> The only way to do great work is to love what you do.
+> *The only way to do great work is to love what you do.*
 >
 > — Steve Jobs
 
@@ -447,14 +445,14 @@ class MyPlugin(EmbedPlugin):
     """My custom plugin.
 
     YAML Schema:
-        type: embed.mytype
+        type: mytype
         source: str (required) - Path to source file
         format: str (optional) - Output format (default: 'auto')
         title: str (optional) - Title for output
 
     Example:
         ```yaml
-        type: embed.mytype
+        type: mytype
         source: data.txt
         format: code
         title: "My Data"
