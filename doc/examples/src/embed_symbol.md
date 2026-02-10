@@ -96,7 +96,7 @@ What about a struct
 
 ```yaml embedm
 type: file
-title: Enum inclusion
+title: Struct inclusion
 source: SymbolTest.cs
 symbol: SymbolTest.InnerStruct
 line_numbers: text
@@ -105,7 +105,7 @@ line_numbers: text
 And an interface 
 ```yaml embedm
 type: file
-title: Enum inclusion
+title: interface inclusion
 source: SymbolTest.cs
 symbol: ISomeInterface
 line_numbers: text

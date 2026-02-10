@@ -497,6 +497,11 @@ C_CPP_CONFIG = LanguageConfig(
             block_style="brace",
         ),
         SymbolPattern(
+            kind="enum",
+            regex_template=r'^\s*(?:typedef\s+)?enum\s+(?:class\s+)?{name}\b',
+            block_style="brace",
+        ),
+        SymbolPattern(
             kind="function",
             regex_template=r'^\s*\S+[\s\*]+(?:\w+::)*{name}\s*\(',
             block_style="brace",
@@ -530,6 +535,11 @@ JAVA_CONFIG = LanguageConfig(
             regex_template=r'^\s*(?:public\s+|private\s+|protected\s+)?interface\s+{name}\b',
             block_style="brace",
             nestable=True,
+        ),
+        SymbolPattern(
+            kind="enum",
+            regex_template=r'^\s*(?:public\s+|private\s+|protected\s+)?enum\s+{name}\b',
+            block_style="brace",
         ),
         SymbolPattern(
             kind="method",
@@ -569,6 +579,17 @@ CSHARP_CONFIG = LanguageConfig(
         SymbolPattern(
             kind="interface",
             regex_template=r'^\s*(?:public\s+|private\s+|protected\s+|internal\s+)?interface\s+{name}\b',
+            block_style="brace",
+            nestable=True,
+        ),
+        SymbolPattern(
+            kind="enum",
+            regex_template=r'^\s*(?:public\s+|private\s+|protected\s+|internal\s+)?enum\s+{name}\b',
+            block_style="brace",
+        ),
+        SymbolPattern(
+            kind="struct",
+            regex_template=r'^\s*(?:public\s+|private\s+|protected\s+|internal\s+)?(?:readonly\s+)?struct\s+{name}\b',
             block_style="brace",
             nestable=True,
         ),

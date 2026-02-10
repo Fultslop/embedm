@@ -18,9 +18,9 @@ Symbol extraction is supported for these languages:
 |----------|-----------|-------------------|
 | Python | `.py` | classes, functions, methods |
 | JavaScript/TypeScript | `.js`, `.ts`, `.jsx`, `.tsx` | classes, functions, const/let/var |
-| C# | `.cs` | namespaces, classes, interfaces, methods |
-| Java | `.java` | packages, classes, interfaces, methods |
-| C/C++ | `.c`, `.cpp`, `.h`, `.hpp` | namespaces, classes, structs, functions |
+| C# | `.cs` | namespaces, classes, interfaces, enums, structs, methods |
+| Java | `.java` | packages, classes, interfaces, enums, methods |
+| C/C++ | `.c`, `.cpp`, `.h`, `.hpp` | namespaces, classes, structs, enums, functions |
 | SQL | `.sql` | CTEs, procedures, functions |
 
 ## Basic Symbol Extraction
@@ -93,6 +93,40 @@ symbol: monthly_totals
 type: file
 source: examples/symbol_example.sql
 symbol: monthly_totals
+```
+
+### Extracting from C++
+
+**Input:**
+```yaml
+type: file
+source: examples/symbol_example.cpp
+symbol: Circle
+```
+
+**Output:**
+```yaml embedm
+type: file
+source: examples/symbol_example.cpp
+symbol: Circle
+```
+
+### Extracting an Enum
+
+Enums are supported in C#, Java, and C/C++.
+
+**Input:**
+```yaml
+type: file
+source: examples/symbol_example.cs
+symbol: Theme
+```
+
+**Output:**
+```yaml embedm
+type: file
+source: examples/symbol_example.cs
+symbol: Theme
 ```
 
 ## Dot Notation
@@ -208,6 +242,22 @@ symbol: Widgets.Button
 type: file
 source: examples/symbol_example.cs
 symbol: Widgets.Button
+```
+
+### C++ Namespace
+
+**Input:**
+```yaml
+type: file
+source: examples/symbol_example.cpp
+symbol: graphics.Circle
+```
+
+**Output:**
+```yaml embedm
+type: file
+source: examples/symbol_example.cpp
+symbol: graphics.Circle
 ```
 
 ### Full Qualified Path

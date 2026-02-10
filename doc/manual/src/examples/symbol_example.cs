@@ -1,5 +1,12 @@
 namespace Widgets
 {
+    public enum Theme
+    {
+        Light,
+        Dark,
+        HighContrast
+    }
+
     class Button
     {
         public void Render()

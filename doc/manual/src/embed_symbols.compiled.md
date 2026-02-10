@@ -10,6 +10,8 @@ This manual covers symbol-based code extraction in EmbedM, including dot notatio
     - [Extracting a Class](#extracting-a-class)
     - [Extracting from JavaScript](#extracting-from-javascript)
     - [Extracting a SQL CTE](#extracting-a-sql-cte)
+    - [Extracting from C++](#extracting-from-c)
+    - [Extracting an Enum](#extracting-an-enum)
   - [Dot Notation](#dot-notation)
   - [Overload Disambiguation](#overload-disambiguation)
     - [How It Works](#how-it-works)
@@ -19,6 +21,7 @@ This manual covers symbol-based code extraction in EmbedM, including dot notatio
     - [Generic Types in Signatures](#generic-types-in-signatures)
   - [Namespace Support](#namespace-support)
     - [C# Namespace](#c-namespace)
+    - [C++ Namespace](#c-namespace-1)
     - [Full Qualified Path](#full-qualified-path)
   - [Combining with Other Properties](#combining-with-other-properties)
     - [Symbol with Line Numbers](#symbol-with-line-numbers)
@@ -43,9 +46,9 @@ Symbol extraction is supported for these languages:
 |----------|-----------|-------------------|
 | Python | `.py` | classes, functions, methods |
 | JavaScript/TypeScript | `.js`, `.ts`, `.jsx`, `.tsx` | classes, functions, const/let/var |
-| C# | `.cs` | namespaces, classes, interfaces, methods |
-| Java | `.java` | packages, classes, interfaces, methods |
-| C/C++ | `.c`, `.cpp`, `.h`, `.hpp` | namespaces, classes, structs, functions |
+| C# | `.cs` | namespaces, classes, interfaces, enums, structs, methods |
+| Java | `.java` | packages, classes, interfaces, enums, methods |
+| C/C++ | `.c`, `.cpp`, `.h`, `.hpp` | namespaces, classes, structs, enums, functions |
 | SQL | `.sql` | CTEs, procedures, functions |
 
 ## Basic Symbol Extraction
@@ -142,6 +145,55 @@ monthly_totals AS (
     WHERE order_date >= '2024-01-01'
     GROUP BY user_id
 )
+```
+
+### Extracting from C++
+
+**Input:**
+```yaml
+type: file
+source: examples/symbol_example.cpp
+symbol: Circle
+```
+
+**Output:**
+```cpp
+class Circle : public Shape {
+public:
+    Circle(double r) : radius(r) {}
+
+    double area() const override {
+        return 3.14159 * radius * radius;
+    }
+
+    void draw() const override {
+        std::cout << "Drawing circle with radius " << radius << std::endl;
+    }
+
+private:
+    double radius;
+};
+```
+
+### Extracting an Enum
+
+Enums are supported in C#, Java, and C/C++.
+
+**Input:**
+```yaml
+type: file
+source: examples/symbol_example.cs
+symbol: Theme
+```
+
+**Output:**
+```cs
+public enum Theme
+{
+    Light,
+    Dark,
+    HighContrast
+}
 ```
 
 ## Dot Notation
@@ -274,6 +326,34 @@ class Button
         Console.WriteLine($"<button style=\"{style}\">{label}</button>");
     }
 }
+```
+
+### C++ Namespace
+
+**Input:**
+```yaml
+type: file
+source: examples/symbol_example.cpp
+symbol: graphics.Circle
+```
+
+**Output:**
+```cpp
+class Circle : public Shape {
+public:
+    Circle(double r) : radius(r) {}
+
+    double area() const override {
+        return 3.14159 * radius * radius;
+    }
+
+    void draw() const override {
+        std::cout << "Drawing circle with radius " << radius << std::endl;
+    }
+
+private:
+    double radius;
+};
 ```
 
 ### Full Qualified Path
