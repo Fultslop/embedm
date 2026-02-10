@@ -4,15 +4,9 @@ EmbedM uses a flexible plugin system that allows you to extend its functionality
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [How Plugins Work](#how-plugins-work)
-- [The EmbedPlugin Interface](#the-embedplugin-interface)
-- [Processing Phases](#processing-phases)
-- [Example 1: Simple Quote Plugin](#example-1-simple-quote-plugin)
-- [Example 2: JSON Data Plugin](#example-2-json-data-plugin)
-- [Registering Your Plugin](#registering-your-plugin)
-- [Configuring Plugins](#configuring-plugins)
-- [Development Tips](#development-tips)
+```yaml embedm
+type: toc
+```
 
 ## Overview
 
@@ -50,67 +44,28 @@ All plugins must inherit from `embedm.plugin.EmbedPlugin` and implement these me
 
 ### Required Properties
 
-```python
-from embedm.plugin import EmbedPlugin
-from embedm.phases import ProcessingPhase
-from typing import List
-
-class MyPlugin(EmbedPlugin):
-    @property
-    def name(self) -> str:
-        """Unique plugin identifier."""
-        return "myplugin"
-
-    @property
-    def embed_types(self) -> List[str]:
-        """Embed types this plugin handles."""
-        return ["mytype"]
-
-    @property
-    def phases(self) -> List[ProcessingPhase]:
-        """Processing phases when this plugin runs."""
-        return [ProcessingPhase.EMBED]
+```yaml embedm
+type: file
+source: ../../../src/embedm/plugin.py
+region: abstract_properties
 ```
 
 ### Required Method
 
-```python
-def process(
-    self,
-    properties: Dict,
-    current_file_dir: str,
-    processing_stack: Set[str],
-    context: Optional[ProcessingContext] = None
-) -> str:
-    """Process the embed and return content.
-
-    Args:
-        properties: YAML properties from the embed block
-        current_file_dir: Directory containing the markdown file
-        processing_stack: Set of files being processed (cycle detection)
-        context: Processing context with limits
-
-    Returns:
-        Processed content as string (Markdown or HTML)
-    """
-    pass
+```yaml embedm
+type: file
+source: ../../../src/embedm/plugin.py
+region: process_method
 ```
 
 ### Utility Methods
 
 The base class provides helpful utilities:
 
-```python
-# Resolve relative paths
-abs_path = self.resolve_path(source, current_file_dir)
-
-# Format error messages
-error = self.format_error("File Not Found", f"`{source}` does not exist")
-
-# Check if file exists
-error = self.check_file_exists(file_path)
-if error:
-    return error
+```yaml embedm
+type: file
+source: ../../../src/embedm/plugin.py
+region: utility_methods
 ```
 
 ## Processing Phases
@@ -387,6 +342,14 @@ json = "embedm_myplugin.json_plugin:JSONPlugin"
 The entry point format is:
 ```
 plugin_name = "package.module:ClassName"
+```
+
+For reference, here are EmbedM's built-in plugin entry points:
+
+```yaml embedm
+type: file
+source: ../../../pyproject.toml
+region: entry_points
 ```
 
 ### Step 3: Install Your Plugin

@@ -42,12 +42,14 @@ Issues = "https://github.com/Fultslop/embedm/issues"
 [project.scripts]
 embedm = "embedm.cli:main"
 
+# md.start:entry_points
 [project.entry-points."embedm.plugins"]
 file = "embedm_plugins.file_plugin:FilePlugin"
 layout = "embedm_plugins.layout_plugin:LayoutPlugin"
 toc = "embedm_plugins.toc_plugin:TOCPlugin"
 table = "embedm_plugins.table_plugin:TablePlugin"
 comment = "embedm_plugins.comment_plugin:CommentPlugin"
+# md.end:entry_points
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
