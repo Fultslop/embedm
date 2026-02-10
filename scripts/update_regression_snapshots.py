@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Update regression test snapshots after intentional changes.
 
-This script processes all source files in tests/regression/sources/ and
-copies the output to tests/regression/snapshots/, replacing the existing
-snapshots with the new output.
+This script processes all source files for each test suite and writes
+the output to the corresponding snapshots directory.
 
 Use this when:
 - You've made intentional changes to output format
@@ -25,29 +24,37 @@ if sys.platform == 'win32':
 
 from embedm.phases import PhaseProcessor
 
+# Suite definitions: (name, sources_dir, snapshots_dir, excludes)
+# Keep in sync with tests/test_regression.py SUITES
+SUITES = [
+    ("regression", "tests/regression/sources", "tests/regression/snapshots", ["data"]),
+    ("manual", "doc/manual/src", "doc/manual/src/compiled", ["compiled", "examples"]),
+]
 
-def process_file(source_file: Path, output_file: Path) -> None:
-    """Process a single markdown file through EmbedM.
 
-    Args:
-        source_file: Path to source markdown file
-        output_file: Path to output file
-    """
-    # Create processor with default limits
+def discover_source_files(sources_dir: Path, excludes: list) -> list:
+    """Discover all .md files in sources directory, skipping excluded subdirectories."""
+    source_files = []
+    for md_file in sources_dir.rglob("*.md"):
+        if any(excluded in md_file.parts for excluded in excludes):
+            continue
+        source_files.append(md_file)
+    return sorted(source_files)
+
+
+def process_file(source_file: Path, output_file: Path) -> bool:
+    """Process a single markdown file through EmbedM."""
     processor = PhaseProcessor()
 
-    # Process all phases
     try:
         result = processor.process_all_phases(str(source_file))
 
-        # Write output
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(result)
 
         return True
     except Exception as e:
-        # Write error to output file
         error_msg = f"# Processing Error\n\n> [!CAUTION]\n> **Error:** {str(e)}\n"
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -57,49 +64,39 @@ def process_file(source_file: Path, output_file: Path) -> None:
 
 
 def main():
-    """Update all regression test snapshots."""
-    sources_dir = Path("tests/regression/sources")
-    snapshots_dir = Path("tests/regression/snapshots")
+    """Update snapshots for all test suites."""
+    total_processed = 0
+    total_errors = 0
+    snapshot_paths = []
 
-    if not sources_dir.exists():
-        print(f"❌ Error: Sources directory not found: {sources_dir}")
-        return 1
+    for suite_name, sources_path, snapshots_path, excludes in SUITES:
+        sources_dir = Path(sources_path)
+        snapshots_dir = Path(snapshots_path)
 
-    # Create snapshots directory if it doesn't exist
-    snapshots_dir.mkdir(parents=True, exist_ok=True)
+        print(f"🔄 [{suite_name}] Processing sources from {sources_path}")
 
-    processed_count = 0
-    error_count = 0
+        if not sources_dir.exists():
+            print(f"   ❌ Sources directory not found: {sources_dir}")
+            print()
+            continue
 
-    print("🔄 Processing regression test sources...")
-    print()
+        snapshots_dir.mkdir(parents=True, exist_ok=True)
+        snapshot_paths.append(snapshots_path)
 
-    # Process files in root directory
-    for source_file in sorted(sources_dir.glob("*.md")):
-        output_file = snapshots_dir / source_file.name
-        print(f"  Processing: {source_file.name}... ", end="")
+        source_files = discover_source_files(sources_dir, excludes)
 
-        success = process_file(source_file, output_file)
-        if success:
-            print("✅")
-            processed_count += 1
-        else:
-            print("❌ (error captured in snapshot)")
-            error_count += 1
+        if not source_files:
+            print(f"   ⚠️  No source files found")
+            print()
+            continue
 
-    # Process files in subdirectories (e.g., circular_deps/)
-    for subdir in sorted(sources_dir.iterdir()):
-        if not subdir.is_dir() or subdir.name == "data":
-            continue  # Skip data directory
+        processed_count = 0
+        error_count = 0
 
-        print(f"\n  Processing {subdir.name}/:")
-
-        snapshot_subdir = snapshots_dir / subdir.name
-        snapshot_subdir.mkdir(parents=True, exist_ok=True)
-
-        for source_file in sorted(subdir.glob("*.md")):
-            output_file = snapshot_subdir / source_file.name
-            print(f"    {source_file.name}... ", end="")
+        for source_file in source_files:
+            rel_path = source_file.relative_to(sources_dir)
+            output_file = snapshots_dir / rel_path
+            print(f"   {rel_path}... ", end="")
 
             success = process_file(source_file, output_file)
             if success:
@@ -109,19 +106,19 @@ def main():
                 print("❌ (error captured in snapshot)")
                 error_count += 1
 
-    print()
-    print(f"✅ Updated {processed_count} snapshots")
+        total_processed += processed_count
+        total_errors += error_count
+        print()
 
-    if error_count > 0:
-        print(f"⚠️  {error_count} files had processing errors (captured in snapshots)")
+    print(f"✅ Updated {total_processed} snapshots across {len(SUITES)} suites")
+
+    if total_errors > 0:
+        print(f"⚠️  {total_errors} files had processing errors (captured in snapshots)")
 
     print()
     print("📝 Snapshots updated. Review changes with:")
-    print("   git diff tests/regression/snapshots/")
-    print()
-    print("💾 Commit updated snapshots with:")
-    print("   git add tests/regression/snapshots/")
-    print("   git commit -m 'Update regression test snapshots'")
+    for path in snapshot_paths:
+        print(f"   git diff {path}/")
 
     return 0
 

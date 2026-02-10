@@ -213,5 +213,6 @@ claude.md
 notes.md
 compiled/
 .claude/
+.notes/
 
 tests/regression/actual/
