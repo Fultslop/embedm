@@ -1,19 +1,13 @@
 """Regression tests for EmbedM output.
 
-These tests process markdown files in tests/regression/sources/ and compare
-the output against snapshots in tests/regression/snapshots/. This catches
-regressions in output formatting, TOC generation, table conversion, etc.
+These tests process markdown files through EmbedM and compare the output
+against snapshots. This catches regressions in output formatting, TOC
+generation, table conversion, etc.
 
-Directory structure:
-    tests/regression/
-    ├── sources/           # Input markdown files with embeds
-    │   ├── *.md
-    │   ├── circular_deps/ # Subdirectory with test cases
-    │   └── data/          # Supporting files (CSV, JSON, Python)
-    ├── snapshots/         # Expected output (committed to git)
-    │   ├── *.md
-    │   └── circular_deps/
-    └── actual/            # Actual output (gitignored, generated during tests)
+Test suites are defined in SUITES below. Each suite specifies:
+- sources_dir: where to find input .md files
+- snapshots_dir: where expected output lives
+- excludes: subdirectory names to skip during discovery
 
 To update snapshots after intentional changes:
     python scripts/update_regression_snapshots.py
@@ -28,23 +22,21 @@ import pytest
 
 from embedm.phases import PhaseProcessor
 
+# Suite definitions: (name, sources_dir, snapshots_dir, excludes)
+# Each suite discovers .md files in sources_dir, processes them, and
+# compares against snapshots_dir. Subdirectories in excludes are skipped.
+SUITES = [
+    ("regression", "tests/regression/sources", "tests/regression/snapshots", ["data"]),
+    ("manual", "doc/manual/src", "doc/manual/src/compiled", ["compiled", "examples"]),
+]
+
 
 class TestRegression:
     """Regression test suite for EmbedM output."""
 
     @pytest.fixture(autouse=True)
-    def setup_actual_dir(self):
-        """Set up actual output directory before each test."""
-        actual_dir = Path("tests/regression/actual")
-
-        # Clean existing actual directory
-        if actual_dir.exists():
-            shutil.rmtree(actual_dir)
-
-        # Create fresh actual directory
-        actual_dir.mkdir(parents=True, exist_ok=True)
-
-        # Ensure plugins are registered (force import and registration)
+    def setup_plugins(self):
+        """Ensure plugins are registered before each test."""
         from embedm.registry import get_default_registry
         from embedm_plugins import FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin
 
@@ -53,19 +45,16 @@ class TestRegression:
         # Register all built-in plugins if not already registered
         for PluginClass in [FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin]:
             plugin = PluginClass()
-            # Check if already registered to avoid conflicts
             for embed_type in plugin.embed_types:
                 for phase in plugin.phases:
                     if not registry.is_registered(embed_type, phase):
                         try:
                             registry.register(plugin)
-                            break  # Only register once per plugin
+                            break
                         except ValueError:
-                            pass  # Already registered by another iteration
+                            pass
 
         yield
-
-        # Note: We don't clean up after tests so users can inspect diffs
 
     def _process_file(self, source_file: Path, output_file: Path) -> None:
         """Process a single markdown file through EmbedM.
@@ -92,23 +81,21 @@ class TestRegression:
             with open(output_file, 'w', encoding='utf-8') as f:
                 f.write(error_msg)
 
-    def _discover_source_files(self, sources_dir: Path) -> List[Path]:
-        """Discover all .md files in sources directory (excluding data/).
+    def _discover_source_files(self, sources_dir: Path, excludes: List[str]) -> List[Path]:
+        """Discover all .md files in sources directory, skipping excluded subdirectories.
 
         Args:
             sources_dir: Path to sources directory
+            excludes: List of subdirectory names to skip
 
         Returns:
-            List of source file paths relative to sources_dir
+            List of source file paths
         """
         source_files = []
 
-        # Find all .md files recursively, excluding data/ directory
         for md_file in sources_dir.rglob("*.md"):
-            # Skip files in data/ directory
-            if "data" in md_file.parts:
+            if any(excluded in md_file.parts for excluded in excludes):
                 continue
-
             source_files.append(md_file)
 
         return sorted(source_files)
@@ -129,71 +116,66 @@ class TestRegression:
             # If file_path is not relative to base_dir, return as-is
             return file_path
 
-    def test_regression_suite(self):
-        """Run regression test suite comparing output against snapshots.
+    @pytest.mark.parametrize(
+        "suite_name,sources_dir,snapshots_dir,excludes",
+        SUITES,
+        ids=[s[0] for s in SUITES],
+    )
+    def test_suite(self, suite_name, sources_dir, snapshots_dir, excludes):
+        """Run a regression suite comparing processed output against snapshots.
 
-        This test automatically discovers all .md files in tests/regression/sources/
-        (excluding data/ directory) and:
-        1. Processes each file through EmbedM
-        2. Writes output to tests/regression/actual/
-        3. Compares with tests/regression/snapshots/
-        4. Deletes matching files from actual/
-        5. Fails if there are any differences
+        Each suite discovers .md files in its sources directory, processes them
+        through EmbedM, and compares the output against its snapshots directory.
 
-        To add new regression tests:
-        - Simply add .md files to tests/regression/sources/
-        - Run: python scripts/update_regression_snapshots.py
-        - Commit both sources/ and snapshots/
-
-        If test fails, inspect tests/regression/actual/ for diffs.
+        If the test fails, inspect tests/regression/actual/<suite_name>/ for diffs.
+        To update snapshots: python scripts/update_regression_snapshots.py
         """
-        sources_dir = Path("tests/regression/sources")
-        snapshots_dir = Path("tests/regression/snapshots")
-        actual_dir = Path("tests/regression/actual")
+        sources = Path(sources_dir)
+        snapshots = Path(snapshots_dir)
+        actual = Path(f"tests/regression/actual/{suite_name}")
+
+        # Clean and create actual dir for this suite
+        if actual.exists():
+            shutil.rmtree(actual)
+        actual.mkdir(parents=True, exist_ok=True)
 
         # Verify directories exist
-        assert sources_dir.exists(), "Sources directory not found"
-        assert snapshots_dir.exists(), "Snapshots directory not found"
+        assert sources.exists(), f"Sources directory not found: {sources}"
+        assert snapshots.exists(), f"Snapshots directory not found: {snapshots}"
 
         # Discover all source files
-        source_files = self._discover_source_files(sources_dir)
+        source_files = self._discover_source_files(sources, excludes)
 
         if not source_files:
-            pytest.skip("No source files found in tests/regression/sources/")
+            pytest.skip(f"No source files found in {sources}")
 
         # Process all source files
         for source_file in source_files:
-            rel_path = self._get_relative_path(source_file, sources_dir)
-            output_file = actual_dir / rel_path
-
+            rel_path = self._get_relative_path(source_file, sources)
+            output_file = actual / rel_path
             self._process_file(source_file, output_file)
 
         # Compare with snapshots and collect differences
         differences = []
         matched_files = []
 
-        # Check all files in actual/
-        for actual_file in actual_dir.rglob("*.md"):
-            rel_path = self._get_relative_path(actual_file, actual_dir)
-            snapshot_file = snapshots_dir / rel_path
+        for actual_file in actual.rglob("*.md"):
+            rel_path = self._get_relative_path(actual_file, actual)
+            snapshot_file = snapshots / rel_path
 
             if not snapshot_file.exists():
                 differences.append(f"New file: {rel_path}")
                 continue
 
-            # Compare content
             if filecmp.cmp(actual_file, snapshot_file, shallow=False):
-                # Match! Mark for deletion
                 matched_files.append(actual_file)
             else:
-                # Difference! Keep file and record
                 differences.append(f"Modified: {rel_path}")
 
         # Check for deleted files (in snapshots but not in actual)
-        for snapshot_file in snapshots_dir.rglob("*.md"):
-            rel_path = self._get_relative_path(snapshot_file, snapshots_dir)
-            actual_file = actual_dir / rel_path
-
+        for snapshot_file in snapshots.rglob("*.md"):
+            rel_path = self._get_relative_path(snapshot_file, snapshots)
+            actual_file = actual / rel_path
             if not actual_file.exists():
                 differences.append(f"Deleted: {rel_path}")
 
@@ -202,24 +184,14 @@ class TestRegression:
             file_path.unlink()
 
         # Clean up empty directories
-        for dirpath in sorted(actual_dir.rglob("*"), reverse=True):
+        for dirpath in sorted(actual.rglob("*"), reverse=True):
             if dirpath.is_dir() and not list(dirpath.iterdir()):
                 dirpath.rmdir()
 
         # Assert no differences
         if differences:
-            diff_msg = "Regression test failed. Differences found:\n"
+            diff_msg = f"Regression test failed for '{suite_name}'. Differences found:\n"
             diff_msg += "\n".join(f"  - {diff}" for diff in differences)
-            diff_msg += "\n\nInspect tests/regression/actual/ for detailed diffs."
+            diff_msg += f"\n\nInspect tests/regression/actual/{suite_name}/ for detailed diffs."
             diff_msg += "\nTo update snapshots: python scripts/update_regression_snapshots.py"
             pytest.fail(diff_msg)
-
-        # Verify actual directory is empty (all files matched)
-        remaining_files = list(actual_dir.rglob("*.md"))
-        if remaining_files:
-            files_list = "\n".join(f"  - {f.relative_to(actual_dir)}" for f in remaining_files)
-            pytest.fail(
-                f"Regression test failed. Files with differences:\n{files_list}\n\n"
-                "Inspect tests/regression/actual/ for detailed diffs.\n"
-                "To update snapshots: python scripts/update_regression_snapshots.py"
-            )
