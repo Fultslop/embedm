@@ -157,33 +157,36 @@ author: Steve Jobs
 >
 > — Steve Jobs
 
-## Example 2: JSON Data Plugin
+## Example 2: Metadata Plugin
 
-A more complex plugin that embeds JSON files as formatted tables:
+A plugin that embeds project metadata from `pyproject.toml` as a markdown table:
 
 ```python
-# json_plugin.py
-import json
-import os
+# metadata_plugin.py
+import tomllib
 from embedm.plugin import EmbedPlugin
 from embedm.phases import ProcessingPhase
 from typing import Dict, Set, Optional, List
 from embedm.resolver import ProcessingContext
 
-class JSONPlugin(EmbedPlugin):
-    """Plugin that embeds JSON files as markdown tables or code blocks."""
+class MetadataPlugin(EmbedPlugin):
+    """Plugin that embeds project metadata from pyproject.toml."""
 
     @property
     def name(self) -> str:
-        return "json"
+        return "metadata"
 
     @property
     def embed_types(self) -> List[str]:
-        return ["json"]
+        return ["metadata"]
 
     @property
     def phases(self) -> List[ProcessingPhase]:
         return [ProcessingPhase.EMBED]
+
+    @property
+    def valid_properties(self) -> List[str]:
+        return ["source", "fields"]
 
     def process(
         self,
@@ -192,12 +195,12 @@ class JSONPlugin(EmbedPlugin):
         processing_stack: Set[str],
         context: Optional[ProcessingContext] = None
     ) -> str:
-        """Process JSON embed."""
+        """Process metadata embed."""
 
         # Get source file
         source = properties.get('source')
         if not source:
-            return self.format_error("JSON Error", "'source' property is required")
+            return self.format_error("Metadata Error", "'source' property is required")
 
         # Resolve path and check existence
         file_path = self.resolve_path(source, current_file_dir)
@@ -205,107 +208,43 @@ class JSONPlugin(EmbedPlugin):
         if error:
             return error
 
-        # Read and parse JSON
+        # Read and parse TOML
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except json.JSONDecodeError as e:
-            return self.format_error("JSON Parse Error", f"Invalid JSON: {str(e)}")
+            with open(file_path, 'rb') as f:
+                data = tomllib.load(f)
         except Exception as e:
-            return self.format_error("JSON Error", f"Could not read file: {str(e)}")
+            return self.format_error("Metadata Error", f"Could not parse TOML: {e}")
 
-        # Get display format
-        format_type = properties.get('format', 'table')
+        # Extract project metadata
+        project = data.get('project', {})
+        fields = properties.get('fields', list(project.keys()))
 
-        if format_type == 'table':
-            return self._format_as_table(data, properties)
-        elif format_type == 'code':
-            return self._format_as_code(data, properties)
-        else:
-            return self.format_error("JSON Error", f"Unknown format: '{format_type}'")
+        # Build markdown table
+        lines = ['| Field | Value |', '| --- | --- |']
+        for field in fields:
+            value = project.get(field, '*not set*')
+            if isinstance(value, list):
+                value = ', '.join(str(v) for v in value)
+            lines.append(f'| {field} | {value} |')
 
-    def _format_as_table(self, data: any, properties: Dict) -> str:
-        """Format JSON data as markdown table."""
-
-        # Handle list of objects (typical JSON structure)
-        if isinstance(data, list) and data and isinstance(data[0], dict):
-            # Get columns from first object or from properties
-            columns = properties.get('columns')
-            if not columns:
-                columns = list(data[0].keys())
-
-            # Build table header
-            lines = ['| ' + ' | '.join(columns) + ' |']
-            lines.append('| ' + ' | '.join(['---'] * len(columns)) + ' |')
-
-            # Build table rows
-            for item in data:
-                row = []
-                for col in columns:
-                    value = item.get(col, '')
-                    # Escape pipes in values
-                    value_str = str(value).replace('|', '\\|')
-                    row.append(value_str)
-                lines.append('| ' + ' | '.join(row) + ' |')
-
-            return '\n'.join(lines)
-
-        # For other structures, fall back to key-value table
-        if isinstance(data, dict):
-            lines = ['| Key | Value |']
-            lines.append('| --- | --- |')
-            for key, value in data.items():
-                value_str = str(value).replace('|', '\\|')
-                lines.append(f'| {key} | {value_str} |')
-            return '\n'.join(lines)
-
-        return self.format_error("JSON Error", "Data must be a list or dictionary for table format")
-
-    def _format_as_code(self, data: any, properties: Dict) -> str:
-        """Format JSON as pretty-printed code block."""
-
-        indent = properties.get('indent', 2)
-        json_str = json.dumps(data, indent=indent, ensure_ascii=False)
-
-        return f"```json\n{json_str}\n```"
+        return '\n'.join(lines)
 ```
 
 ### Usage
 
-**Table format:**
-
 ```yaml
-type: embed.json
-source: data/users.json
-format: table
-columns: [name, email, role]
-```
-
-**Code format:**
-
-```yaml
-type: embed.json
-source: config.json
-format: code
-indent: 4
+type: metadata
+source: pyproject.toml
+fields: [name, version, description]
 ```
 
 ### Output
 
-**Table format (for `[{"name": "Alice", "email": "alice@example.com", "role": "Admin"}]`):**
-
-| name | email | role |
-| --- | --- | --- |
-| Alice | alice@example.com | Admin |
-
-**Code format:**
-
-```json
-{
-  "theme": "dark",
-  "timeout": 30
-}
-```
+| Field | Value |
+| --- | --- |
+| name | embedm |
+| version | 0.4.0 |
+| description | A Python tool for embedding files... |
 
 ## Registering Your Plugin
 
@@ -321,7 +260,8 @@ my-embedm-plugin/
 ├── src/
 │   └── embedm_myplugin/
 │       ├── __init__.py
-│       └── quote_plugin.py
+│       ├── quote_plugin.py
+│       └── metadata_plugin.py
 ```
 
 ### Step 2: Define Entry Point
@@ -336,7 +276,7 @@ dependencies = ["embedm>=0.4.0"]
 
 [project.entry-points."embedm.plugins"]
 quote = "embedm_myplugin.quote_plugin:QuotePlugin"
-json = "embedm_myplugin.json_plugin:JSONPlugin"
+metadata = "embedm_myplugin.metadata_plugin:MetadataPlugin"
 ```
 
 The entry point format is:
@@ -387,7 +327,7 @@ plugins:
   - file
   - toc
   - quote
-  - json
+  - metadata
 ```
 
 ### Configuration Precedence
