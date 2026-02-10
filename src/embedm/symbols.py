@@ -632,8 +632,43 @@ SQL_CONFIG = LanguageConfig(
     ],
 )
 
+GO_CONFIG = LanguageConfig(
+    name="Go",
+    extensions=["go"],
+    comment_style=CommentStyle(
+        line_comment="//",
+        block_comment_start="/*",
+        block_comment_end="*/",
+        string_delimiters=['"', '`'],
+    ),
+    patterns=[
+        SymbolPattern(
+            kind="struct",
+            regex_template=r'^\s*type\s+{name}\s+struct\b',
+            block_style="brace",
+            nestable=True,
+        ),
+        SymbolPattern(
+            kind="interface",
+            regex_template=r'^\s*type\s+{name}\s+interface\b',
+            block_style="brace",
+            nestable=True,
+        ),
+        SymbolPattern(
+            kind="function",
+            regex_template=r'^\s*func\s+{name}\s*[\(\[]',
+            block_style="brace",
+        ),
+        SymbolPattern(
+            kind="method",
+            regex_template=r'^\s*func\s+\([^)]+\)\s+{name}\s*\(',
+            block_style="brace",
+        ),
+    ],
+)
+
 # Build extension -> config lookup
-ALL_CONFIGS = [PYTHON_CONFIG, JS_TS_CONFIG, C_CPP_CONFIG, JAVA_CONFIG, CSHARP_CONFIG, SQL_CONFIG]
+ALL_CONFIGS = [PYTHON_CONFIG, JS_TS_CONFIG, C_CPP_CONFIG, JAVA_CONFIG, CSHARP_CONFIG, SQL_CONFIG, GO_CONFIG]
 
 _EXTENSION_MAP: Optional[Dict[str, LanguageConfig]] = None
 
