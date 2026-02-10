@@ -38,12 +38,12 @@ class TestRegression:
     def setup_plugins(self):
         """Ensure plugins are registered before each test."""
         from embedm.registry import get_default_registry
-        from embedm_plugins import FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin, CommentPlugin, MermaidPlugin
+        from embedm_plugins import FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin, MermaidPlugin
 
         registry = get_default_registry()
 
         # Register all built-in plugins if not already registered
-        for PluginClass in [FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin, CommentPlugin, MermaidPlugin]:
+        for PluginClass in [FilePlugin, LayoutPlugin, TOCPlugin, TablePlugin, MermaidPlugin]:
             plugin = PluginClass()
             for embed_type in plugin.embed_types:
                 for phase in plugin.phases:

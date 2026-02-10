@@ -35,7 +35,6 @@ MODULE_REQUIREMENTS = {
     # Plugins
     'src/embedm_plugins/file_plugin.py': 90,
     'src/embedm_plugins/toc_plugin.py': 90,
-    'src/embedm_plugins/comment_plugin.py': 80,
     'src/embedm_plugins/layout_plugin.py': 60,
     'src/embedm_plugins/table_plugin.py': 60,
 
