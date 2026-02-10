@@ -74,8 +74,17 @@ When EmbedM processes a markdown file:
 3. **Processing**: When an embed block is encountered, the registry dispatches to the appropriate plugin
 4. **Phases**: Plugins can run in different processing phases (EMBED, POST_PROCESS)
 
-```
-User's Markdown → Parser → Registry Dispatcher → Plugin.process() → Output
+```mermaid
+flowchart LR
+  n_1["User's Markdown"]
+  n_2["Parser"]
+  n_3["Registry Dispatcher"]
+  n_4["Plugin.process()"]
+  n_5["Output"]
+  n_1 --> n_2
+  n_2 --> n_3
+  n_3 --> n_4
+  n_4 --> n_5
 ```
 
 ## The EmbedPlugin Interface
@@ -455,6 +464,7 @@ layout = "embedm_plugins.layout_plugin:LayoutPlugin"
 toc = "embedm_plugins.toc_plugin:TOCPlugin"
 table = "embedm_plugins.table_plugin:TablePlugin"
 comment = "embedm_plugins.comment_plugin:CommentPlugin"
+mermaid = "embedm_plugins.mermaid_plugin:MermaidPlugin"
 ```
 
 ### Step 3: Install Your Plugin

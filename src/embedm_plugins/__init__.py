@@ -11,6 +11,7 @@ Built-in plugins:
 - TOCPlugin: Handles table of contents generation (embed.toc)
 - TablePlugin: Handles tabular data embeds (embed.table)
 - CommentPlugin: Handles comment blocks that are removed from output (embed.comment)
+- MermaidPlugin: Generates Mermaid flowcharts from arrow-delimited text (embed.mermaid)
 
 Plugins are automatically discovered and registered via entry points defined
 in pyproject.toml. No manual registration is required.
@@ -21,5 +22,6 @@ from .layout_plugin import LayoutPlugin
 from .toc_plugin import TOCPlugin
 from .table_plugin import TablePlugin
 from .comment_plugin import CommentPlugin
+from .mermaid_plugin import MermaidPlugin
 
-__all__ = ['FilePlugin', 'LayoutPlugin', 'TOCPlugin', 'TablePlugin', 'CommentPlugin']
+__all__ = ['FilePlugin', 'LayoutPlugin', 'TOCPlugin', 'TablePlugin', 'CommentPlugin', 'MermaidPlugin']
