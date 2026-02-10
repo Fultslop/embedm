@@ -135,6 +135,11 @@ def validate_all(source_path: str, limits: Limits) -> ValidationResult:
             if region:
                 validate_region(embed, result)
 
+            # Validate symbols if specified
+            symbol = embed.properties.get('symbol')
+            if symbol:
+                validate_symbol(embed, result)
+
     # Step 6: Build dependency graph and check for cycles
     result.dependency_graph = build_dependency_graph(result.embeds_discovered)
 
@@ -206,6 +211,50 @@ def validate_region(embed: EmbedDirective, result: ValidationResult):
             line_number=embed.line_number,
             error_type='invalid_region',
             message=f"Region '{region}' not found in {os.path.basename(embed.source_file)}",
+            severity='error'
+        ))
+
+
+def validate_symbol(embed: EmbedDirective, result: ValidationResult):
+    """
+    Validate that a symbol specification is valid.
+
+    Checks that the language is supported and the symbol exists in the source file.
+
+    Args:
+        embed: Embed directive with symbol property
+        result: ValidationResult to append errors to
+    """
+    from .symbols import get_language_config, extract_symbol
+
+    symbol = embed.properties.get('symbol')
+    if not symbol or not embed.source_file or not os.path.exists(embed.source_file):
+        return
+
+    # Check language support
+    config = get_language_config(embed.source_file)
+    if config is None:
+        file_ext = os.path.splitext(embed.source_file)[1]
+        result.errors.append(ValidationError(
+            file_path=embed.file_path,
+            line_number=embed.line_number,
+            error_type='unsupported_language',
+            message=f"Symbol extraction not supported for '{file_ext}' files",
+            severity='error'
+        ))
+        return
+
+    # Check symbol exists
+    with open(embed.source_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    result_data = extract_symbol(content, symbol, embed.source_file)
+    if not result_data:
+        result.errors.append(ValidationError(
+            file_path=embed.file_path,
+            line_number=embed.line_number,
+            error_type='invalid_symbol',
+            message=f"Symbol '{symbol}' not found in {os.path.basename(embed.source_file)}",
             severity='error'
         ))
 

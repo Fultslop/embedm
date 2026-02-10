@@ -31,6 +31,7 @@ MODULE_REQUIREMENTS = {
     'src/embedm/validation.py': 90,
     'src/embedm/formatting.py': 70,
     'src/embedm/models.py': 75,
+    'src/embedm/symbols.py': 70,
 
     # Plugins
     'src/embedm_plugins/file_plugin.py': 90,

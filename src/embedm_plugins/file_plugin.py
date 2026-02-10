@@ -6,6 +6,7 @@ Handles file and code embeds, including:
 - Complete file embedding
 - Line range selection (10-20)
 - Named region extraction (md.start:name / md.end:name)
+- Symbol extraction (function, class, method by name)
 - Line number display (text or HTML)
 
 Usage in markdown:
@@ -15,6 +16,12 @@ Usage in markdown:
     lines: 10-20  # Optional
     line_numbers: html  # Optional: text, html, table, or omit
     title: My Code  # Optional
+    ```
+
+    ```yaml embedm
+    type: file
+    source: path/to/file.py
+    symbol: my_function  # Extract by symbol name
     ```
 """
 
@@ -26,6 +33,7 @@ from embedm.plugin import EmbedPlugin
 from embedm.phases import ProcessingPhase
 from embedm.resolver import ProcessingContext, resolve_content
 from embedm.extraction import extract_lines, extract_region
+from embedm.symbols import extract_symbol, get_language_config
 from embedm.formatting import (
     format_with_line_numbers,
     format_with_line_numbers_text,
@@ -64,9 +72,35 @@ class FilePlugin(EmbedPlugin):
             "title",               # Optional: title for the embed
             "lines",               # Optional: line range (e.g., "10-20", "15", "10-")
             "region",              # Optional: named region to extract
+            "symbol",              # Optional: code symbol name (e.g., "my_function", "MyClass.method")
             "line_numbers",        # Optional: "text" or "html"
             "line_numbers_style",  # Optional: style for HTML line numbers
         ]
+
+    def validate(
+        self,
+        properties: Dict,
+        current_file_dir: str,
+        file_path: str,
+        line_number: int
+    ) -> List:
+        """Validate file embed properties."""
+        from embedm.models import ValidationError
+
+        errors = []
+        symbol = properties.get('symbol')
+        region = properties.get('region')
+
+        if symbol and region:
+            errors.append(ValidationError(
+                file_path=file_path,
+                line_number=line_number,
+                error_type='invalid_properties',
+                message="'symbol' and 'region' cannot be used together",
+                severity='error'
+            ))
+
+        return errors
 
     def process(
         self,
@@ -95,6 +129,7 @@ class FilePlugin(EmbedPlugin):
 
         lines = properties.get('lines')  # Line range (e.g., "L4-6")
         region = properties.get('region')  # Named region
+        symbol = properties.get('symbol')  # Code symbol name
         title = properties.get('title')
         line_numbers = properties.get('line_numbers', False)
         line_numbers_style = properties.get('line_numbers_style', 'default')
@@ -125,15 +160,38 @@ class FilePlugin(EmbedPlugin):
         with open(target_path, 'r', encoding='utf-8') as f:
             raw_content = f.read()
 
-        # Case A: Embedding specific part (lines/region) or non-Markdown file
-        if lines or region or not is_markdown:
+        # Case A: Embedding specific part (lines/region/symbol) or non-Markdown file
+        if lines or region or symbol or not is_markdown:
             result_data = None
             ext = os.path.splitext(target_path)[1][1:] or 'text'
 
-            # Extract specific lines or region
-            if lines:
+            # Extract by symbol, lines, or region
+            if symbol:
+                # Symbol extraction (function, class, method, etc.)
+                config = get_language_config(target_path)
+                if config is None:
+                    file_ext = os.path.splitext(target_path)[1]
+                    return f"> [!CAUTION]\n> **Embed Error:** Symbol extraction not supported for `{file_ext}` files"
+
+                result_data = extract_symbol(raw_content, symbol, target_path)
+                if not result_data:
+                    return f"> [!CAUTION]\n> **Embed Error:** Symbol `{symbol}` not found in `{source}`"
+
+                # If lines is also specified, apply as offset within the symbol
+                if lines:
+                    offset_data = extract_lines(
+                        '\n'.join(result_data['lines']),
+                        str(lines)
+                    )
+                    if not offset_data:
+                        return f"> [!CAUTION]\n> **Embed Error:** Invalid line range `{lines}` within symbol `{symbol}` in `{source}`"
+                    # Adjust startLine to reflect original file position
+                    offset_data['startLine'] = result_data['startLine'] + offset_data['startLine'] - 1
+                    result_data = offset_data
+
+            elif lines:
                 # Extract line range (e.g., "L4-6")
-                result_data = extract_lines(raw_content, lines)
+                result_data = extract_lines(raw_content, str(lines))
                 if not result_data:
                     return f"> [!CAUTION]\n> Invalid line range `{lines}` in `{source}`"
             elif region:

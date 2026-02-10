@@ -388,3 +388,147 @@ class TestFilePluginEdgeCases:
         assert "Hello" in result
         # Either the pipe is escaped as \| or it's in a code cell
         assert "world" in result
+
+
+class TestFilePluginSymbol:
+    """Test the 'symbol' property for code symbol extraction."""
+
+    def test_extract_python_function(self, tmp_path):
+        """Test extracting a Python function by symbol name."""
+        test_file = tmp_path / "test.py"
+        test_file.write_text("def helper():\n    return 42\n\ndef other():\n    pass\n")
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.py", "symbol": "helper"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "def helper():" in result
+        assert "return 42" in result
+        assert "other" not in result
+
+    def test_extract_js_class(self, tmp_path):
+        """Test extracting a JavaScript class by symbol name."""
+        test_file = tmp_path / "test.js"
+        test_file.write_text("class Foo {\n    bar() {}\n}\n\nfunction baz() {}\n")
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.js", "symbol": "Foo"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "class Foo" in result
+        assert "bar()" in result
+        assert "baz" not in result
+
+    def test_symbol_not_found(self, tmp_path):
+        """Test error when symbol doesn't exist."""
+        test_file = tmp_path / "test.py"
+        test_file.write_text("def hello():\n    pass\n")
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.py", "symbol": "nonexistent"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "CAUTION" in result
+        assert "nonexistent" in result
+        assert "not found" in result
+
+    def test_symbol_unsupported_language(self, tmp_path):
+        """Test error when file type doesn't support symbol extraction."""
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("some text")
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.txt", "symbol": "something"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "CAUTION" in result
+        assert "not supported" in result
+
+    def test_symbol_with_lines_offset(self, tmp_path):
+        """Test symbol + lines as offset within the symbol."""
+        test_file = tmp_path / "test.py"
+        test_file.write_text(
+            "def foo():\n"
+            "    x = 1\n"
+            "    y = 2\n"
+            "    return x + y\n"
+            "\ndef bar():\n    pass\n"
+        )
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.py", "symbol": "foo", "lines": "1-2"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "def foo():" in result
+        assert "x = 1" in result
+        assert "return x + y" not in result
+
+    def test_symbol_with_invalid_lines_offset(self, tmp_path):
+        """Test symbol + invalid lines offset error."""
+        test_file = tmp_path / "test.py"
+        test_file.write_text("def foo():\n    pass\n")
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.py", "symbol": "foo", "lines": "abc"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "CAUTION" in result
+        assert "Invalid line range" in result
+
+    def test_symbol_with_line_numbers(self, tmp_path):
+        """Test symbol extraction with text line numbers."""
+        test_file = tmp_path / "test.py"
+        test_file.write_text("import os\n\ndef greet():\n    print('hi')\n")
+
+        plugin = FilePlugin()
+        result = plugin.process(
+            properties={"source": "test.py", "symbol": "greet", "line_numbers": "text"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "def greet():" in result
+        assert "3 |" in result  # Line 3 in original file
+
+    def test_validate_symbol_and_region_conflict(self):
+        """Test that symbol + region together is a validation error."""
+        plugin = FilePlugin()
+        errors = plugin.validate(
+            properties={"source": "test.py", "symbol": "foo", "region": "bar"},
+            current_file_dir=".",
+            file_path="test.md",
+            line_number=5
+        )
+
+        assert len(errors) == 1
+        assert "cannot be used together" in errors[0].message
+
+    def test_validate_no_conflict(self):
+        """Test that symbol alone passes validation."""
+        plugin = FilePlugin()
+        errors = plugin.validate(
+            properties={"source": "test.py", "symbol": "foo"},
+            current_file_dir=".",
+            file_path="test.md",
+            line_number=5
+        )
+
+        assert len(errors) == 0
