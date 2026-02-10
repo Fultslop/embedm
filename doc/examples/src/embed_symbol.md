@@ -80,3 +80,33 @@ source: SymbolTest.cs
 symbol: OverloadMethod1(int number) 
 line_numbers: text
 ```
+
+See if we can embed other structures, an enum in this case
+
+```yaml embedm
+type: file
+title: Enum inclusion
+source: SymbolTest.cs
+symbol: EnumSymbol 
+line_numbers: text
+```
+
+
+What about a struct 
+
+```yaml embedm
+type: file
+title: Enum inclusion
+source: SymbolTest.cs
+symbol: SymbolTest.InnerStruct
+line_numbers: text
+```
+
+And an interface 
+```yaml embedm
+type: file
+title: Enum inclusion
+source: SymbolTest.cs
+symbol: ISomeInterface
+line_numbers: text
+```

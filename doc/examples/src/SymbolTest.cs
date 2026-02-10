@@ -2,6 +2,20 @@ namespace test
 {
     class SymbolTest
     {
+        public enum EnumSymbol
+        {
+            Method = 1,
+            Class = 2,
+            Struct = 3,
+            Enum = 4
+        }
+
+        public struct InnerStruct
+        {
+            public int x;
+            public int y;
+        }
+        
         public void UniqueMethod() 
         {
             // code goes here
@@ -29,4 +43,10 @@ namespace test
             // this is from SymbolTest2
         }
     }
+
+    private interface ISomeInterface 
+    {
+        void DoThings();
+    }
+
 }
