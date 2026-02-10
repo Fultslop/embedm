@@ -7,10 +7,16 @@ from embedm.symbols import (
     scan_line,
     ScanState,
     CommentStyle,
+    SymbolSpec,
     extract_block_brace,
     extract_block_paren,
     extract_block_indent,
     extract_block_keyword,
+    _parse_symbol_spec,
+    _split_params,
+    _extract_param_types,
+    _extract_type_from_param,
+    _match_signature,
 )
 
 
@@ -738,3 +744,299 @@ class TestEdgeCases:
         result = extract_symbol(code, "helper", "test.py")
         assert result is not None
         assert "return 1" in '\n'.join(result['lines'])
+
+
+# =============================================================================
+# Test fixtures: overload and namespace samples
+# =============================================================================
+
+CSHARP_OVERLOAD = """\
+namespace test
+{
+    class SymbolTest
+    {
+        public void UniqueMethod()
+        {
+            // unique code
+        }
+
+        public void OverloadMethod1()
+        {
+            // no params
+        }
+
+        public void OverloadMethod1(string text)
+        {
+            // string param
+        }
+
+        public void OverloadMethod1(string text, int count)
+        {
+            // two params
+        }
+    }
+}
+"""
+
+CPP_NAMESPACE = """\
+namespace mylib {
+    class Helper {
+    public:
+        void process() {
+            // code
+        }
+    };
+}
+"""
+
+JAVA_PACKAGE = """\
+package com.example;
+
+public class App {
+    public void run() {
+        // code
+    }
+}
+"""
+
+
+# =============================================================================
+# Spec Parsing Tests
+# =============================================================================
+
+class TestParseSymbolSpec:
+    """Test _parse_symbol_spec() function."""
+
+    def test_simple_name(self):
+        spec = _parse_symbol_spec("Foo")
+        assert spec.parts == ["Foo"]
+        assert spec.signature is None
+        assert spec.has_parens is False
+
+    def test_dotted_name(self):
+        spec = _parse_symbol_spec("A.B.C")
+        assert spec.parts == ["A", "B", "C"]
+        assert spec.signature is None
+        assert spec.has_parens is False
+
+    def test_empty_parens(self):
+        spec = _parse_symbol_spec("Foo()")
+        assert spec.parts == ["Foo"]
+        assert spec.signature == ""
+        assert spec.has_parens is True
+
+    def test_single_param(self):
+        spec = _parse_symbol_spec("Foo(string)")
+        assert spec.parts == ["Foo"]
+        assert spec.signature == "string"
+        assert spec.has_parens is True
+
+    def test_multi_params(self):
+        spec = _parse_symbol_spec("Foo(string, int)")
+        assert spec.parts == ["Foo"]
+        assert spec.signature == "string, int"
+        assert spec.has_parens is True
+
+    def test_dotted_with_params(self):
+        spec = _parse_symbol_spec("A.B.Foo(string)")
+        assert spec.parts == ["A", "B", "Foo"]
+        assert spec.signature == "string"
+        assert spec.has_parens is True
+
+    def test_generic_in_params(self):
+        spec = _parse_symbol_spec("Foo(List<string>, int)")
+        assert spec.parts == ["Foo"]
+        assert spec.signature == "List<string>, int"
+        assert spec.has_parens is True
+
+    def test_dots_inside_parens(self):
+        spec = _parse_symbol_spec("Foo(Ns.Type)")
+        assert spec.parts == ["Foo"]
+        assert spec.signature == "Ns.Type"
+        assert spec.has_parens is True
+
+
+# =============================================================================
+# Param Splitting Tests
+# =============================================================================
+
+class TestSplitParams:
+    """Test _split_params() function."""
+
+    def test_empty(self):
+        assert _split_params("") == []
+
+    def test_single(self):
+        assert _split_params("string") == ["string"]
+
+    def test_multiple(self):
+        assert _split_params("string, int") == ["string", "int"]
+
+    def test_generics(self):
+        assert _split_params("List<string>, int") == ["List<string>", "int"]
+
+    def test_nested_generics(self):
+        result = _split_params("Dictionary<string, int>, bool")
+        assert result == ["Dictionary<string, int>", "bool"]
+
+
+# =============================================================================
+# Type Extraction Tests
+# =============================================================================
+
+class TestExtractTypeFromParam:
+    """Test _extract_type_from_param() function."""
+
+    def test_simple(self):
+        assert _extract_type_from_param("string text") == "string"
+
+    def test_generic(self):
+        assert _extract_type_from_param("List<string> items") == "List<string>"
+
+    def test_nested_generic(self):
+        assert _extract_type_from_param("Dictionary<string, int> map") == "Dictionary<string, int>"
+
+    def test_array(self):
+        assert _extract_type_from_param("int[] arr") == "int[]"
+
+    def test_type_only(self):
+        assert _extract_type_from_param("string") == "string"
+
+
+class TestExtractParamTypes:
+    """Test _extract_param_types() function."""
+
+    def test_no_params(self):
+        lines = ["public void Foo() {"]
+        assert _extract_param_types(lines, 0) == []
+
+    def test_single_param(self):
+        lines = ["public void Foo(string text) {"]
+        assert _extract_param_types(lines, 0) == ["string"]
+
+    def test_multi_params(self):
+        lines = ["public void Foo(string text, int count) {"]
+        assert _extract_param_types(lines, 0) == ["string", "int"]
+
+    def test_multiline_params(self):
+        lines = [
+            "public void Foo(",
+            "    string text,",
+            "    int count",
+            ") {",
+        ]
+        assert _extract_param_types(lines, 0) == ["string", "int"]
+
+    def test_with_default_value(self):
+        lines = ["public void Foo(int x = 0, string s = null) {"]
+        assert _extract_param_types(lines, 0) == ["int", "string"]
+
+
+# =============================================================================
+# Signature Matching Tests
+# =============================================================================
+
+class TestMatchSignature:
+    """Test _match_signature() function."""
+
+    def test_exact_match(self):
+        assert _match_signature(["string"], ["string"]) is True
+
+    def test_count_mismatch(self):
+        assert _match_signature(["string"], ["string", "int"]) is False
+
+    def test_type_mismatch(self):
+        assert _match_signature(["int"], ["string"]) is False
+
+    def test_case_insensitive(self):
+        assert _match_signature(["String"], ["string"]) is True
+
+    def test_partial_match_suffix(self):
+        assert _match_signature(["String"], ["System.String"]) is True
+
+    def test_empty_matches_empty(self):
+        assert _match_signature([], []) is True
+
+
+# =============================================================================
+# Overload Disambiguation Tests
+# =============================================================================
+
+class TestOverloadDisambiguation:
+    """Test signature-based overload disambiguation."""
+
+    def test_no_parens_returns_first(self):
+        """Without parens, returns first overload (backward compatible)."""
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.OverloadMethod1", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "no params" in joined
+
+    def test_empty_parens_matches_parameterless(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.OverloadMethod1()", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "no params" in joined
+        assert "string param" not in joined
+
+    def test_typed_parens_matches_overload(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.OverloadMethod1(string)", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "string param" in joined
+        assert "no params" not in joined
+
+    def test_two_params_matches(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.OverloadMethod1(string, int)", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "two params" in joined
+
+    def test_wrong_signature_returns_none(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.OverloadMethod1(bool)", "test.cs")
+        assert result is None
+
+    def test_unique_method_no_signature_needed(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.UniqueMethod", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "unique code" in joined
+
+
+# =============================================================================
+# Namespace Support Tests
+# =============================================================================
+
+class TestNamespaceSupport:
+    """Test namespace/package resolution in dot notation."""
+
+    def test_csharp_namespace_class_method(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "test.SymbolTest.UniqueMethod", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "unique code" in joined
+
+    def test_csharp_namespace_class_overload_with_sig(self):
+        result = extract_symbol(CSHARP_OVERLOAD, "test.SymbolTest.OverloadMethod1(string)", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "string param" in joined
+
+    def test_csharp_class_without_namespace(self):
+        """Namespace is optional — class.method still works."""
+        result = extract_symbol(CSHARP_OVERLOAD, "SymbolTest.OverloadMethod1()", "test.cs")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "no params" in joined
+
+    def test_cpp_namespace_class_method(self):
+        result = extract_symbol(CPP_NAMESPACE, "mylib.Helper.process", "test.cpp")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "// code" in joined
+
+    def test_java_package_class_method(self):
+        result = extract_symbol(JAVA_PACKAGE, "com.example.App.run", "test.java")
+        assert result is not None
+        joined = '\n'.join(result['lines'])
+        assert "// code" in joined

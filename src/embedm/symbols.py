@@ -88,6 +88,21 @@ class ScanState:
     in_triple_quote: bool = False
 
 
+@dataclass
+class SymbolSpec:
+    """Parsed symbol specification from user input.
+
+    Attributes:
+        parts: Dot-separated name components (e.g., ["test", "SymbolTest", "Method"])
+        signature: Parameter type string if specified (e.g., "string, int"), or None
+        has_parens: Whether parentheses were explicitly present (distinguishes
+                    "Method" from "Method()")
+    """
+    parts: List[str]
+    signature: Optional[str] = None
+    has_parens: bool = False
+
+
 # =============================================================================
 # String/Comment State Machine
 # =============================================================================
@@ -358,10 +373,23 @@ def extract_block_keyword(
 # Block Strategy Dispatch
 # =============================================================================
 
+def extract_block_rest_of_file(
+    lines: List[str],
+    start_idx: int,
+    comment_style: CommentStyle,
+) -> int:
+    """Block extends from declaration line to end of file.
+
+    Used for file-scoped namespaces (C# 10+) and Java packages.
+    """
+    return len(lines) - 1
+
+
 BLOCK_STRATEGIES = {
     'brace': extract_block_brace,
     'paren': extract_block_paren,
     'indent': extract_block_indent,
+    'rest_of_file': extract_block_rest_of_file,
 }
 
 
@@ -452,6 +480,12 @@ C_CPP_CONFIG = LanguageConfig(
     ),
     patterns=[
         SymbolPattern(
+            kind="namespace",
+            regex_template=r'^\s*namespace\s+{name}\b',
+            block_style="brace",
+            nestable=True,
+        ),
+        SymbolPattern(
             kind="class",
             regex_template=r'^\s*class\s+{name}\b',
             block_style="brace",
@@ -479,6 +513,12 @@ JAVA_CONFIG = LanguageConfig(
         block_comment_end="*/",
     ),
     patterns=[
+        SymbolPattern(
+            kind="package",
+            regex_template=r'^\s*package\s+{name}\s*;',
+            block_style="rest_of_file",
+            nestable=True,
+        ),
         SymbolPattern(
             kind="class",
             regex_template=r'^\s*(?:public\s+|private\s+|protected\s+)?(?:static\s+)?(?:abstract\s+)?class\s+{name}\b',
@@ -508,6 +548,18 @@ CSHARP_CONFIG = LanguageConfig(
         block_comment_end="*/",
     ),
     patterns=[
+        SymbolPattern(
+            kind="namespace_file_scoped",
+            regex_template=r'^\s*namespace\s+{name}\s*;',
+            block_style="rest_of_file",
+            nestable=True,
+        ),
+        SymbolPattern(
+            kind="namespace",
+            regex_template=r'^\s*namespace\s+{name}\b',
+            block_style="brace",
+            nestable=True,
+        ),
         SymbolPattern(
             kind="class",
             regex_template=r'^\s*(?:public\s+|private\s+|protected\s+|internal\s+)?(?:static\s+)?(?:abstract\s+)?(?:partial\s+)?class\s+{name}\b',
@@ -596,6 +648,239 @@ def _include_decorators(lines: List[str], start_idx: int) -> int:
 
 
 # =============================================================================
+# Spec Parsing & Signature Matching
+# =============================================================================
+
+def _parse_symbol_spec(symbol_name: str) -> SymbolSpec:
+    """Parse a symbol specification that may include a signature hint.
+
+    Parses the signature BEFORE dot splitting to handle dots inside parens
+    (e.g., 'method(Ns.Type)').
+
+    Examples:
+        'Method'                     -> parts=['Method'], no signature
+        'Method()'                   -> parts=['Method'], signature='', has_parens=True
+        'Method(string)'             -> parts=['Method'], signature='string'
+        'Ns.Class.Method(string)'    -> parts=['Ns','Class','Method'], signature='string'
+        'Foo(List<string>, int)'     -> parts=['Foo'], signature='List<string>, int'
+        'Foo(Ns.Type)'               -> parts=['Foo'], signature='Ns.Type'
+
+    Returns:
+        SymbolSpec with parsed parts, signature, and has_parens flag
+    """
+    name = symbol_name.strip()
+
+    if name.endswith(')'):
+        # Walk backward from the closing ')' to find its matching '('
+        depth = 0
+        for i in range(len(name) - 1, -1, -1):
+            if name[i] == ')':
+                depth += 1
+            elif name[i] == '(':
+                depth -= 1
+                if depth == 0:
+                    prefix = name[:i]
+                    if prefix:
+                        sig_content = name[i + 1:-1]
+                        parts = prefix.split('.')
+                        return SymbolSpec(
+                            parts=parts,
+                            signature=sig_content,
+                            has_parens=True,
+                        )
+                    break
+
+    parts = name.split('.')
+    return SymbolSpec(parts=parts, signature=None, has_parens=False)
+
+
+def _split_params(param_string: str) -> List[str]:
+    """Split a parameter string on commas, respecting angle bracket nesting.
+
+    Examples:
+        'string, int'                  -> ['string', 'int']
+        'List<string>, int'            -> ['List<string>', 'int']
+        'Dictionary<string, int>, bool' -> ['Dictionary<string, int>', 'bool']
+        ''                             -> []
+    """
+    if not param_string or not param_string.strip():
+        return []
+
+    params = []
+    current: List[str] = []
+    angle_depth = 0
+
+    for char in param_string:
+        if char == '<':
+            angle_depth += 1
+            current.append(char)
+        elif char == '>':
+            angle_depth -= 1
+            current.append(char)
+        elif char == ',' and angle_depth == 0:
+            params.append(''.join(current).strip())
+            current = []
+        else:
+            current.append(char)
+
+    last = ''.join(current).strip()
+    if last:
+        params.append(last)
+
+    return params
+
+
+def _extract_type_from_param(param: str) -> str:
+    """Extract the type portion from a single parameter declaration.
+
+    Finds the boundary between type and name by looking for the last
+    space that isn't inside angle brackets or array brackets.
+
+    'string text'               -> 'string'
+    'List<string> items'        -> 'List<string>'
+    'Dictionary<string, int> m' -> 'Dictionary<string, int>'
+    'int[] arr'                 -> 'int[]'
+    'string'                    -> 'string'  (just a type, no name)
+    """
+    param = param.strip()
+    if not param:
+        return param
+
+    angle_depth = 0
+    last_space = -1
+
+    for i, char in enumerate(param):
+        if char == '<':
+            angle_depth += 1
+        elif char == '>':
+            angle_depth -= 1
+        elif char == '[':
+            # Array brackets are part of the type, skip to ']'
+            bracket_end = param.find(']', i)
+            if bracket_end != -1:
+                # Don't update last_space while inside brackets
+                continue
+        elif char == ' ' and angle_depth == 0:
+            last_space = i
+
+    if last_space > 0:
+        return param[:last_space]
+    return param
+
+
+def _extract_param_types(
+    lines: List[str],
+    decl_line_idx: int,
+) -> Optional[List[str]]:
+    """Extract parameter types from a method/function declaration.
+
+    Scans forward from the declaration line to find the full parameter
+    list between '(' and ')', handling multi-line declarations.
+
+    Returns:
+        List of type strings (e.g., ['string', 'int']), or [] for no params,
+        or None if the param list cannot be extracted.
+    """
+    collected: List[str] = []
+    found_open = False
+    paren_depth = 0
+
+    for idx in range(decl_line_idx, min(decl_line_idx + 10, len(lines))):
+        for char in lines[idx]:
+            if not found_open:
+                if char == '(':
+                    found_open = True
+                    paren_depth = 1
+            else:
+                if char == '(':
+                    paren_depth += 1
+                    collected.append(char)
+                elif char == ')':
+                    paren_depth -= 1
+                    if paren_depth == 0:
+                        # Found the full param string
+                        param_str = ''.join(collected).strip()
+                        if not param_str:
+                            return []
+                        return _extract_types_from_params(param_str)
+                    collected.append(char)
+                else:
+                    collected.append(char)
+
+    return None
+
+
+def _extract_types_from_params(param_str: str) -> List[str]:
+    """Parse 'type name, type name' into a list of type strings.
+
+    Strips C#/Java parameter modifiers (ref, out, params, final, etc.)
+    before extracting the type.
+    """
+    raw_params = _split_params(param_str)
+    types = []
+    modifiers = ('ref ', 'out ', 'in ', 'params ', 'this ', 'final ')
+
+    for param in raw_params:
+        param = param.strip()
+        if not param:
+            continue
+
+        # Remove default value (e.g., 'int x = 0' -> 'int x')
+        if '=' in param:
+            eq_idx = param.index('=')
+            # Make sure '=' is not inside angle brackets
+            angle = 0
+            for i, c in enumerate(param):
+                if c == '<':
+                    angle += 1
+                elif c == '>':
+                    angle -= 1
+                elif c == '=' and angle == 0:
+                    param = param[:i].strip()
+                    break
+
+        # Strip modifiers
+        param_lower = param.lower()
+        for mod in modifiers:
+            if param_lower.startswith(mod):
+                param = param[len(mod):].strip()
+                break
+
+        types.append(_extract_type_from_param(param))
+
+    return types
+
+
+def _match_signature(
+    requested: List[str],
+    declared: List[str],
+) -> bool:
+    """Check if requested parameter types match declared parameter types.
+
+    Comparison is case-insensitive. Also supports partial matching:
+    'string' matches 'System.String' (suffix match after '.').
+
+    Args:
+        requested: Types from the user's symbol spec
+        declared: Types extracted from the source declaration
+    """
+    if len(requested) != len(declared):
+        return False
+
+    for req, decl in zip(requested, declared):
+        req_lower = req.strip().lower()
+        decl_lower = decl.strip().lower()
+
+        if req_lower == decl_lower:
+            continue
+        if decl_lower.endswith('.' + req_lower):
+            continue
+        return False
+
+    return True
+
+
+# =============================================================================
 # Symbol Finding
 # =============================================================================
 
@@ -605,6 +890,8 @@ def _find_symbol_in_range(
     config: LanguageConfig,
     range_start: int,
     range_end: int,
+    signature: Optional[str] = None,
+    has_parens: bool = False,
 ) -> Optional[Tuple[int, int]]:
     """Find a symbol within a specific line range.
 
@@ -614,11 +901,18 @@ def _find_symbol_in_range(
         config: Language configuration
         range_start: Start line index (inclusive)
         range_end: End line index (inclusive)
+        signature: Parameter signature string if specified, or None
+        has_parens: Whether parentheses were explicitly specified
 
     Returns:
         (start_idx, end_idx) tuple or None
     """
     escaped_name = re.escape(symbol_name)
+
+    # Pre-parse the requested signature if provided
+    requested_params = None
+    if has_parens:
+        requested_params = _split_params(signature) if signature else []
 
     for pattern in config.patterns:
         regex_str = pattern.regex_template.replace('{name}', escaped_name)
@@ -626,6 +920,12 @@ def _find_symbol_in_range(
 
         for line_idx in range(range_start, range_end + 1):
             if regex.search(lines[line_idx]):
+                # Check signature if specified
+                if has_parens and requested_params is not None:
+                    declared_params = _extract_param_types(lines, line_idx)
+                    if declared_params is None or not _match_signature(requested_params, declared_params):
+                        continue
+
                 # Found the symbol declaration
                 try:
                     end_idx = _extract_block(
@@ -671,8 +971,11 @@ def extract_symbol(
 
     Args:
         content: Full file content as string
-        symbol_name: Name of symbol to extract. Supports dot notation
-                     for nested symbols (e.g., 'MyClass.my_method').
+        symbol_name: Name of symbol to extract. Supports:
+                     - Dot notation: 'MyClass.my_method'
+                     - Namespace paths: 'test.SymbolTest.Method'
+                     - Signature disambiguation: 'Method(string, int)'
+                     - Combined: 'Ns.Class.Method(string)'
         file_path: Path to source file (for language detection)
 
     Returns:
@@ -683,29 +986,57 @@ def extract_symbol(
         return None
 
     lines = content.replace('\r\n', '\n').split('\n')
-    parts = symbol_name.split('.')
+    spec = _parse_symbol_spec(symbol_name)
 
-    # Resolve each part, narrowing the search range
+    # Resolve each part, narrowing the search range.
+    # Uses greedy coalescing: if a part fails, try combining it with
+    # subsequent parts to handle dotted names (e.g., Java 'com.example').
     range_start = 0
     range_end = len(lines) - 1
+    i = 0
 
-    for i, part in enumerate(parts):
-        result = _find_symbol_in_range(lines, part, config, range_start, range_end)
+    while i < len(spec.parts):
+        part = spec.parts[i]
+        is_last = (i == len(spec.parts) - 1)
+
+        sig = spec.signature if is_last else None
+        parens = spec.has_parens if is_last else False
+
+        result = _find_symbol_in_range(
+            lines, part, config, range_start, range_end,
+            signature=sig, has_parens=parens,
+        )
+
+        # If not found, try coalescing with subsequent parts
+        if result is None:
+            for j in range(i + 1, len(spec.parts)):
+                part = part + '.' + spec.parts[j]
+                is_last = (j == len(spec.parts) - 1)
+                sig = spec.signature if is_last else None
+                parens = spec.has_parens if is_last else False
+
+                result = _find_symbol_in_range(
+                    lines, part, config, range_start, range_end,
+                    signature=sig, has_parens=parens,
+                )
+                if result is not None:
+                    i = j  # Skip coalesced parts
+                    break
+
         if result is None:
             return None
 
         start_idx, end_idx = result
 
-        if i < len(parts) - 1:
-            # Not the last part - narrow range for next search
-            # Search within the block body (skip the declaration line)
+        if not is_last:
             range_start = start_idx + 1
             range_end = end_idx
         else:
-            # Last part - this is what we return
             return {
                 'lines': lines[start_idx:end_idx + 1],
                 'startLine': start_idx + 1,
             }
+
+        i += 1
 
     return None
