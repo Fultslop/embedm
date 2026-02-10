@@ -655,6 +655,74 @@ region: 2-4
             for err in result.errors
         ))
 
+    def test_validate_symbol_valid(self):
+        """Test validation passes for valid symbol."""
+        source_file = os.path.join(self.temp_dir, 'source.py')
+        with open(source_file, 'w') as f:
+            f.write("def hello():\n    pass\n")
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.py
+symbol: hello
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        self.assertFalse(any(
+            err.error_type == 'invalid_symbol'
+            for err in result.errors
+        ))
+
+    def test_validate_symbol_not_found(self):
+        """Test validation catches symbol not found."""
+        source_file = os.path.join(self.temp_dir, 'source.py')
+        with open(source_file, 'w') as f:
+            f.write("def hello():\n    pass\n")
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.py
+symbol: nonexistent
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            err.error_type == 'invalid_symbol'
+            for err in result.errors
+        ))
+
+    def test_validate_symbol_unsupported_language(self):
+        """Test validation catches unsupported language for symbol."""
+        source_file = os.path.join(self.temp_dir, 'source.txt')
+        with open(source_file, 'w') as f:
+            f.write("some text\n")
+
+        test_file = os.path.join(self.temp_dir, 'test.md')
+        with open(test_file, 'w') as f:
+            f.write("""```yaml embedm
+type: file
+source: source.txt
+symbol: something
+```""")
+
+        limits = Limits()
+        result = validate_all(test_file, limits)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(any(
+            err.error_type == 'unsupported_language'
+            for err in result.errors
+        ))
+
     def test_validate_recursion_depth_exceeded(self):
         """Test validation catches recursion depth exceeding limit."""
         # Create a chain: a.md -> b.md -> c.md -> d.md (depth 4)
