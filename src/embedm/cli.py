@@ -118,6 +118,21 @@ Size formats: 1024, 1KB, 1K, 1MB, 1M, 1GB, 1G
         help='Verbose output'
     )
 
+    # Sandbox flags
+    sandbox_group = parser.add_argument_group('sandbox')
+    sandbox_group.add_argument(
+        '--allow-path',
+        nargs='+',
+        default=None,
+        metavar='DIR',
+        help='Additional directories to allow file access from (beyond the sandbox root)'
+    )
+    sandbox_group.add_argument(
+        '--no-sandbox',
+        action='store_true',
+        help='Disable file access sandbox entirely'
+    )
+
     return parser.parse_args()
 
 
@@ -173,7 +188,7 @@ def create_limits(args, config=None) -> Limits:
     )
 
 
-def process_files(validation_result, output_path: str, limits: Limits, verbose: bool = False, force: bool = False) -> ProcessingStats:
+def process_files(validation_result, output_path: str, limits: Limits, verbose: bool = False, force: bool = False, sandbox=None) -> ProcessingStats:
     """
     Execute the processing phase - resolve embeds and write output files.
 
@@ -199,7 +214,7 @@ def process_files(validation_result, output_path: str, limits: Limits, verbose: 
     is_dir_mode = len(files) > 1 or (output_path and os.path.isdir(output_path))
 
     # Create processing context with limits (only if force mode is enabled)
-    context = ProcessingContext(limits if force else None)
+    context = ProcessingContext(limits if force else None, sandbox=sandbox)
 
     if is_dir_mode:
         # Directory mode
@@ -295,6 +310,16 @@ def main():
         # Create limits with precedence: CLI > config > defaults
         limits = create_limits(args, config)
 
+        # Create sandbox configuration
+        from .sandbox import create_sandbox
+        config_dir = os.path.dirname(config_path) if config_path else None
+        sandbox = create_sandbox(
+            args.source,
+            config_dir=config_dir,
+            allow_paths=args.allow_path,
+            no_sandbox=args.no_sandbox,
+        )
+
         # Initialize plugin registry with config-specified plugins
         if config and config.plugins is not None:
             from .config import parse_plugins_config
@@ -321,7 +346,7 @@ def main():
                 os.makedirs(output_path, exist_ok=True)
 
         # PHASE 1: Validation
-        validation = validate_all(args.source, limits)
+        validation = validate_all(args.source, limits, sandbox=sandbox)
 
         # PHASE 2: Report Results
         print(validation.format_report(verbose=args.verbose))
@@ -332,6 +357,17 @@ def main():
             if limit_errors:
                 print("\nTip: Override limits with flags like:")
                 print("  --max-file-size 5MB --max-recursion 10 --max-embeds 200")
+
+            sandbox_errors = [e for e in validation.errors if e.error_type == 'sandbox_violation']
+            if sandbox_errors:
+                print("\nTip: Allow additional paths or disable the sandbox:")
+                print("  --allow-path /path/to/dir    # Add allowed directory")
+                print("  --no-sandbox                 # Disable sandbox entirely")
+
+            # Sandbox violations cannot be bypassed with --force
+            if sandbox_errors:
+                print("\n❌ Sandbox violations cannot be bypassed with --force.")
+                sys.exit(1)
 
             # Exit unless --force is specified
             if not args.force:
@@ -347,7 +383,7 @@ def main():
 
         # PHASE 3: Execute Processing (always run if no errors, or if --force is set)
         if not validation.has_errors() or args.force:
-            stats = process_files(validation, output_path, limits, args.verbose, args.force)
+            stats = process_files(validation, output_path, limits, args.verbose, args.force, sandbox=sandbox)
             print(f"\n{stats.format_summary()}")
 
     except KeyboardInterrupt:

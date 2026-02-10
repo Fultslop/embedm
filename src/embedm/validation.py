@@ -13,7 +13,7 @@ from .discovery import (
 )
 
 
-def validate_all(source_path: str, limits: Limits) -> ValidationResult:
+def validate_all(source_path: str, limits: Limits, sandbox=None) -> ValidationResult:
     """
     Comprehensive validation phase - discover and validate everything before execution.
 
@@ -25,6 +25,13 @@ def validate_all(source_path: str, limits: Limits) -> ValidationResult:
         ValidationResult with errors, warnings, and discovered embeds
     """
     result = ValidationResult()
+
+    # Record sandbox info for display
+    if sandbox and sandbox.enabled:
+        from .sandbox import format_sandbox_info
+        result.sandbox_info = format_sandbox_info(sandbox)
+    elif sandbox and not sandbox.enabled:
+        result.sandbox_info = "disabled (--no-sandbox)"
 
     # Step 1: Discover all files to process
     files = discover_files(source_path)
@@ -117,6 +124,20 @@ def validate_all(source_path: str, limits: Limits) -> ValidationResult:
                     severity='error'
                 ))
                 continue
+
+            # Check sandbox access
+            if sandbox and sandbox.enabled:
+                from .sandbox import check_sandbox as _check_sandbox
+                violation = _check_sandbox(embed.source_file, sandbox)
+                if violation:
+                    result.errors.append(ValidationError(
+                        file_path=embed.file_path,
+                        line_number=embed.line_number,
+                        error_type='sandbox_violation',
+                        message=violation,
+                        severity='error'
+                    ))
+                    continue
 
             # Check if source file exceeds size limit
             if os.path.isfile(embed.source_file):
