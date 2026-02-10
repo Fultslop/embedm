@@ -34,8 +34,9 @@ When EmbedM processes a markdown file:
 3. **Processing**: When an embed block is encountered, the registry dispatches to the appropriate plugin
 4. **Phases**: Plugins can run in different processing phases (EMBED, POST_PROCESS)
 
-```
-User's Markdown → Parser → Registry Dispatcher → Plugin.process() → Output
+```yaml embedm
+type: mermaid
+input: User's Markdown → Parser → Registry Dispatcher → Plugin.process() → Output
 ```
 
 ## The EmbedPlugin Interface
