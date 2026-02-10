@@ -48,7 +48,6 @@ file = "embedm_plugins.file_plugin:FilePlugin"
 layout = "embedm_plugins.layout_plugin:LayoutPlugin"
 toc = "embedm_plugins.toc_plugin:TOCPlugin"
 table = "embedm_plugins.table_plugin:TablePlugin"
-comment = "embedm_plugins.comment_plugin:CommentPlugin"
 mermaid = "embedm_plugins.mermaid_plugin:MermaidPlugin"
 # md.end:entry_points
 
