@@ -7,10 +7,7 @@ Handles embedding tabular data as markdown tables.
 Currently supports:
 - CSV files
 - JSON files (arrays of objects)
-
-Future support planned for:
-- TSV files
-- Excel files
+- TSV files (tab-separated values)
 
 Usage in markdown:
     ```yaml embedm
@@ -140,10 +137,9 @@ class TablePlugin(EmbedPlugin):
             if table.startswith("> [!CAUTION]"):
                 return table  # Error message
         elif ext == 'tsv':
-            # TSV support - future enhancement
-            return f"> [!CAUTION]\n> **Table Error:** TSV format not yet supported. Use CSV or JSON for now."
+            table = csv_to_markdown_table(content, delimiter='\t')
         else:
-            return f"> [!CAUTION]\n> **Table Error:** Unsupported file format `.{ext}`. Currently CSV and JSON are supported."
+            return f"> [!CAUTION]\n> **Table Error:** Unsupported file format `.{ext}`. Supported formats: CSV, JSON, TSV."
 
         # Check embedded table size limit
         if context.limits and context.limits.max_embed_text > 0:

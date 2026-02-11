@@ -86,7 +86,10 @@ embedm input.md --dry-run          # validate without writing
 |--------|-------------|
 | [File Embedding](doc/manual/src/compiled/embed_file.md) | Embedding files, line ranges, regions, and line numbers |
 | [Symbol Extraction](doc/manual/src/compiled/embed_symbols.md) | Extracting functions, classes, and methods by name |
+| [Table Embedding](doc/manual/src/compiled/embed_tables.md) | Embedding CSV, JSON, and TSV files as Markdown tables |
 | [Table of Contents](doc/manual/src/compiled/embed_toc.md) | Generating tables of contents from document headings |
+| [Layouts](doc/manual/src/compiled/embed_layout.md) | Multi-column and multi-row flexbox layouts |
+| [Mermaid Flowcharts](doc/manual/src/compiled/embed_mermaid.md) | Shorthand notation for linear Mermaid flowcharts |
 | [CLI Reference](doc/manual/src/compiled/cli.md) | All command-line options, limits, and sandbox configuration |
 | [Plugin System](doc/manual/src/compiled/plugins.md) | Writing custom embed plugins |
 | [Adding Languages](doc/manual/src/compiled/adding_languages.md) | Adding symbol extraction for new programming languages |

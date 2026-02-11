@@ -297,6 +297,20 @@ class TestCsvToMarkdownTable(unittest.TestCase):
         # Should pad missing cells
         self.assertIn('| 1 | 2 |', result)
 
+    def test_tsv_basic(self):
+        tsv = "Name\tAge\tCity\nAlice\t30\tNYC\nBob\t25\tLA"
+        result = csv_to_markdown_table(tsv, delimiter='\t')
+        self.assertIn('| Name | Age | City |', result)
+        self.assertIn('| --- | --- | --- |', result)
+        self.assertIn('| Alice | 30 | NYC |', result)
+        self.assertIn('| Bob | 25 | LA |', result)
+
+    def test_tsv_with_quoted_fields(self):
+        tsv = 'Name\tDescription\nAlice\t"Hello\tWorld"\nBob\tSimple'
+        result = csv_to_markdown_table(tsv, delimiter='\t')
+        self.assertIn('| Alice | Hello\tWorld |', result)
+        self.assertIn('| Bob | Simple |', result)
+
 
 class TestSlugify(unittest.TestCase):
     """Tests for slugify function"""

@@ -3,9 +3,9 @@
 import re
 
 
-def csv_to_markdown_table(csv_content: str) -> str:
+def csv_to_markdown_table(csv_content: str, delimiter: str = ',') -> str:
     """
-    Converts CSV content to a Markdown table
+    Converts CSV/TSV content to a Markdown table
     """
     lines = csv_content.strip().split('\n')
     if not lines or not csv_content.strip():  # Handle empty input
@@ -30,7 +30,7 @@ def csv_to_markdown_table(csv_content: str) -> str:
                 else:
                     # Toggle quote mode
                     in_quotes = not in_quotes
-            elif char == ',' and not in_quotes:
+            elif char == delimiter and not in_quotes:
                 # End of cell
                 cells.append(current.strip())
                 current = ''

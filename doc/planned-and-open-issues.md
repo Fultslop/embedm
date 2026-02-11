@@ -2,15 +2,8 @@
 
 ## High priority features / fixes
 
-- Add manuals for toc / tables / layout / mermaid.
-
-- Add a 'manual' which provides an overview of all manuals
-
-- Add a final "Transform"/"Output" phase mapping to md, html, pdf (?) or txt.
-
-- Add caching, so embeddings won't need to be recompiled if not touched. 
-
-- For large projects create a dependency tree, enabling a split to distribute embeddings in a directory over various threads.
+- Goal should be to compile to md, html styling is available in some case but generally is discouraged. Use other tools for postprocessing / beautifying.
+    - for line numbers add an option to abbreviate and a link `line-numbers: short` adds line x-y to the top and `link: true false (default)` results in [filename]() line x - y
 
 - Create a 'synopsis' plugin and manual.
 
@@ -22,9 +15,16 @@
 
 - Move doc/examples to regression tests, where the current regression doesn't cover them
 
+## Mid / Long term priority features / fixes
+
 - Create a plugin to insert versions / build dates / ...
 
-## Long term priority features / fixes
+- Add a final "Transform"/"Output" phase mapping to md, html, pdf (?) or txt. Something DocSaurus can / should do ?
+
+- Add caching, so embeddings won't need to be recompiled if not touched. 
+
+- For large projects create a dependency tree, enabling a split to distribute embeddings in a directory over various threads.
+
 
 - Watch mode (`--watch`) that recompiles when source files or embedded targets change.
 
@@ -37,6 +37,8 @@
 - Source URL annotation — optionally emit a comment or link back to the original file and line range.
 
 - MkDocs / Docusaurus integration guides to capture organic search traffic from those ecosystems.
+
+- Excel table insertion in a new project which uses this core project
 
 ## Undecided Features 
 
@@ -83,6 +85,10 @@ It's an interesting thought and therefore worth capturing but I'd leave that res
 
 
 ## Completed features
+
+- 11/02/26 Add manuals for toc / tables / layout / mermaid.
+
+
 
 - 11/02/26 Fix TOC generator to skip `#` lines inside fenced code blocks.
 
