@@ -349,6 +349,37 @@ class TestGenerateTableOfContents(unittest.TestCase):
         result = generate_table_of_contents(content)
         self.assertIn('[Hello, World!](#hello-world)', result)
 
+    def test_headings_inside_fenced_code_blocks_ignored(self):
+        """TOC should not pick up # lines from inside fenced code blocks."""
+        content = (
+            "# Real Heading\n\n"
+            "```python\n"
+            "# This is a comment, not a heading\n"
+            "## Also not a heading\n"
+            "```\n\n"
+            "## Another Real Heading\n"
+        )
+        result = generate_table_of_contents(content)
+        self.assertIn('- [Real Heading](#real-heading)', result)
+        self.assertIn('- [Another Real Heading](#another-real-heading)', result)
+        self.assertNotIn('comment', result.lower())
+        self.assertNotIn('Also not', result)
+
+    def test_headings_inside_yaml_code_blocks_ignored(self):
+        """TOC should not pick up # lines from YAML code blocks."""
+        content = (
+            "# Title\n\n"
+            "```yaml\n"
+            "# yaml comment\n"
+            "key: value\n"
+            "```\n\n"
+            "## Section\n"
+        )
+        result = generate_table_of_contents(content)
+        self.assertIn('- [Title](#title)', result)
+        self.assertIn('- [Section](#section)', result)
+        self.assertNotIn('yaml comment', result)
+
     def test_max_depth_filters_deep_headings(self):
         content = "# H1\n## H2\n### H3\n#### H4\n##### H5"
         result = generate_table_of_contents(content, max_depth=2)

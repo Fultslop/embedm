@@ -23,11 +23,6 @@ This manual covers file embedding in EmbedM, including all line numbering option
   - [Another Section](#another-section)
   - [Size Limits and Safety](#size-limits-and-safety)
   - [Complete Property Reference](#complete-property-reference)
-- [Required](#required)
-- [Optional - Content Selection](#optional---content-selection)
-- [Optional - Line Numbers](#optional---line-numbers)
-- [Optional - Presentation](#optional---presentation)
-- [Optional - Documentation](#optional---documentation)
   - [Examples in This Manual](#examples-in-this-manual)
   - [Advanced: Custom HTML Line Number Themes](#advanced-custom-html-line-number-themes)
 

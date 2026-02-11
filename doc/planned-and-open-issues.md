@@ -2,8 +2,6 @@
 
 ## High priority features / fixes
 
-- Add a feature to the ToC plugin to select depth of sections. This should enable pruning less relevant sections.
-
 - Add manuals for toc / tables / layout / mermaid.
 
 - Add a 'manual' which provides an overview of all manuals
@@ -21,8 +19,6 @@
 - Set up GitHub Actions CI (tests, coverage, regression snapshots).
 
 - Publish to PyPI (`pip install embedm`).
-
-- Fix TOC generator to skip `#` lines inside fenced code blocks.
 
 - Move doc/examples to regression tests, where the current regression doesn't cover them
 
@@ -88,7 +84,11 @@ It's an interesting thought and therefore worth capturing but I'd leave that res
 
 ## Completed features
 
+- 11/02/26 Fix TOC generator to skip `#` lines inside fenced code blocks.
+
 - 11/02/26 Improve README with a "Why EmbedM?" section and a concise before/after example.
+
+- 11/02/26 Add a feature to the ToC plugin to select depth of sections. This should enable pruning less relevant sections.
 
 - class , function region, test java, js, c++, c, rust
 

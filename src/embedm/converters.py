@@ -110,8 +110,25 @@ def generate_table_of_contents(content: str, source_file: str = None, current_fi
     lines = content.replace('\r\n', '\n').replace('\r', '\n').split('\n')
     toc_lines = []
     heading_counts = {}  # Track duplicate headings for unique anchors
+    in_fence = False
+    fence_marker = ""
 
     for line in lines:
+        stripped = line.strip()
+
+        # Track fenced code blocks so we skip headings inside them
+        if stripped.startswith("```"):
+            fence_ticks = len(stripped) - len(stripped.lstrip("`"))
+            if not in_fence:
+                in_fence = True
+                fence_marker = "`" * fence_ticks
+            elif stripped.startswith(fence_marker) and stripped.strip("`").strip() == "":
+                in_fence = False
+            continue
+
+        if in_fence:
+            continue
+
         # Match markdown headings (# through ######)
         match = re.match(r'^(#{1,6})\s+(.+)$', line)
         if not match:
