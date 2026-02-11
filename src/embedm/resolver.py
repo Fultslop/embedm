@@ -11,8 +11,9 @@ from .phases import ProcessingPhase
 
 class ProcessingContext:
     """Context for tracking limits during processing."""
-    def __init__(self, limits=None):
+    def __init__(self, limits=None, sandbox=None):
         self.limits = limits
+        self.sandbox = sandbox
         self.embed_counts = {}  # Track embeds per file
         self.total_embeds = 0
 

@@ -147,6 +147,13 @@ class FilePlugin(EmbedPlugin):
         target_path = os.path.abspath(os.path.join(current_file_dir, source))
         is_markdown = target_path.endswith('.md')
 
+        # Runtime sandbox check (defense in depth)
+        if context and context.sandbox and context.sandbox.enabled:
+            from embedm.sandbox import check_sandbox as _check_sandbox
+            violation = _check_sandbox(target_path, context.sandbox)
+            if violation:
+                return f"> [!CAUTION]\n> **Sandbox Violation:** {violation}"
+
         if not os.path.exists(target_path):
             return f"> [!CAUTION]\n> **Embed Error:** File not found: `{source}`"
 

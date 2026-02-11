@@ -106,6 +106,7 @@ class ValidationResult:
     embeds_discovered: List[EmbedDirective] = field(default_factory=list)
     files_to_process: List[str] = field(default_factory=list)
     dependency_graph: Dict[str, Set[str]] = field(default_factory=dict)
+    sandbox_info: Optional[str] = None
 
     def has_errors(self) -> bool:
         """Check if there are any errors."""
@@ -119,6 +120,9 @@ class ValidationResult:
         lines.append("\n🔍 Validation Phase")
         lines.append("━" * 60)
         lines.append(f"  Discovered: {len(self.files_to_process)} files, {len(self.embeds_discovered)} embeds")
+
+        if self.sandbox_info:
+            lines.append(f"  Sandbox: {self.sandbox_info}")
 
         if self.dependency_graph:
             max_depth = self._calculate_max_depth()

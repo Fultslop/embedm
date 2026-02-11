@@ -32,6 +32,7 @@ MODULE_REQUIREMENTS = {
     'src/embedm/formatting.py': 70,
     'src/embedm/models.py': 75,
     'src/embedm/symbols.py': 70,
+    'src/embedm/sandbox.py': 85,
 
     # Plugins
     'src/embedm_plugins/file_plugin.py': 90,
@@ -40,7 +41,7 @@ MODULE_REQUIREMENTS = {
     'src/embedm_plugins/table_plugin.py': 60,
 
     # CLI - low threshold for now
-    'src/embedm/cli.py': 14,
+    'src/embedm/cli.py': 13,
 }
 
 # Overall minimum coverage

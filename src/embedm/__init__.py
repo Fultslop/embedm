@@ -8,6 +8,7 @@ from .converters import csv_to_markdown_table, slugify, generate_table_of_conten
 from .models import Limits, ValidationError, ValidationResult, EmbedDirective, ProcessingStats
 from .discovery import discover_files, discover_embeds_in_file, discover_all_embeds, build_dependency_graph
 from .validation import validate_all
+from .sandbox import SandboxConfig, create_sandbox, check_sandbox
 
 __version__ = '0.4.0'
 
@@ -49,4 +50,9 @@ __all__ = [
 
     # Validation
     'validate_all',
+
+    # Sandbox
+    'SandboxConfig',
+    'create_sandbox',
+    'check_sandbox',
 ]
