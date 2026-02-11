@@ -3,15 +3,9 @@ version 0.4.0
 
 Embed files, code, and content directly into Markdown — and keep them in sync.
 
-  - [Why EmbedM?](#why-embedm)
-  - [See It In Action](#see-it-in-action)
-  - [Quick Start](#quick-start)
-  - [Features](#features)
-  - [Documentation](#documentation)
-  - [Safety and Validation](#safety-and-validation)
-  - [Project Background](#project-background)
-  - [License](#license)
-  - [Contributing](#contributing)
+```yaml embedm
+type: toc
+```
 
 ## Why EmbedM?
 
@@ -31,15 +25,10 @@ region: connect
 
 EmbedM produces:
 
-```py
-def connect(host, port=5432, timeout=30):
-    """Establish a database connection."""
-    conn = Database.connect(
-        host=host,
-        port=port,
-        timeout=timeout,
-    )
-    return conn
+```yaml embedm
+type: file
+source: examples/demo.py
+region: connect
 ```
 
 The embedded code is pulled directly from the source file. When `demo.py` changes, the docs update automatically on the next compile.
@@ -52,12 +41,10 @@ source: examples/demo.py
 symbol: query
 ````
 
-```py
-def query(conn, sql, params=None):
-    """Execute a parameterized query safely."""
-    cursor = conn.cursor()
-    cursor.execute(sql, params or [])
-    return cursor.fetchall()
+```yaml embedm
+type: file
+source: examples/demo.py
+symbol: query
 ```
 
 ## Quick Start

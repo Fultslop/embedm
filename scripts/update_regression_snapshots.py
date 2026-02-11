@@ -29,6 +29,7 @@ from embedm.phases import PhaseProcessor
 SUITES = [
     ("regression", "tests/regression/sources", "tests/regression/snapshots", ["data"]),
     ("manual", "doc/manual/src", "doc/manual/src/compiled", ["compiled", "examples"]),
+    ("readme", "doc/readme/src", "doc/readme/compiled", ["compiled", "examples"]),
 ]
 
 
