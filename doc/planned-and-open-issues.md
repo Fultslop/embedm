@@ -4,6 +4,9 @@
 
 - Add manuals for toc / tables / layout / mermaid.
 
+- Goal should be to compile to md, html styling is available in some case but generally is discouraged. Use other tools for postprocessing / beautifying.
+    - for line numbers add an option to abbreviate and a link `line-numbers: short` adds line x-y to the top and `link: true false (default)` results in [filename]() line x - y
+
 - Add a 'manual' which provides an overview of all manuals
 
 - Create a 'synopsis' plugin and manual.
@@ -16,11 +19,11 @@
 
 - Move doc/examples to regression tests, where the current regression doesn't cover them
 
+## Mid / Long term priority features / fixes
+
 - Create a plugin to insert versions / build dates / ...
 
-## Long term priority features / fixes
-
-- Add a final "Transform"/"Output" phase mapping to md, html, pdf (?) or txt.
+- Add a final "Transform"/"Output" phase mapping to md, html, pdf (?) or txt. Something DocSaurus can / should do ?
 
 - Add caching, so embeddings won't need to be recompiled if not touched. 
 
