@@ -1,0 +1,6 @@
+[
+  {"id": 1, "endpoint": "/api/users", "method": "GET", "auth": true},
+  {"id": 2, "endpoint": "/api/users", "method": "POST", "auth": true},
+  {"id": 3, "endpoint": "/api/health", "method": "GET", "auth": false},
+  {"id": 4, "endpoint": "/api/docs", "method": "GET", "auth": false}
+]

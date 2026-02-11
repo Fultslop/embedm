@@ -6,12 +6,6 @@
 
 - Add a 'manual' which provides an overview of all manuals
 
-- Add a final "Transform"/"Output" phase mapping to md, html, pdf (?) or txt.
-
-- Add caching, so embeddings won't need to be recompiled if not touched. 
-
-- For large projects create a dependency tree, enabling a split to distribute embeddings in a directory over various threads.
-
 - Create a 'synopsis' plugin and manual.
 
 - Add a `--verify` mode that fails if compiled output is stale. Enables CI pipelines to catch outdated docs.
@@ -26,6 +20,13 @@
 
 ## Long term priority features / fixes
 
+- Add a final "Transform"/"Output" phase mapping to md, html, pdf (?) or txt.
+
+- Add caching, so embeddings won't need to be recompiled if not touched. 
+
+- For large projects create a dependency tree, enabling a split to distribute embeddings in a directory over various threads.
+
+
 - Watch mode (`--watch`) that recompiles when source files or embedded targets change.
 
 - Symbol extraction for Rust, PHP, Kotlin, and TypeScript-specific syntax (decorators, traits, etc.).
@@ -37,6 +38,8 @@
 - Source URL annotation — optionally emit a comment or link back to the original file and line range.
 
 - MkDocs / Docusaurus integration guides to capture organic search traffic from those ecosystems.
+
+- Excel table insertion in a new project which uses this core project
 
 ## Undecided Features 
 
