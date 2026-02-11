@@ -79,7 +79,7 @@ def slugify(text: str) -> str:
     return result
 
 
-def generate_table_of_contents(content: str, source_file: str = None, current_file_dir: str = None) -> str:
+def generate_table_of_contents(content: str, source_file: str = None, current_file_dir: str = None, max_depth: int = None) -> str:
     """
     Generates a table of contents from markdown headings
 
@@ -87,6 +87,7 @@ def generate_table_of_contents(content: str, source_file: str = None, current_fi
         content: Markdown content to generate TOC from (used if source_file is None)
         source_file: Optional path to file to read and generate TOC from
         current_file_dir: Directory of the file containing the TOC embed (for resolving relative paths)
+        max_depth: Maximum heading depth to include (e.g., 2 = # and ## only). None means no limit.
 
     Returns:
         Generated table of contents as markdown list
@@ -117,6 +118,11 @@ def generate_table_of_contents(content: str, source_file: str = None, current_fi
             continue
 
         level = len(match.group(1))
+
+        # Skip headings deeper than max_depth
+        if max_depth is not None and level > max_depth:
+            continue
+
         text = match.group(2).strip()
 
         # Generate slug (GitHub style)

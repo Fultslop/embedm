@@ -2,8 +2,6 @@
 
 ## High priority features / fixes
 
-- Improve README with a "Why EmbedM?" section and a concise before/after example.
-
 - Add a feature to the ToC plugin to select depth of sections. This should enable pruning less relevant sections.
 
 - Add manuals for toc / tables / layout / mermaid.
@@ -27,6 +25,8 @@
 - Fix TOC generator to skip `#` lines inside fenced code blocks.
 
 - Move doc/examples to regression tests, where the current regression doesn't cover them
+
+- Create a plugin to insert versions / build dates / ...
 
 ## Long term priority features / fixes
 
@@ -87,6 +87,8 @@ It's an interesting thought and therefore worth capturing but I'd leave that res
 
 
 ## Completed features
+
+- 11/02/26 Improve README with a "Why EmbedM?" section and a concise before/after example.
 
 - class , function region, test java, js, c++, c, rust
 

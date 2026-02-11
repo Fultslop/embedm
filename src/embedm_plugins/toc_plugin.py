@@ -54,6 +54,7 @@ class TOCPlugin(EmbedPlugin):
         """Valid properties for TOC embeds."""
         return [
             "source",  # Optional: file to generate TOC from
+            "depth",   # Optional: max heading depth to include (e.g., 2 = # and ## only)
         ]
 
     def process(
@@ -83,6 +84,9 @@ class TOCPlugin(EmbedPlugin):
         # Check if source file is specified
         source = properties.get('source')
 
+        depth = properties.get('depth')
+        max_depth = int(depth) if depth is not None else None
+
         if source:
             # Generate TOC from specified file
             target_path = os.path.abspath(os.path.join(current_file_dir, source))
@@ -96,18 +100,20 @@ class TOCPlugin(EmbedPlugin):
             except Exception as e:
                 return f"> [!CAUTION]\n> **TOC Error:** Could not read `{source}`: {str(e)}"
 
-            return self._generate_toc(content)
+            return self._generate_toc(content, max_depth=max_depth)
         else:
             # This case requires full document content which isn't available
             # in the plugin interface yet. Return None to signal that this
             # should be handled by the POST_PROCESS phase handler.
             return None
 
-    def _generate_toc(self, content: str) -> str:
+    def _generate_toc(self, content: str, max_depth: int = None) -> str:
         """Generate table of contents from markdown content.
 
         Args:
             content: Markdown content to parse for headings
+            max_depth: Maximum heading depth to include (e.g., 2 = # and ## only).
+                       None means no limit.
 
         Returns:
             Generated table of contents as markdown list
@@ -124,6 +130,10 @@ class TOCPlugin(EmbedPlugin):
                 continue
 
             level = len(match.group(1))
+
+            # Skip headings deeper than max_depth
+            if max_depth is not None and level > max_depth:
+                continue
             text = match.group(2).strip()
 
             # Generate slug (GitHub style)

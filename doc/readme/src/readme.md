@@ -1,7 +1,7 @@
 # EmbedM
 version 0.4.0
 
-Embed files, code, and content directly into Markdown — and keep them in sync.
+Safely embed files, code, and content directly into Markdown — and keep them in sync.
 
 ```yaml embedm
 type: toc
@@ -11,7 +11,7 @@ type: toc
 
 If you've ever copied code into documentation, later changed the code, and forgot to update the docs — your documentation is already out of date.
 
-EmbedM lets you embed code, data, and file fragments directly from source files into Markdown, safely and repeatably. When the source changes, recompile and your docs are current.
+EmbedM lets you embed code, data, and file fragments directly from source files into Markdown, safely and repeatably. When the source changes, recompile and your docs are up-to-date.
 
 ## See It In Action
 
@@ -69,13 +69,16 @@ embedm input.md --dry-run          # validate without writing
 - **File embedding** — entire files or specific line ranges (`L10-20`)
 - **Named regions** — extract sections marked with `md.start:name` / `md.end:name`
 - **Symbol extraction** — embed functions, classes, or methods by name (Python, JS, C#, Java, C/C++, Go, SQL)
+
+- **File access sandbox** — restricts source paths to the project root by default
+- **Safety limits** — configurable caps on file size, recursion depth, embed count, and output size
+
 - **Line numbers** — text or styled HTML line numbers
-- **CSV to table** — automatic Markdown table conversion
+- **CSV/Json to table** — automatic Markdown table conversion
 - **Table of contents** — generated from document headings
 - **Layouts** — multi-column/row flexbox-based layouts
 - **Recursive embedding** — Markdown files that embed other Markdown files
-- **Safety limits** — configurable caps on file size, recursion depth, embed count, and output size
-- **File access sandbox** — restricts source paths to the project root by default
+- **Simplified mermaid charts** - Add mermaid flowcharts using a shorthand notation.
 
 ## Documentation
 
