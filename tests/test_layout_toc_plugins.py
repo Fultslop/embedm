@@ -121,6 +121,76 @@ class TestTOCPlugin:
         assert "> [!CAUTION]" in result
         assert "not found" in result.lower()
 
+    def test_process_toc_with_depth(self, tmp_path):
+        """Test TOC generation with depth limit from external file."""
+        doc_file = tmp_path / "document.md"
+        doc_file.write_text(
+            "# Main Title\n\n"
+            "## Section 1\n\n"
+            "### Subsection 1.1\n\n"
+            "#### Detail 1.1.1\n\n"
+            "## Section 2\n\n"
+            "### Subsection 2.1\n\n"
+        )
+
+        plugin = TOCPlugin()
+
+        # depth: 2 should include only # and ##
+        result = plugin.process(
+            properties={"source": "document.md", "depth": 2},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "- [Main Title](#main-title)" in result
+        assert "- [Section 1](#section-1)" in result
+        assert "- [Section 2](#section-2)" in result
+        assert "Subsection" not in result
+        assert "Detail" not in result
+
+    def test_process_toc_depth_includes_up_to_level(self, tmp_path):
+        """Test that depth: 3 includes h1, h2, and h3 but not h4."""
+        doc_file = tmp_path / "document.md"
+        doc_file.write_text(
+            "# Title\n\n"
+            "## Section\n\n"
+            "### Subsection\n\n"
+            "#### Detail\n\n"
+        )
+
+        plugin = TOCPlugin()
+        result = plugin.process(
+            properties={"source": "document.md", "depth": 3},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "- [Title](#title)" in result
+        assert "- [Section](#section)" in result
+        assert "- [Subsection](#subsection)" in result
+        assert "Detail" not in result
+
+    def test_process_toc_no_depth_includes_all(self, tmp_path):
+        """Test that omitting depth includes all heading levels."""
+        doc_file = tmp_path / "document.md"
+        doc_file.write_text(
+            "# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n"
+        )
+
+        plugin = TOCPlugin()
+        result = plugin.process(
+            properties={"source": "document.md"},
+            current_file_dir=str(tmp_path),
+            processing_stack=set()
+        )
+
+        assert "- [H1](#h1)" in result
+        assert "- [H2](#h2)" in result
+        assert "- [H3](#h3)" in result
+        assert "- [H4](#h4)" in result
+        assert "- [H5](#h5)" in result
+        assert "- [H6](#h6)" in result
+
 
 class TestAllPluginsIntegration:
     """Test all plugins together."""

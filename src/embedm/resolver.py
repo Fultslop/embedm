@@ -175,7 +175,11 @@ def resolve_table_of_contents(content: str, source_file_path: str = None) -> str
                     content_after_toc
                 )
 
-                return generate_table_of_contents(temp_content)
+                # Pass depth property if specified
+                depth = properties.get('depth')
+                max_depth = int(depth) if depth is not None else None
+
+                return generate_table_of_contents(temp_content, max_depth=max_depth)
 
             return result
         elif embed_type == 'comment':

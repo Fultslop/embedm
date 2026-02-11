@@ -17,7 +17,7 @@ limits:
   max_output_size: "10MB"
 
   # Maximum size of embedded text snippets
-  max_embed_text: "2KB"
+  max_embed_text: "35KB"
 
 # Output Configuration
 output:

@@ -349,6 +349,61 @@ class TestGenerateTableOfContents(unittest.TestCase):
         result = generate_table_of_contents(content)
         self.assertIn('[Hello, World!](#hello-world)', result)
 
+    def test_headings_inside_fenced_code_blocks_ignored(self):
+        """TOC should not pick up # lines from inside fenced code blocks."""
+        content = (
+            "# Real Heading\n\n"
+            "```python\n"
+            "# This is a comment, not a heading\n"
+            "## Also not a heading\n"
+            "```\n\n"
+            "## Another Real Heading\n"
+        )
+        result = generate_table_of_contents(content)
+        self.assertIn('- [Real Heading](#real-heading)', result)
+        self.assertIn('- [Another Real Heading](#another-real-heading)', result)
+        self.assertNotIn('comment', result.lower())
+        self.assertNotIn('Also not', result)
+
+    def test_headings_inside_yaml_code_blocks_ignored(self):
+        """TOC should not pick up # lines from YAML code blocks."""
+        content = (
+            "# Title\n\n"
+            "```yaml\n"
+            "# yaml comment\n"
+            "key: value\n"
+            "```\n\n"
+            "## Section\n"
+        )
+        result = generate_table_of_contents(content)
+        self.assertIn('- [Title](#title)', result)
+        self.assertIn('- [Section](#section)', result)
+        self.assertNotIn('yaml comment', result)
+
+    def test_max_depth_filters_deep_headings(self):
+        content = "# H1\n## H2\n### H3\n#### H4\n##### H5"
+        result = generate_table_of_contents(content, max_depth=2)
+        self.assertIn('- [H1](#h1)', result)
+        self.assertIn('  - [H2](#h2)', result)
+        self.assertNotIn('H3', result)
+        self.assertNotIn('H4', result)
+        self.assertNotIn('H5', result)
+
+    def test_max_depth_none_includes_all(self):
+        content = "# H1\n## H2\n### H3\n#### H4"
+        result = generate_table_of_contents(content, max_depth=None)
+        self.assertIn('- [H1](#h1)', result)
+        self.assertIn('  - [H2](#h2)', result)
+        self.assertIn('    - [H3](#h3)', result)
+        self.assertIn('      - [H4](#h4)', result)
+
+    def test_max_depth_1_only_h1(self):
+        content = "# Title\n## Section\n### Sub"
+        result = generate_table_of_contents(content, max_depth=1)
+        self.assertIn('- [Title](#title)', result)
+        self.assertNotIn('Section', result)
+        self.assertNotIn('Sub', result)
+
 
 class TestResolveContentIntegration(unittest.TestCase):
     """Integration tests for resolve_content function"""
@@ -611,11 +666,50 @@ type: toc
 type: file
 source: test.py
 ```"""
-        
+
         result = resolve_table_of_contents(content)
         # Non-TOC embeds should be left alone
         self.assertIn('```yaml', result)
         self.assertIn('type: file', result)
+
+    def test_toc_with_depth(self):
+        content = """# Main Title
+
+```yaml embedm
+type: toc
+depth: 2
+```
+
+## Section 1
+### Subsection 1.1
+#### Detail 1.1.1
+## Section 2
+### Subsection 2.1"""
+
+        result = resolve_table_of_contents(content)
+        # depth: 2 should include ## but not ### or ####
+        self.assertIn('- [Section 1](#section-1)', result)
+        self.assertIn('- [Section 2](#section-2)', result)
+        # TOC links for deeper headings should not be present
+        self.assertNotIn('[Subsection', result)
+        self.assertNotIn('[Detail', result)
+
+    def test_toc_depth_no_limit(self):
+        content = """# Title
+
+```yaml embedm
+type: toc
+```
+
+## H2
+### H3
+#### H4"""
+
+        result = resolve_table_of_contents(content)
+        # No depth specified, all levels included
+        self.assertIn('- [H2](#h2)', result)
+        self.assertIn('- [H3](#h3)', result)
+        self.assertIn('- [H4](#h4)', result)
 
 
 class TestFormatWithLineNumbersHTML(unittest.TestCase):
