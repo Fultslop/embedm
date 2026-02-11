@@ -2,12 +2,8 @@
 
 ## High priority features / fixes
 
-- Add manuals for toc / tables / layout / mermaid.
-
 - Goal should be to compile to md, html styling is available in some case but generally is discouraged. Use other tools for postprocessing / beautifying.
     - for line numbers add an option to abbreviate and a link `line-numbers: short` adds line x-y to the top and `link: true false (default)` results in [filename]() line x - y
-
-- Add a 'manual' which provides an overview of all manuals
 
 - Create a 'synopsis' plugin and manual.
 
@@ -89,6 +85,10 @@ It's an interesting thought and therefore worth capturing but I'd leave that res
 
 
 ## Completed features
+
+- 11/02/26 Add manuals for toc / tables / layout / mermaid.
+
+
 
 - 11/02/26 Fix TOC generator to skip `#` lines inside fenced code blocks.
 
