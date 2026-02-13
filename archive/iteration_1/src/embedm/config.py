@@ -6,14 +6,13 @@ for directory-level processing configuration.
 
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
+
 import os
 import yaml
-
 
 class ConfigValidationError(Exception):
     """Raised when config file has invalid values."""
     pass
-
 
 @dataclass
 class EmbedMConfig:

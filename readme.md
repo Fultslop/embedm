@@ -1,5 +1,5 @@
 # EmbedM
-version 0.4.0
+Iteration 2 - version 0.1.0
 
 Safely embed files, code, and content directly into Markdown — and keep them in sync.
 
@@ -95,18 +95,6 @@ embedm input.md --dry-run          # validate without writing
 
 ## Documentation
 
-| Manual | Description |
-|--------|-------------|
-| [File Embedding](doc/manual/src/compiled/embed_file.md) | Embedding files, line ranges, regions, and line numbers |
-| [Symbol Extraction](doc/manual/src/compiled/embed_symbols.md) | Extracting functions, classes, and methods by name |
-| [Table Embedding](doc/manual/src/compiled/embed_tables.md) | Embedding CSV, JSON, and TSV files as Markdown tables |
-| [Table of Contents](doc/manual/src/compiled/embed_toc.md) | Generating tables of contents from document headings |
-| [Layouts](doc/manual/src/compiled/embed_layout.md) | Multi-column and multi-row flexbox layouts |
-| [Mermaid Flowcharts](doc/manual/src/compiled/embed_mermaid.md) | Shorthand notation for linear Mermaid flowcharts |
-| [CLI Reference](doc/manual/src/compiled/cli.md) | All command-line options, limits, and sandbox configuration |
-| [Plugin System](doc/manual/src/compiled/plugins.md) | Writing custom embed plugins |
-| [Adding Languages](doc/manual/src/compiled/adding_languages.md) | Adding symbol extraction for new programming languages |
-
 ## Safety and Validation
 
 EmbedM uses a three-phase pipeline — **Discovery, Validation, Execution** — that checks all files, limits, and dependencies before writing any output. Errors are reported upfront with file:line references. A file access sandbox restricts embeds to the project root (detected via git), with `--allow-path` for exceptions.
@@ -118,6 +106,14 @@ Use `--dry-run` to validate without processing, or `--force` to embed warnings i
 EmbedM is part of an exploration into how far AI-assisted development can go when building a non-trivial, production-style tool. This project has been built primarily using [Claude](https://claude.ai/) and [Google Gemini](https://gemini.google.com/app).
 
 The goal is not just to demo AI, but to see whether AI-assisted development can produce software that is readable, testable, maintainable, and genuinely useful.
+
+The first iteration of this project was a usable proof of concept. Concepts were explored, the projects scope was set and features were delivered (unless halicunated). However, the code driving these features was "less than optimial". Having unittests, test coverage and regression tests was not enough to keep the AI on track. The result of this first iteration can be found in [the archive](./archive/iteration_1/).
+
+Based on these findings, reading up on people with similar experiences and consulting with a knowledgable AI assistant or two, the next iteration would add some more guardrails:
+
+* Create an document outlining the goals and constraint of the project and code.
+* Identifying core features and create a scaffolding to which the ai has to stick.
+* Add more automation tooling to detect the AI going off rails. 
 
 ## License
 
