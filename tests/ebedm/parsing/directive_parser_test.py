@@ -1,10 +1,16 @@
 from embedm.domain.directive import Directive
+from embedm.domain.span import Span
 from embedm.domain.status_level import StatusLevel
 from embedm.parsing.directive_parser import (
     find_yaml_embed_block,
     parse_yaml_embed_block,
     parse_yaml_embed_blocks,
 )
+
+
+def _span_text(content: str, span: Span) -> str:
+    """Extract text from content using a Span."""
+    return content[span.offset : span.offset + span.length]
 
 
 # --- parse_yaml_embed_block: happy path ---
@@ -138,9 +144,11 @@ def test_parse_blocks_single_block():
 
     assert errors == []
     assert len(fragments) == 3
-    assert fragments[0] == "Text before\n"
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == "Text before\n"
     assert fragments[1] == Directive(type="hello_world")
-    assert fragments[2] == "Text after\n"
+    assert isinstance(fragments[2], Span)
+    assert _span_text(content, fragments[2]) == "Text after\n"
 
 
 def test_parse_blocks_multiple_blocks():
@@ -160,11 +168,14 @@ def test_parse_blocks_multiple_blocks():
 
     assert errors == []
     assert len(fragments) == 5
-    assert fragments[0] == "Intro\n"
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == "Intro\n"
     assert fragments[1] == Directive(type="hello_world")
-    assert fragments[2] == "Middle\n"
+    assert isinstance(fragments[2], Span)
+    assert _span_text(content, fragments[2]) == "Middle\n"
     assert fragments[3] == Directive(type="file_embed", source="example.py")
-    assert fragments[4] == "End\n"
+    assert isinstance(fragments[4], Span)
+    assert _span_text(content, fragments[4]) == "End\n"
 
 
 def test_parse_blocks_no_blocks():
@@ -173,7 +184,8 @@ def test_parse_blocks_no_blocks():
 
     assert errors == []
     assert len(fragments) == 1
-    assert fragments[0] == content
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == content
 
 
 # --- parse_yaml_embed_blocks: edge cases ---
@@ -198,7 +210,8 @@ def test_parse_blocks_block_at_start():
     assert errors == []
     assert len(fragments) == 2
     assert fragments[0] == Directive(type="hello_world")
-    assert fragments[1] == "Text after\n"
+    assert isinstance(fragments[1], Span)
+    assert _span_text(content, fragments[1]) == "Text after\n"
 
 
 def test_parse_blocks_block_at_end():
@@ -212,7 +225,8 @@ def test_parse_blocks_block_at_end():
 
     assert errors == []
     assert len(fragments) == 2
-    assert fragments[0] == "Text before\n"
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == "Text before\n"
     assert fragments[1] == Directive(type="hello_world")
 
 
@@ -230,7 +244,8 @@ def test_parse_blocks_unclosed_fence_reports_error():
     assert len(errors) == 1
     assert errors[0].level == StatusLevel.ERROR
     assert len(fragments) == 1
-    assert fragments[0] == "Text before\n"
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == "Text before\n"
 
 
 def test_parse_blocks_missing_type_reports_error():
@@ -246,8 +261,10 @@ def test_parse_blocks_missing_type_reports_error():
     assert len(errors) == 1
     assert errors[0].level == StatusLevel.ERROR
     assert len(fragments) == 2
-    assert fragments[0] == "Text before\n"
-    assert fragments[1] == "Text after\n"
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == "Text before\n"
+    assert isinstance(fragments[1], Span)
+    assert _span_text(content, fragments[1]) == "Text after\n"
 
 
 def test_parse_blocks_skips_invalid_continues_to_valid():
@@ -267,7 +284,10 @@ def test_parse_blocks_skips_invalid_continues_to_valid():
     assert len(errors) == 1
     assert errors[0].level == StatusLevel.ERROR
     assert len(fragments) == 4
-    assert fragments[0] == "Intro\n"
-    assert fragments[1] == "Middle\n"
+    assert isinstance(fragments[0], Span)
+    assert _span_text(content, fragments[0]) == "Intro\n"
+    assert isinstance(fragments[1], Span)
+    assert _span_text(content, fragments[1]) == "Middle\n"
     assert fragments[2] == Directive(type="hello_world")
-    assert fragments[3] == "End\n"
+    assert isinstance(fragments[3], Span)
+    assert _span_text(content, fragments[3]) == "End\n"

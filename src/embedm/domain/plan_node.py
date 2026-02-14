@@ -11,6 +11,6 @@ from .document import Document
 @dataclass
 class PlanNode:
     directive: Directive
-    status: Status
-    document: Document
-    children: list[PlanNode]
+    status: list[Status]
+    document: Document | None
+    children: list[PlanNode] | None

@@ -55,3 +55,38 @@ def test_reject_plugin():
         assert registry.count == 0
         assert registry.get_plugin(plugin_name) is None
         assert registry.get_plugin('foo') is None
+
+
+# --- find_plugin_by_directive_type ---
+
+
+def test_find_plugin_by_directive_type_returns_matching_plugin():
+    registry = PluginRegistry()
+    mock_plugin = MagicMock(spec=PluginBase)
+    mock_plugin.name = "hello_world"
+    mock_plugin.directive_type = "hello_world"
+    registry.lookup["hello_world"] = mock_plugin
+
+    result = registry.find_plugin_by_directive_type("hello_world")
+
+    assert result is mock_plugin
+
+
+def test_find_plugin_by_directive_type_returns_none_when_not_found():
+    registry = PluginRegistry()
+    mock_plugin = MagicMock(spec=PluginBase)
+    mock_plugin.name = "hello_world"
+    mock_plugin.directive_type = "hello_world"
+    registry.lookup["hello_world"] = mock_plugin
+
+    result = registry.find_plugin_by_directive_type("unknown_type")
+
+    assert result is None
+
+
+def test_find_plugin_by_directive_type_empty_registry():
+    registry = PluginRegistry()
+
+    result = registry.find_plugin_by_directive_type("hello_world")
+
+    assert result is None
