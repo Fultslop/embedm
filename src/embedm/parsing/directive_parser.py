@@ -5,6 +5,7 @@ import yaml
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
+from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 
 EMBEDM_FENCE_PATTERN = re.compile(r"^```yaml embedm\s*$", re.MULTILINE)
@@ -113,9 +114,9 @@ def parse_yaml_embed_blocks(content: str) -> tuple[list[Fragment], list[Status]]
     position = 0
 
     for block in raw_blocks:
-        text_before = content[position : block.start]
-        if text_before:
-            fragments.append(text_before)
+        text_length = block.start - position
+        if text_length > 0:
+            fragments.append(Span(position, text_length))
 
         directive, block_errors = parse_yaml_embed_block(block.raw_content)
         if directive is not None:
@@ -124,8 +125,8 @@ def parse_yaml_embed_blocks(content: str) -> tuple[list[Fragment], list[Status]]
 
         position = block.end
 
-    remaining = content[position:content_end]
-    if remaining:
-        fragments.append(remaining)
+    remaining_length = content_end - position
+    if remaining_length > 0:
+        fragments.append(Span(position, remaining_length))
 
     return fragments, errors

@@ -33,3 +33,10 @@ class PluginRegistry:
 
     def get_plugin(self, name: str) -> PluginBase | None:
         return self.lookup.get(name)
+
+    def find_plugin_by_directive_type(self, directive_type: str) -> PluginBase | None:
+        """Find a plugin that handles the given directive type."""
+        for plugin in self.lookup.values():
+            if plugin.directive_type == directive_type:
+                return plugin
+        return None
