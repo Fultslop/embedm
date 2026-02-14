@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache, FileState, WriteMode
 
 
@@ -247,3 +248,207 @@ def test_get_files_recursive_wildcard(tmp_path: Path):
     assert len(files) == 2
     assert str(tmp_path / "root.md") in files
     assert str(sub / "nested.md") in files
+
+
+# --- validate: error cases ---
+
+
+def test_validate_path_not_allowed(tmp_path: Path):
+    test_file = tmp_path / "readme.md"
+    test_file.write_text("hello")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path / "other")],
+    )
+    errors = cache.validate(str(test_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.FATAL
+
+
+def test_validate_file_does_not_exist(tmp_path: Path):
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+    )
+    errors = cache.validate(str(tmp_path / "missing.md"))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+def test_validate_file_exceeds_max_size(tmp_path: Path):
+    test_file = tmp_path / "large.md"
+    test_file.write_text("x" * 100)
+
+    cache = FileCache(
+        max_file_size=50,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+    )
+    errors = cache.validate(str(test_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+# --- get_file: error cases ---
+
+
+def test_get_file_path_not_allowed(tmp_path: Path):
+    test_file = tmp_path / "readme.md"
+    test_file.write_text("hello")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path / "other")],
+    )
+    content, errors = cache.get_file(str(test_file))
+
+    assert content is None
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.FATAL
+
+
+def test_get_file_reloads_evicted_file(tmp_path: Path):
+    file_a = tmp_path / "a.md"
+    file_b = tmp_path / "b.md"
+    file_a.write_text("aaaa")
+    file_b.write_text("bbbb")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4,
+        allowed_paths=[str(tmp_path)],
+    )
+
+    cache.get_file(str(file_a))
+    # loading b evicts a
+    cache.get_file(str(file_b))
+    assert cache.get_file_state(str(file_a)) == FileState.UNLOADED
+
+    # reloading a should work (reloads from disk, evicts b)
+    content, errors = cache.get_file(str(file_a))
+
+    assert errors == []
+    assert content == "aaaa"
+    assert cache.get_file_state(str(file_a)) == FileState.LOADED
+    assert cache.get_file_state(str(file_b)) == FileState.UNLOADED
+
+
+# --- get_file: LRU behavior ---
+
+
+def test_get_file_access_promotes_entry_preventing_eviction(tmp_path: Path):
+    file_a = tmp_path / "a.md"
+    file_b = tmp_path / "b.md"
+    file_c = tmp_path / "c.md"
+    file_a.write_text("aaaa")
+    file_b.write_text("bbbb")
+    file_c.write_text("cccc")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=8,
+        allowed_paths=[str(tmp_path)],
+    )
+
+    cache.get_file(str(file_a))
+    cache.get_file(str(file_b))
+
+    # re-access a, promoting it to front
+    cache.get_file(str(file_a))
+
+    # loading c should now evict b (least recently used), not a
+    cache.get_file(str(file_c))
+
+    assert cache.get_file_state(str(file_a)) == FileState.LOADED
+    assert cache.get_file_state(str(file_b)) == FileState.UNLOADED
+    assert cache.get_file_state(str(file_c)) == FileState.LOADED
+
+
+def test_get_file_evicts_multiple_to_fit_large_file(tmp_path: Path):
+    file_a = tmp_path / "a.md"
+    file_b = tmp_path / "b.md"
+    file_large = tmp_path / "large.md"
+    file_a.write_text("aa")   # 2 bytes
+    file_b.write_text("bb")   # 2 bytes
+    file_large.write_text("x" * 6)  # 6 bytes
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=6,
+        allowed_paths=[str(tmp_path)],
+    )
+
+    cache.get_file(str(file_a))
+    cache.get_file(str(file_b))
+
+    # loading large file needs 6 bytes, must evict both a and b
+    content, errors = cache.get_file(str(file_large))
+
+    assert errors == []
+    assert content == "x" * 6
+    assert cache.get_file_state(str(file_a)) == FileState.UNLOADED
+    assert cache.get_file_state(str(file_b)) == FileState.UNLOADED
+    assert cache.get_file_state(str(file_large)) == FileState.LOADED
+
+
+# --- write: error cases ---
+
+
+def test_write_path_not_allowed(tmp_path: Path):
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path / "allowed")],
+    )
+
+    written_path, errors = cache.write("content", str(tmp_path / "forbidden" / "out.md"))
+
+    assert written_path is None
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.FATAL
+
+
+def test_write_create_new_increments_past_existing(tmp_path: Path):
+    existing = tmp_path / "output.md"
+    existing.write_text("original")
+    (tmp_path / "output.0.md").write_text("version 0")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+        write_mode=WriteMode.CREATE_NEW,
+    )
+
+    written_path, errors = cache.write("version 1", str(existing))
+
+    assert errors == []
+    expected = str(tmp_path / "output.1.md")
+    assert written_path == expected
+    assert Path(expected).read_text() == "version 1"
+    # originals untouched
+    assert existing.read_text() == "original"
+    assert (tmp_path / "output.0.md").read_text() == "version 0"
+
+
+# --- get_files: error cases ---
+
+
+def test_get_files_no_matches(tmp_path: Path):
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+    )
+
+    files, errors = cache.get_files(str(tmp_path / "*.md"))
+
+    assert errors == []
+    assert files == []
