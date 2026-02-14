@@ -1,4 +1,4 @@
-from embedm.io.file_cache import FileCache
+from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .cli import parse_command_line_arguments
@@ -17,7 +17,7 @@ def main() -> None:
     # in the output directory and we're not doing a dry-run safe the config
 
     if len(errors) == 0:
-        file_cache = FileCache(config.max_file_size, config.max_memory)
+        file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
         plugin_registry = PluginRegistry()
         context = EmbedmContext(config, file_cache, plugin_registry)
 

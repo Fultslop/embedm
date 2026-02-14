@@ -1,7 +1,7 @@
 from embedm.domain.directive import Directive
 from embedm.domain.document import Document
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.io.file_cache import FileCache
+from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.transformer_base import NoParams

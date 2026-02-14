@@ -4,7 +4,7 @@ from typing import ClassVar
 from embedm.domain.directive import Directive
 from embedm.domain.document import Document
 from embedm.domain.status_level import Status
-from embedm.io.file_cache import FileCache
+from embedm.infrastructure.file_cache import FileCache
 
 from .plugin_configuration import PluginConfiguration
 
