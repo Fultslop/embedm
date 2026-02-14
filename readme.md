@@ -1,4 +1,10 @@
 # EmbedM
+
+> [!NOTE]
+> This project is to test the capabilities of AI code assistants. The first iteration yielded valuable insights but ultimately failed to produce valuable code. If you want to see the result, see the archive folder. The next iteration (2) has just started.
+> The readme still reflects the intentions of the project, so it's allowed to stay around.
+
+
 Iteration 2 - version 0.1.0
 
 Safely embed files, code, and content directly into Markdown — and keep them in sync.
