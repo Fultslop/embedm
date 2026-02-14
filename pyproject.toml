@@ -44,11 +44,7 @@ embedm = "embedm.cli:main"
 
 # md.start:entry_points
 [project.entry-points."embedm.plugins"]
-file = "embedm_plugins.file_plugin:FilePlugin"
-layout = "embedm_plugins.layout_plugin:LayoutPlugin"
-toc = "embedm_plugins.toc_plugin:TOCPlugin"
-table = "embedm_plugins.table_plugin:TablePlugin"
-mermaid = "embedm_plugins.mermaid_plugin:MermaidPlugin"
+hello_world = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
 # md.end:entry_points
 
 [build-system]
@@ -62,8 +58,12 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 testpaths = ["tests"]
-python_files = "test_*.py"
+norecursedirs = ["archive", ".*", "dist", "build"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*", "*_test"]
+
 addopts = [
     "--verbose",
     "--color=yes",

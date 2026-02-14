@@ -1,11 +1,15 @@
-from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import ClassVar, Generic, TypeVar
 
-from embedm.domain.directive import Directive
-from embedm.io.file_cache import FileCache
+TParams = TypeVar("TParams")
 
+# default implementation for a no params plugin
+@dataclass
+class NoParams:
+    pass
 
-class TransformerBase(ABC):
+class TransformerBase(Generic[TParams]):
+    params_type: ClassVar[type[TParams]]
 
-    @abstractmethod
-    def transform(self, directive: Directive, file_cache : FileCache) -> str:
-        pass
+    def execute(self, params: TParams) -> str:
+        raise NotImplementedError
