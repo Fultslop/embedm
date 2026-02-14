@@ -1,0 +1,273 @@
+from embedm.domain.directive import Directive
+from embedm.domain.status_level import StatusLevel
+from embedm.parsing.directive_parser import (
+    find_yaml_embed_block,
+    parse_yaml_embed_block,
+    parse_yaml_embed_blocks,
+)
+
+
+# --- parse_yaml_embed_block: happy path ---
+
+
+def test_parse_block_type_only():
+    yaml_content = "type: hello_world"
+    directive, errors = parse_yaml_embed_block(yaml_content)
+
+    assert directive == Directive(type="hello_world")
+    assert errors == []
+
+
+def test_parse_block_with_source():
+    yaml_content = "type: file_embed\nsource: myfile.py"
+    directive, errors = parse_yaml_embed_block(yaml_content)
+
+    assert directive == Directive(type="file_embed", source="myfile.py")
+    assert errors == []
+
+
+def test_parse_block_with_options():
+    yaml_content = "type: file_embed\nsource: myfile.py\nlines: 1-10\nlanguage: python"
+    directive, errors = parse_yaml_embed_block(yaml_content)
+
+    assert directive == Directive(
+        type="file_embed",
+        source="myfile.py",
+        options={"lines": "1-10", "language": "python"},
+    )
+    assert errors == []
+
+
+# --- parse_yaml_embed_block: error cases ---
+
+
+def test_parse_block_empty_string():
+    directive, errors = parse_yaml_embed_block("")
+
+    assert directive is None
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+def test_parse_block_missing_type():
+    directive, errors = parse_yaml_embed_block("source: myfile.py")
+
+    assert directive is None
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+def test_parse_block_invalid_yaml():
+    yaml_content = (
+        "type: some_type\n"
+        'forget_to_add_colon "value"\n'
+        ': "no_key"\n'
+        "#@#@:\n"
+    )
+    directive, errors = parse_yaml_embed_block(yaml_content)
+
+    assert directive is None
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+# --- find_yaml_embed_block: happy path ---
+
+
+def test_find_block_returns_match():
+    content = (
+        "Some text before\n"
+        "```yaml embedm\n"
+        "type: hello_world\n"
+        "```\n"
+        "Some text after\n"
+    )
+    result = find_yaml_embed_block(content)
+
+    assert result is not None
+    assert result.raw_content == "type: hello_world\n"
+    assert result.start == content.index("```yaml embedm\n")
+    assert result.end == content.index("```\nSome text after\n") + len("```\n")
+
+
+# --- find_yaml_embed_block: edge cases ---
+
+
+def test_find_block_returns_none_when_no_block():
+    result = find_yaml_embed_block("Just some regular markdown\nwith no embedm blocks\n")
+    assert result is None
+
+
+def test_find_block_empty_string():
+    result = find_yaml_embed_block("")
+    assert result is None
+
+
+def test_find_block_unclosed_fence():
+    content = "Some text\n```yaml embedm\ntype: hello_world\n"
+    result = find_yaml_embed_block(content)
+    assert result is None
+
+
+def test_find_block_ignores_non_embedm_fence():
+    content = "```yaml\nkey: value\n```\n"
+    result = find_yaml_embed_block(content)
+    assert result is None
+
+
+def test_find_block_empty_embedm_block():
+    content = "```yaml embedm\n```\n"
+    result = find_yaml_embed_block(content)
+
+    assert result is not None
+    assert result.raw_content == ""
+
+
+# --- parse_yaml_embed_blocks: happy path ---
+
+
+def test_parse_blocks_single_block():
+    content = (
+        "Text before\n"
+        "```yaml embedm\n"
+        "type: hello_world\n"
+        "```\n"
+        "Text after\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert errors == []
+    assert len(fragments) == 3
+    assert fragments[0] == "Text before\n"
+    assert fragments[1] == Directive(type="hello_world")
+    assert fragments[2] == "Text after\n"
+
+
+def test_parse_blocks_multiple_blocks():
+    content = (
+        "Intro\n"
+        "```yaml embedm\n"
+        "type: hello_world\n"
+        "```\n"
+        "Middle\n"
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        "source: example.py\n"
+        "```\n"
+        "End\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert errors == []
+    assert len(fragments) == 5
+    assert fragments[0] == "Intro\n"
+    assert fragments[1] == Directive(type="hello_world")
+    assert fragments[2] == "Middle\n"
+    assert fragments[3] == Directive(type="file_embed", source="example.py")
+    assert fragments[4] == "End\n"
+
+
+def test_parse_blocks_no_blocks():
+    content = "Just plain markdown\nwith no embeds\n"
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert errors == []
+    assert len(fragments) == 1
+    assert fragments[0] == content
+
+
+# --- parse_yaml_embed_blocks: edge cases ---
+
+
+def test_parse_blocks_empty_string():
+    fragments, errors = parse_yaml_embed_blocks("")
+
+    assert errors == []
+    assert fragments == []
+
+
+def test_parse_blocks_block_at_start():
+    content = (
+        "```yaml embedm\n"
+        "type: hello_world\n"
+        "```\n"
+        "Text after\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert errors == []
+    assert len(fragments) == 2
+    assert fragments[0] == Directive(type="hello_world")
+    assert fragments[1] == "Text after\n"
+
+
+def test_parse_blocks_block_at_end():
+    content = (
+        "Text before\n"
+        "```yaml embedm\n"
+        "type: hello_world\n"
+        "```\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert errors == []
+    assert len(fragments) == 2
+    assert fragments[0] == "Text before\n"
+    assert fragments[1] == Directive(type="hello_world")
+
+
+# --- parse_yaml_embed_blocks: error recovery ---
+
+
+def test_parse_blocks_unclosed_fence_reports_error():
+    content = (
+        "Text before\n"
+        "```yaml embedm\n"
+        "type: hello_world\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert len(fragments) == 1
+    assert fragments[0] == "Text before\n"
+
+
+def test_parse_blocks_missing_type_reports_error():
+    content = (
+        "Text before\n"
+        "```yaml embedm\n"
+        "source: myfile.py\n"
+        "```\n"
+        "Text after\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert len(fragments) == 2
+    assert fragments[0] == "Text before\n"
+    assert fragments[1] == "Text after\n"
+
+
+def test_parse_blocks_skips_invalid_continues_to_valid():
+    content = (
+        "Intro\n"
+        "```yaml embedm\n"
+        "source: missing_type.py\n"
+        "```\n"
+        "Middle\n"
+        "```yaml embedm\n"
+        "type: hello_world\n"
+        "```\n"
+        "End\n"
+    )
+    fragments, errors = parse_yaml_embed_blocks(content)
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert len(fragments) == 4
+    assert fragments[0] == "Intro\n"
+    assert fragments[1] == "Middle\n"
+    assert fragments[2] == Directive(type="hello_world")
+    assert fragments[3] == "End\n"
