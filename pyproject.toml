@@ -1,6 +1,6 @@
 [project]
 name = "embedm"
-version = "0.4.0"
+version = "0.5.0"
 description = "A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents with built-in safety limits and validation"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -102,13 +102,13 @@ include_external_packages = false
 name = "Domain must not import from infrastructure, cli, or application"
 type = "forbidden"
 source_modules = ["embedm.domain"]
-forbidden_modules = ["embedm.io", "embedm.application"]
+forbidden_modules = ["embedm.infrastructure", "embedm.application"]
 
 [[tool.importlinter.contracts]]
 name = "Parsing must not import from infrastructure or application"
 type = "forbidden"
 source_modules = ["embedm.parsing"]
-forbidden_modules = ["embedm.io", "embedm.application"]
+forbidden_modules = ["embedm.infrastructure", "embedm.application"]
 
 [[tool.importlinter.contracts]]
 name = "Plugins must not import from application"
@@ -117,9 +117,9 @@ source_modules = ["embedm.plugins"]
 forbidden_modules = ["embedm.application"]
 
 [[tool.importlinter.contracts]]
-name = "IO must not import from application, parsing, or plugins"
+name = "Infrastructure must not import from application, parsing, or plugins"
 type = "forbidden"
-source_modules = ["embedm.io"]
+source_modules = ["embedm.infrastructure"]
 forbidden_modules = ["embedm.application", "embedm.parsing", "embedm.plugins"]
 
 [[tool.importlinter.contracts]]
