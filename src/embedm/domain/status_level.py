@@ -8,6 +8,7 @@ class StatusLevel(Enum):
     ERROR = 3
     FATAL = 4
 
+
 @dataclass
 class Status:
     level: StatusLevel

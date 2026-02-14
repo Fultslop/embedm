@@ -13,7 +13,7 @@ class PluginRegistry:
         return len(self.lookup)
 
     def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> None:
-        plugins = entry_points(group='embedm.plugins')
+        plugins = entry_points(group="embedm.plugins")
 
         if verbose:
             print(f"discovered {len(plugins)} plugins.")

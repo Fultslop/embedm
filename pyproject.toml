@@ -92,6 +92,57 @@ exclude_lines = [
 
 
 # -------------------
+# IMPORT LINTER
+# -------------------
+[tool.importlinter]
+root_packages = ["embedm", "embedm_plugins"]
+include_external_packages = false
+
+[[tool.importlinter.contracts]]
+name = "Domain must not import from infrastructure, cli, or application"
+type = "forbidden"
+source_modules = ["embedm.domain"]
+forbidden_modules = ["embedm.io", "embedm.application"]
+
+[[tool.importlinter.contracts]]
+name = "Parsing must not import from infrastructure or application"
+type = "forbidden"
+source_modules = ["embedm.parsing"]
+forbidden_modules = ["embedm.io", "embedm.application"]
+
+[[tool.importlinter.contracts]]
+name = "Plugins must not import from application"
+type = "forbidden"
+source_modules = ["embedm.plugins"]
+forbidden_modules = ["embedm.application"]
+
+[[tool.importlinter.contracts]]
+name = "IO must not import from application, parsing, or plugins"
+type = "forbidden"
+source_modules = ["embedm.io"]
+forbidden_modules = ["embedm.application", "embedm.parsing", "embedm.plugins"]
+
+[[tool.importlinter.contracts]]
+name = "Embedm plugins must not import from application or parsing"
+type = "forbidden"
+source_modules = ["embedm_plugins"]
+forbidden_modules = ["embedm.application", "embedm.parsing"]
+
+# -------------------
+# VULTURE
+# -------------------
+[tool.vulture]
+paths = ["src/"]
+min_confidence = 80
+exclude = ["__pycache__"]
+
+# -------------------
+# RADON / XENON
+# -------------------
+# Xenon thresholds (run via CLI):
+#   xenon src/ --max-absolute B --max-modules A --max-average A
+
+# -------------------
 # RUFF
 # -------------------
 [tool.ruff]

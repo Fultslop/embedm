@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
-from embedm.application.configuration import Configuration
 from embedm.domain.directive import Directive
 from embedm.domain.document import Document
 from embedm.domain.status_level import Status
 from embedm.io.file_cache import FileCache
+
+from .plugin_configuration import PluginConfiguration
 
 
 class PluginBase(ABC):
@@ -23,7 +24,6 @@ class PluginBase(ABC):
         directive: Directive,
         document: Document | None = None,
         file_cache: FileCache | None = None,
-        configuration: Configuration | None = None,
+        configuration: PluginConfiguration | None = None,
     ) -> str:
-
         pass

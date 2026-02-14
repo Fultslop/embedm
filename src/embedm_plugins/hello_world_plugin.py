@@ -1,9 +1,9 @@
-from embedm.application.configuration import Configuration
 from embedm.domain.directive import Directive
 from embedm.domain.document import Document
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.io.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
+from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.transformer_base import NoParams
 from embedm_plugins.hello_world_transformer import HelloWorldTransformer
 
@@ -17,11 +17,9 @@ class HelloWorldPlugin(PluginBase):
         if directive.type != self.directive_type:
             return [
                 Status(
-                    # is fatal because this indicates a programming error, not
-                    # an input error
                     StatusLevel.FATAL,
                     f"directive type does not match. "
-                    f"Expected '{self.directive_type}', provided: '{directive.type}'."
+                    f"Expected '{self.directive_type}', provided: '{directive.type}'.",
                 )
             ]
         return []
@@ -31,8 +29,7 @@ class HelloWorldPlugin(PluginBase):
         _directive: Directive,
         _document: Document | None = None,
         _file_cache: FileCache | None = None,
-        _configuration: Configuration | None = None,
+        _configuration: PluginConfiguration | None = None,
     ) -> str:
-
         transform = HelloWorldTransformer()
         return transform.execute(NoParams())

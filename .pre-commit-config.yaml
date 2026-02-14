@@ -1,0 +1,45 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: ruff check ./src
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff format check
+        entry: ruff format --check ./src
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: mypy
+        name: mypy
+        entry: mypy ./src
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: import-linter
+        name: import-linter
+        entry: lint-imports
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      # TODO: re-enable vulture once skeleton code is filled in
+      # - id: vulture
+      #   name: vulture
+      #   entry: vulture src/ --min-confidence 80
+      #   language: system
+      #   types: [python]
+      #   pass_filenames: false
+
+      - id: xenon
+        name: xenon complexity
+        entry: xenon src/ --max-absolute B --max-modules A --max-average A
+        language: system
+        types: [python]
+        pass_filenames: false
