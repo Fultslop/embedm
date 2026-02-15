@@ -1,12 +1,19 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, ClassVar
 
 from embedm.domain.directive import Directive
-from embedm.domain.document import Document
+from embedm.domain.document import Fragment
+from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status
 from embedm.infrastructure.file_cache import FileCache
 
 from .plugin_configuration import PluginConfiguration
+
+if TYPE_CHECKING:
+    from .plugin_registry import PluginRegistry
 
 
 class PluginBase(ABC):
@@ -15,15 +22,17 @@ class PluginBase(ABC):
     directive_type: ClassVar[str]
 
     @abstractmethod
-    def validate_directive(self, directive: Directive) -> list[Status]:
+    def validate_directive(
+        self, directive: Directive, configuration: PluginConfiguration
+    ) -> list[Status]:
         pass
 
     @abstractmethod
     def transform(
         self,
-        directive: Directive,
-        document: Document | None = None,
+        plan_node: PlanNode,
+        parent_document: Sequence[Fragment],
         file_cache: FileCache | None = None,
-        configuration: PluginConfiguration | None = None,
+        plugin_registry: PluginRegistry | None = None,
     ) -> str:
         pass

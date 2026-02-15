@@ -4,6 +4,12 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 15/02/26 [Arch] Replace compiler with embedm_file_plugin — all document compilation logic lives in the plugin, no separate compiler needed
+
+* 15/02/26 [Arch] Root PlanNode uses embedm_file directive type so orchestration just dispatches to the plugin registry
+
+* 15/02/26 [Task] Implement compiler with DFS plan traversal, span resolution, and ordered plugin passes
+
 * 15/02/26 [Task] Implement planner with directive validation, recursion control, and tests
 
 * 15/02/26 [Arch] Plan-before-execute: validate all directives and sources before building the plan tree
