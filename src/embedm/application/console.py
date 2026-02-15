@@ -1,13 +1,25 @@
-from embedm.domain.plan_node import PlanNode
+from __future__ import annotations
+
+import sys
+from collections.abc import Sequence
+
+from embedm.domain.status_level import Status
 
 
 def present_title() -> None:
-    print("Ebedm version 0.5")
+    """Print the application banner."""
+    print("embedm v0.5")
 
 
-def present_plan(root: PlanNode, is_force_set: bool) -> bool:
-    raise NotImplementedError("todo")
+def present_errors(errors: Sequence[Status] | str) -> None:
+    """Print errors to stderr."""
+    if isinstance(errors, str):
+        print(f"error: {errors}", file=sys.stderr)
+        return
+    for error in errors:
+        print(f"error: {error.description}", file=sys.stderr)
 
 
-def present_arg_errors(errors: list[str]) -> None:
-    raise NotImplementedError("todo")
+def present_result(result: str) -> None:
+    """Print compilation result to stdout."""
+    print(result, end="")

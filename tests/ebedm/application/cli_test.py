@@ -9,6 +9,7 @@ from embedm.application.configuration import (
     DEFAULT_MAX_MEMORY,
     DEFAULT_MAX_RECURSION,
     DEFAULT_PLUGIN_SEQUENCE,
+    InputMode,
 )
 from embedm.domain.status_level import StatusLevel
 
@@ -20,6 +21,7 @@ def test_file_to_stdout() -> None:
     config, errors = parse_command_line_arguments(["my_content.md"])
 
     assert not errors
+    assert config.input_mode == InputMode.FILE
     assert config.input == "my_content.md"
     assert config.output_file is None
     assert config.output_directory is None
@@ -50,6 +52,7 @@ def test_dir_to_dir_short_flag() -> None:
     config, errors = parse_command_line_arguments(["./my_content", "-d", "./compiled"])
 
     assert not errors
+    assert config.input_mode == InputMode.DIRECTORY
     assert config.input == "./my_content"
     assert config.output_directory == "./compiled"
 
@@ -88,6 +91,7 @@ def test_stdin_to_stdout() -> None:
         config, errors = parse_command_line_arguments([])
 
     assert not errors
+    assert config.input_mode == InputMode.STDIN
     assert config.input == "piped content"
     assert config.output_file is None
 

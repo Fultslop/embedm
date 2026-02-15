@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 15/02/26 [Task] Wire up orchestration with CLI, planner, plugin dispatch, and output writing for FILE mode
+
 * 15/02/26 [Feat] Implement CLI argument parser with argparse — supports file, directory, stdin input modes and output options
 
 * 15/02/26 [Code] Convert Configuration to @dataclass with sensible defaults for limits and plugin sequence

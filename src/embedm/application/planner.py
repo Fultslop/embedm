@@ -1,3 +1,5 @@
+import os
+
 from embedm.domain.directive import Directive
 from embedm.domain.document import Document
 from embedm.domain.plan_node import PlanNode
@@ -33,7 +35,10 @@ def create_plan(directive: Directive, content: str, depth: int, context: EmbedmC
     document = Document(file_name=directive.source, fragments=fragments)
     directives = [f for f in fragments if isinstance(f, Directive)]
 
-    # steps 3-4: validate directives and source files
+    # step 3: resolve relative source paths against the parent file's directory
+    _resolve_source_paths(directives, directive.source)
+
+    # steps 4-5: validate directives and source files
     plugin_config = PluginConfiguration(
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
@@ -103,6 +108,16 @@ def _build_children(
         children.append(child)
 
     return children
+
+
+def _resolve_source_paths(directives: list[Directive], parent_source: str) -> None:
+    """Resolve relative directive sources against the parent file's directory."""
+    parent_dir = os.path.dirname(parent_source) if parent_source else ""
+    if not parent_dir:
+        return
+    for d in directives:
+        if d.source and not os.path.isabs(d.source):
+            d.source = os.path.normpath(os.path.join(parent_dir, d.source))
 
 
 def _error_node(directive: Directive, errors: list[Status]) -> PlanNode:

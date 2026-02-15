@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from embedm.application.embedm_context import EmbedmContext
-from embedm.application.planner import create_plan
+from embedm.application.planner import create_plan, plan_file
 from embedm.domain.directive import Directive
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
@@ -275,3 +275,62 @@ def test_create_plan_child_errors_dont_fail_parent(tmp_path: Path):
     assert plan.children is not None
     assert len(plan.children) == 1
     assert any(s.level == StatusLevel.ERROR for s in plan.children[0].status)
+
+
+# --- relative path resolution ---
+
+
+def test_create_plan_resolves_relative_source_against_parent(tmp_path: Path):
+    """A directive with a relative source is resolved against the parent file's directory."""
+    subdir = tmp_path / "docs"
+    subdir.mkdir()
+    child_file = subdir / "child.md"
+    child_file.write_text("child content\n")
+
+    context = _make_context(tmp_path)
+    _register_plugin(context, "file_embed")
+    # Parent directive lives in subdir
+    parent_directive = Directive(type="root", source=str(subdir / "root.md"))
+    content = (
+        "Before\n"
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        "source: ./child.md\n"
+        "```\n"
+    )
+
+    plan = create_plan(parent_directive, content, depth=0, context=context)
+
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    # Source should be resolved to the full path, not remain as ./child.md
+    assert "child.md" in plan.children[0].directive.source
+    assert plan.children[0].directive.source != "./child.md"
+
+
+def test_plan_file_resolves_nested_relative_paths(tmp_path: Path):
+    """End-to-end: plan_file resolves relative paths across nesting levels."""
+    subdir = tmp_path / "docs"
+    subdir.mkdir()
+    root_file = subdir / "root.md"
+    child_file = subdir / "chapter.md"
+
+    child_file.write_text("chapter content\n")
+    root_file.write_text(
+        "# Root\n"
+        "```yaml embedm\n"
+        "type: embedm_file\n"
+        "source: ./chapter.md\n"
+        "```\n"
+    )
+
+    context = _make_context(tmp_path)
+    _register_plugin(context, "embedm_file")
+
+    plan = plan_file(str(root_file), context)
+
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert str(child_file) in plan.children[0].directive.source

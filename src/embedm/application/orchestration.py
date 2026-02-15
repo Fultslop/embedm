@@ -1,54 +1,75 @@
+from __future__ import annotations
+
+import sys
+
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .cli import parse_command_line_arguments
-from .console import present_arg_errors, present_plan, present_title
+from .configuration import Configuration, InputMode
+from .console import present_errors, present_result, present_title
 from .embedm_context import EmbedmContext
 from .planner import plan_file
 
 
 def main() -> None:
+    """Entry point for the embedm CLI."""
     present_title()
 
-    # todo this should be done by the cli
     config, errors = parse_command_line_arguments()
-
-    # todo if an output directory is defined and the config doesn't exist
-    # in the output directory and we're not doing a dry-run safe the config
-
     if errors:
-        # todo present errors to user
-        present_arg_errors(["todo"])
-        return
+        present_errors(errors)
+        sys.exit(1)
 
+    context = _build_context(config)
+
+    if config.input_mode == InputMode.FILE:
+        result = _process_file(config.input, context)
+        _write_output(result, config)
+    elif config.input_mode == InputMode.DIRECTORY:
+        # TODO: expand directory into file list and process each
+        present_errors("directory mode not yet implemented")
+    elif config.input_mode == InputMode.STDIN:
+        # TODO: handle stdin content
+        present_errors("stdin mode not yet implemented")
+
+
+def _build_context(config: Configuration) -> EmbedmContext:
+    """Build the runtime context from configuration."""
     file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
     plugin_registry = PluginRegistry()
-
-    # todo read enabled plugins from config
+    # TODO: filter by config.plugin_sequence
     plugin_registry.load_plugins()
-    context = EmbedmContext(config, file_cache, plugin_registry)
-
-    # TODO: expand config.input into file list (single file, directory, or stdin)
-    _process_file(config.input, context)
-
-    # todo present process complete
+    return EmbedmContext(config, file_cache, plugin_registry)
 
 
-def _process_file(file_name: str, context: EmbedmContext) -> None:
+def _process_file(file_name: str, context: EmbedmContext) -> str:
     """Plan and compile a single input file."""
-    # todo check if output file already exists and is up to date in the target dir
     plan_root = plan_file(file_name, context)
 
-    # todo present plan to user if needed
-    if not present_plan(plan_root, context.config.is_force_set):
-        return
+    if plan_root.document is None:
+        present_errors(plan_root.status)
+        return ""
 
     plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
     if plugin is None:
-        # TODO: present error — no plugin for root directive type
+        present_errors(f"no plugin for directive type '{plan_root.directive.type}'")
+        return ""
+
+    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
+
+
+def _write_output(result: str, config: Configuration) -> None:
+    """Write compilation result to the configured destination."""
+    if not result:
         return
 
-    document = plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
-    if not context.config.is_dry_run:
-        # todo write to target directory if provided else create a filename
-        context.file_cache.write(document, "todo: create path from config")
+    if config.is_dry_run:
+        present_result(result)
+        return
+
+    if config.output_file:
+        with open(config.output_file, "w", encoding="utf-8") as f:
+            f.write(result)
+    else:
+        present_result(result)

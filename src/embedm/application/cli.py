@@ -5,7 +5,7 @@ import sys
 
 from embedm.domain.status_level import Status, StatusLevel
 
-from .configuration import Configuration
+from .configuration import Configuration, InputMode
 
 
 def parse_command_line_arguments(
@@ -19,9 +19,10 @@ def parse_command_line_arguments(
     if errors:
         return Configuration(), errors
 
-    input_value = parsed.input if parsed.input else _read_stdin()
+    input_mode, input_value = _resolve_input(parsed)
 
     return Configuration(
+        input_mode=input_mode,
         input=input_value,
         output_file=parsed.output_file,
         output_directory=parsed.output_dir,
@@ -55,6 +56,10 @@ def _validate(parsed: argparse.Namespace) -> list[Status]:
     return errors
 
 
-def _read_stdin() -> str:
-    """Read all content from stdin."""
-    return sys.stdin.read()
+def _resolve_input(parsed: argparse.Namespace) -> tuple[InputMode, str]:
+    """Determine input mode and value from parsed arguments."""
+    if not parsed.input:
+        return InputMode.STDIN, sys.stdin.read()
+    if parsed.output_dir:
+        return InputMode.DIRECTORY, parsed.input
+    return InputMode.FILE, parsed.input

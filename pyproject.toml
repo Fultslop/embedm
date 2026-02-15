@@ -40,10 +40,11 @@ Repository = "https://github.com/Fultslop/embedm"
 Issues = "https://github.com/Fultslop/embedm/issues"
 
 [project.scripts]
-embedm = "embedm.cli:main"
+embedm = "embedm.application.orchestration:main"
 
 # md.start:entry_points
 [project.entry-points."embedm.plugins"]
+embedm_file = "embedm_plugins.embedm_file_plugin:EmbedmFilePlugin"
 hello_world = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
 # md.end:entry_points
 

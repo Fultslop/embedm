@@ -1,6 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class InputMode(Enum):
+    FILE = "file"
+    DIRECTORY = "directory"
+    STDIN = "stdin"
+
 
 DEFAULT_MAX_FILE_SIZE = 1_048_576  # 1 MB
 DEFAULT_MAX_RECURSION = 8
@@ -14,12 +22,17 @@ DEFAULT_PLUGIN_SEQUENCE = [
 
 @dataclass
 class Configuration:
-    # text, file or directory
+    input_mode: InputMode = InputMode.FILE
+
+    # text, file path or directory path
     input: str = ""
 
+    # output file name, if both this and the output directory are none
+    # output will be written to std.out
     output_file: str | None = None
 
-    # output directory
+    # output directory, if both this and the output file are none
+    # output will be written to std.out
     output_directory: str | None = None
 
     # max file size that can be loaded
