@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 15/02/26 [Feat] Implement CLI argument parser with argparse — supports file, directory, stdin input modes and output options
+
+* 15/02/26 [Code] Convert Configuration to @dataclass with sensible defaults for limits and plugin sequence
+
 * 15/02/26 [Arch] Replace compiler with embedm_file_plugin — all document compilation logic lives in the plugin, no separate compiler needed
 
 * 15/02/26 [Arch] Root PlanNode uses embedm_file directive type so orchestration just dispatches to the plugin registry

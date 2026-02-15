@@ -32,6 +32,7 @@ class EmbedmFileTransformer(TransformerBase[EmbedmFileParams]):
             return ""
 
         # step 1: load source content for span resolution
+        # todo is this a programming error ?
         source_content, errors = params.file_cache.get_file(params.plan_node.directive.source)
         if errors or source_content is None:
             return ""

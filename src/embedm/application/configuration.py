@@ -1,32 +1,45 @@
-class Configuration:
-    # list or markdown files to process
-    file_list: list[str]
+from __future__ import annotations
 
-    # default extension added to the compiled files if no target
-    # directory is set, will be used as file_name.ext.file_ext
-    default_file_extension: str
+from dataclasses import dataclass, field
+
+DEFAULT_MAX_FILE_SIZE = 1_048_576  # 1 MB
+DEFAULT_MAX_RECURSION = 8
+DEFAULT_MAX_MEMORY = 104_857_600  # 100 MB
+DEFAULT_MAX_EMBED_SIZE = 524_288  # 512 KB
+DEFAULT_PLUGIN_SEQUENCE = [
+    "embedm_plugins.embedm_file_plugin",
+    "embedm_plugins.hello_world_plugin",
+]
+
+
+@dataclass
+class Configuration:
+    # text, file or directory
+    input: str = ""
+
+    output_file: str | None = None
 
     # output directory
-    target_directory: str
+    output_directory: str | None = None
 
     # max file size that can be loaded
-    max_file_size: int
+    max_file_size: int = DEFAULT_MAX_FILE_SIZE
 
     # max depth of recursion
-    max_recursion: int
+    max_recursion: int = DEFAULT_MAX_RECURSION
 
     # max memory available to the file cache
-    max_memory: int
+    max_memory: int = DEFAULT_MAX_MEMORY
 
     # max number of characters in a resolved embed block
-    max_embed_size: int
+    max_embed_size: int = DEFAULT_MAX_EMBED_SIZE
 
     # order in which plugins must be executed during the compile stage
-    plugin_sequence: list[str]
+    plugin_sequence: list[str] = field(default_factory=lambda: list(DEFAULT_PLUGIN_SEQUENCE))
 
     # if set, warnings and errors will be skipped during the validation
     # step unless the errors affect the limits
-    is_force_set: bool
+    is_force_set: bool = False
 
     # will only run, does not save any files
-    is_dry_run: bool
+    is_dry_run: bool = False

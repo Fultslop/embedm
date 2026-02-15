@@ -23,10 +23,13 @@ def main() -> None:
 
     file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
     plugin_registry = PluginRegistry()
+
+    # todo read enabled plugins from config
+    plugin_registry.load_plugins()
     context = EmbedmContext(config, file_cache, plugin_registry)
 
-    for file_name in config.file_list:
-        _process_file(file_name, context)
+    # TODO: expand config.input into file list (single file, directory, or stdin)
+    _process_file(config.input, context)
 
     # todo present process complete
 
