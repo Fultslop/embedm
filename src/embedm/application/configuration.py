@@ -1,6 +1,3 @@
-from typing import Any
-
-
 class Configuration:
     # list or markdown files to process
     file_list: list[str]
@@ -25,7 +22,7 @@ class Configuration:
     max_embed_size: int
 
     # order in which plugins must be executed during the compile stage
-    plugin_sequence: Any | None
+    plugin_sequence: list[str]
 
     # if set, warnings and errors will be skipped during the validation
     # step unless the errors affect the limits

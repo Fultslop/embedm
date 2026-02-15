@@ -3,8 +3,23 @@ from embedm.domain.document import Document
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.parsing.directive_parser import parse_yaml_embed_blocks
+from embedm.plugins.plugin_configuration import PluginConfiguration
 
 from .embedm_context import EmbedmContext
+
+EMBEDM_FILE_DIRECTIVE_TYPE = "embedm_file"
+
+
+def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
+    """Create a plan for a file, using an embedm_file root directive."""
+    root_directive = Directive(type=EMBEDM_FILE_DIRECTIVE_TYPE, source=file_name)
+    content, errors = context.file_cache.get_file(file_name)
+    if errors or content is None:
+        return _error_node(
+            root_directive,
+            errors if errors else [Status(StatusLevel.ERROR, f"failed to load file '{file_name}'")],
+        )
+    return create_plan(root_directive, content, 0, context)
 
 
 def create_plan(directive: Directive, content: str, depth: int, context: EmbedmContext) -> PlanNode:
@@ -19,7 +34,11 @@ def create_plan(directive: Directive, content: str, depth: int, context: EmbedmC
     directives = [f for f in fragments if isinstance(f, Directive)]
 
     # steps 3-4: validate directives and source files
-    errors = _validate_directives(directives, depth, context)
+    plugin_config = PluginConfiguration(
+        max_embed_size=context.config.max_embed_size,
+        max_recursion=context.config.max_recursion,
+    )
+    errors = _validate_directives(directives, depth, context, plugin_config)
     if errors:
         return _error_node(directive, errors)
 
@@ -35,7 +54,10 @@ def create_plan(directive: Directive, content: str, depth: int, context: EmbedmC
 
 
 def _validate_directives(
-    directives: list[Directive], depth: int, context: EmbedmContext
+    directives: list[Directive],
+    depth: int,
+    context: EmbedmContext,
+    plugin_config: PluginConfiguration,
 ) -> list[Status]:
     """Validate directives against the plugin registry and file cache."""
     errors: list[Status] = []
@@ -47,7 +69,7 @@ def _validate_directives(
                 Status(StatusLevel.ERROR, f"no plugin registered for directive type '{d.type}'")
             )
         else:
-            errors.extend(plugin.validate_directive(d))
+            errors.extend(plugin.validate_directive(d, plugin_config))
 
     for d in directives:
         if not d.source:
