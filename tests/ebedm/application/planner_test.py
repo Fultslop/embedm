@@ -334,3 +334,57 @@ def test_plan_file_resolves_nested_relative_paths(tmp_path: Path):
     assert plan.children is not None
     assert len(plan.children) == 1
     assert str(child_file) in plan.children[0].directive.source
+
+
+# --- circular dependency detection ---
+
+
+def test_create_plan_detects_self_reference(tmp_path: Path):
+    """A file that includes itself is detected as a cycle."""
+    self_ref = tmp_path / "self.md"
+    self_ref.write_text(
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        f"source: {self_ref}\n"
+        "```\n"
+    )
+
+    context = _make_context(tmp_path)
+    _register_plugin(context, "file_embed")
+
+    plan = plan_file(str(self_ref), context)
+
+    assert plan.document is None
+    assert any("circular" in s.description.lower() for s in plan.status)
+
+
+def test_create_plan_detects_indirect_cycle(tmp_path: Path):
+    """A→B→A cycle is detected and reported as an error."""
+    file_a = tmp_path / "a.md"
+    file_b = tmp_path / "b.md"
+
+    file_a.write_text(
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        f"source: {file_b}\n"
+        "```\n"
+    )
+    file_b.write_text(
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        f"source: {file_a}\n"
+        "```\n"
+    )
+
+    context = _make_context(tmp_path)
+    _register_plugin(context, "file_embed")
+
+    plan = plan_file(str(file_a), context)
+
+    # Root succeeds, but the child (b.md) should have a cycle error
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    child = plan.children[0]
+    assert child.document is None
+    assert any("circular" in s.description.lower() for s in child.status)
