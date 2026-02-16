@@ -15,6 +15,7 @@ DEFAULT_MAX_RECURSION = 8
 DEFAULT_MAX_MEMORY = 104_857_600  # 100 MB
 DEFAULT_MAX_EMBED_SIZE = 524_288  # 512 KB
 DEFAULT_ROOT_DIRECTIVE_TYPE = "file"
+CONFIG_FILE_NAME = "embedm-config.yaml"
 DEFAULT_PLUGIN_SEQUENCE = [
     "embedm_plugins.file_plugin",
     "embedm_plugins.hello_world_plugin",
@@ -60,3 +61,9 @@ class Configuration:
 
     # will only run, does not save any files
     is_dry_run: bool = False
+
+    # path to the config file (from --config or auto-discovered)
+    config_file: str | None = None
+
+    # path for --init output (generate config file and exit)
+    init_path: str | None = None

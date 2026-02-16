@@ -10,6 +10,13 @@ from embedm.plugins.plugin_configuration import PluginConfiguration
 from .embedm_context import EmbedmContext
 
 
+def plan_content(content: str, context: EmbedmContext) -> PlanNode:
+    """Create a plan for raw content, using cwd as the base directory."""
+    source = str(Path.cwd() / "<stdin>")
+    root_directive = Directive(type=context.config.root_directive_type, source=source)
+    return create_plan(root_directive, content, 0, context)
+
+
 def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
     """Create a plan for a file, using the configured root directive type."""
     resolved = str(Path(file_name).resolve())

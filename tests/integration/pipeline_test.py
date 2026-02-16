@@ -163,3 +163,47 @@ def test_circular_dependency_produces_error(tmp_path: Path):
     # Compilation renders the cycle as a visible caution block
     result = _compile(file_a, context)
     assert "> [!CAUTION]" in result
+
+
+# --- test 5: directory mode with deduplication ---
+
+
+def test_directory_mode_skips_embedded_files(tmp_path: Path):
+    """When processing a directory, files already embedded as children are skipped."""
+    from embedm.application.orchestration import (
+        _collect_embedded_sources,
+        _expand_directory_input,
+    )
+
+    child = tmp_path / "child.md"
+    child.write_text("Child content\n")
+
+    root = tmp_path / "root.md"
+    root.write_text(
+        "Root\n"
+        "```yaml embedm\n"
+        "type: file\n"
+        "source: ./child.md\n"
+        "```\n"
+    )
+
+    standalone = tmp_path / "standalone.md"
+    standalone.write_text("Standalone content\n")
+
+    # expand directory — all three .md files found
+    files = _expand_directory_input(str(tmp_path))
+    assert len(files) == 3
+
+    # plan root and collect embedded sources
+    context = _build_context(tmp_path)
+    plan = plan_file(str(root), context)
+    embedded: set[str] = set()
+    _collect_embedded_sources(plan, embedded)
+
+    # child.md is embedded, so it should be in the skip set
+    child_resolved = str(child.resolve())
+    assert child_resolved in embedded
+
+    # standalone.md is NOT embedded
+    standalone_resolved = str(standalone.resolve())
+    assert standalone_resolved not in embedded
