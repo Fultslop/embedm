@@ -388,3 +388,34 @@ def test_create_plan_detects_indirect_cycle(tmp_path: Path):
     child = plan.children[0]
     assert child.document is None
     assert any("circular" in s.description.lower() for s in child.status)
+
+
+# --- duplicate source handling ---
+
+
+def test_create_plan_two_directives_same_source_produce_two_children(tmp_path: Path):
+    """Two directives pointing at the same source file both get their own child node."""
+    shared = tmp_path / "shared.md"
+    shared.write_text("shared content\n")
+
+    context = _make_context(tmp_path)
+    _register_plugin(context, "file_embed")
+    directive = Directive(type="root")
+    content = (
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        f"source: {shared}\n"
+        "```\n"
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        f"source: {shared}\n"
+        "```\n"
+    )
+
+    plan = create_plan(directive, content, depth=0, context=context)
+
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 2
+    assert plan.children[0].directive.source == str(shared)
+    assert plan.children[1].directive.source == str(shared)

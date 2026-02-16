@@ -21,9 +21,7 @@ class EmbedmFilePlugin(PluginBase):
     api_version = 1
     directive_type = "embedm_file"
 
-    def validate_directive(
-        self, directive: Directive, _configuration: PluginConfiguration
-    ) -> list[Status]:
+    def validate_directive(self, directive: Directive, _configuration: PluginConfiguration) -> list[Status]:
         if not directive.source:
             return [Status(StatusLevel.ERROR, "embedm_file directive requires a source")]
         return []

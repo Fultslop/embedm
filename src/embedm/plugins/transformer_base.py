@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import ClassVar, Generic, TypeVar
 
@@ -10,8 +11,9 @@ class NoParams:
     pass
 
 
-class TransformerBase(Generic[TParams]):
+class TransformerBase(ABC, Generic[TParams]):
     params_type: ClassVar[type[TParams]]
 
+    @abstractmethod
     def execute(self, params: TParams) -> str:
-        raise NotImplementedError
+        pass

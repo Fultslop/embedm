@@ -154,9 +154,7 @@ class FileCache:
             if _is_path_allowed(resolved, self.allowed_paths):
                 files.append(resolved)
             else:
-                errors.append(
-                    Status(StatusLevel.ERROR, f"matched file is not in allowed paths: '{resolved}'")
-                )
+                errors.append(Status(StatusLevel.ERROR, f"matched file is not in allowed paths: '{resolved}'"))
 
         return files, errors
 
