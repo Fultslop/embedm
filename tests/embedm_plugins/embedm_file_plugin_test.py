@@ -7,7 +7,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.document import Document
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.span import Span
-from embedm.domain.status_level import Status, StatusLevel
+from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_registry import PluginRegistry
@@ -239,7 +239,7 @@ def test_no_document_returns_empty(tmp_path: Path):
     assert result == ""
 
 
-def test_no_file_cache_returns_empty(tmp_path: Path):
+def test_no_file_cache_returns_empty():
     node = PlanNode(
         directive=Directive(type="embedm_file", source="input.md"),
         status=[],

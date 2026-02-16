@@ -4,7 +4,6 @@ from pathlib import Path
 from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache, FileState, WriteMode
 
-
 # --- validate: happy path ---
 
 

@@ -13,7 +13,6 @@ from embedm.application.configuration import (
 )
 from embedm.domain.status_level import StatusLevel
 
-
 # --- file to stdout ---
 
 

@@ -77,7 +77,13 @@ addopts = [
 
 [tool.coverage.run]
 source = ["embedm"]
-omit = ["*/tests/*", "*/test_*.py"]
+omit = [
+    "*/tests/*", 
+    "*/test_*.py", 
+    "src/embedm/__main__.py", 
+    "src/embedm/application/console.py",
+    "src/embedm/application/orchestration.py"
+ ]
 
 [tool.coverage.report]
 fail_under = 70

@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 16/02/26 [Task] Add integration tests in tests/integration/ — full pipeline (file → parse → plan → compile → output) with real plugins, no mocks
+
+* 16/02/26 [Arch] No IoC container — project scale doesn't justify the abstraction overhead. Plugin system already provides IoC via entry points. Revisit if plugin construction needs injected dependencies.
+
 * 16/02/26 [Code] Move relative path resolution from planner into parser via base_dir param — directives now store absolute paths from creation
 
 * 16/02/26 [Code] Standardize path handling on pathlib, remove os.path usage from planner and parser
