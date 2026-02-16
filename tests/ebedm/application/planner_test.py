@@ -144,8 +144,8 @@ def test_create_plan_unknown_directive_type(tmp_path: Path):
     plan = create_plan(directive, content, depth=0, context=context)
 
     assert plan.directive == directive
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
 
 
@@ -165,8 +165,8 @@ def test_create_plan_plugin_validation_fails(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
 
 
@@ -183,8 +183,9 @@ def test_create_plan_source_file_not_found(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 0
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
 
 
@@ -204,12 +205,14 @@ def test_create_plan_max_recursion_exceeded(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=2, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 0
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
 
 
-def test_create_plan_parser_errors_return_with_error(tmp_path: Path):
+def test_create_plan_parser_errors_still_builds_partial_document(tmp_path: Path):
+    """Unclosed fence: partial fragments are preserved alongside the error."""
     context = _make_context(tmp_path)
     directive = Directive(type="root")
     content = (
@@ -220,9 +223,11 @@ def test_create_plan_parser_errors_return_with_error(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
+    # The text before the unclosed block is preserved as a fragment
+    assert len(plan.document.fragments) >= 1
 
 
 # --- create_plan: error collection ---
@@ -242,8 +247,8 @@ def test_create_plan_collects_multiple_errors(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     error_count = sum(1 for s in plan.status if s.level == StatusLevel.ERROR)
     assert error_count >= 2
 
@@ -354,7 +359,9 @@ def test_create_plan_detects_self_reference(tmp_path: Path):
 
     plan = plan_file(str(self_ref), context)
 
-    assert plan.document is None
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 0
     assert any("circular" in s.description.lower() for s in plan.status)
 
 
@@ -386,7 +393,7 @@ def test_create_plan_detects_indirect_cycle(tmp_path: Path):
     assert plan.children is not None
     assert len(plan.children) == 1
     child = plan.children[0]
-    assert child.document is None
+    assert child.document is not None
     assert any("circular" in s.description.lower() for s in child.status)
 
 

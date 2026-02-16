@@ -32,32 +32,35 @@ def create_plan(
     context: EmbedmContext,
     ancestors: frozenset[str] = frozenset(),
 ) -> PlanNode:
-    """Build a validated plan tree from content, catching all issues before compilation."""
+    """Build a validated plan tree from content, collecting all errors without short-circuiting."""
+    all_errors: list[Status] = []
+
     # step 1: parse content into fragments, resolving relative sources against parent directory
     base_dir = str(Path(directive.source).parent) if directive.source else ""
     fragments, parse_errors = parse_yaml_embed_blocks(content, base_dir=base_dir)
-    if parse_errors:
-        return _error_node(directive, parse_errors)
+    all_errors.extend(parse_errors)
 
-    # step 2: build the document
+    # step 2: build the document (always, even with parse errors — fragments may be partial)
     document = Document(file_name=directive.source, fragments=fragments)
     directives = [f for f in fragments if isinstance(f, Directive)]
 
-    # step 3: validate directives and source files
+    # step 3: validate directives — collect errors and determine which sources are buildable
     plugin_config = PluginConfiguration(
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
     )
-    errors = _validate_directives(directives, depth, ancestors, context, plugin_config)
-    if errors:
-        return _error_node(directive, errors)
+    validation_errors, buildable = _validate_directives(directives, depth, ancestors, context, plugin_config)
+    all_errors.extend(validation_errors)
 
-    # step 4: recurse into source directives
-    children = _build_children(directives, depth, ancestors, context)
+    # step 4: recurse into buildable source directives
+    children = _build_children(buildable, depth, ancestors, context)
+
+    if not all_errors:
+        all_errors.append(Status(StatusLevel.OK, "plan created successfully"))
 
     return PlanNode(
         directive=directive,
-        status=[Status(StatusLevel.OK, "plan created successfully")],
+        status=all_errors,
         document=document,
         children=children,
     )
@@ -69,9 +72,10 @@ def _validate_directives(
     ancestors: frozenset[str],
     context: EmbedmContext,
     plugin_config: PluginConfiguration,
-) -> list[Status]:
-    """Validate directives against the plugin registry and file cache."""
+) -> tuple[list[Status], list[Directive]]:
+    """Validate directives. Returns (all_errors, buildable_directives)."""
     errors: list[Status] = []
+    buildable: list[Directive] = []
 
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
@@ -93,9 +97,13 @@ def _validate_directives(
                 )
             )
         else:
-            errors.extend(context.file_cache.validate(d.source))
+            source_errors = context.file_cache.validate(d.source)
+            if source_errors:
+                errors.extend(source_errors)
+            else:
+                buildable.append(d)
 
-    return errors
+    return errors, buildable
 
 
 def _build_children(

@@ -2,15 +2,20 @@
 
 ## Planned
 
-* Integration tests
-* Error handling pass
-* Discuss IoC
+* Error handling pass, user interaction
 * Orchestration add InputMode.DIRECTORY, InputMode.STDIN
 * Setup regression testing
+* ToC plugin
+* Table plugin with sql-ish syntax
+* File 
 * Add progress indicator
+* --silent --yes-to-all --dry-run --verify
+* Enabled plugins
 
 ## To do
 
+* Discuss IoC
+* Integration tests
 * Review
   * Fix duplicate source in child lookup (data loss bug)
   * Make transformer failures loud (raise on programming errors)

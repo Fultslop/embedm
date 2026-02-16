@@ -1,6 +1,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 from embedm.application.embedm_context import EmbedmContext
 from embedm.application.planner import plan_file
 from embedm.domain.directive import Directive
@@ -239,7 +241,8 @@ def test_no_document_returns_empty(tmp_path: Path):
     assert result == ""
 
 
-def test_no_file_cache_returns_empty():
+def test_no_file_cache_asserts():
+    """Missing file_cache is a coding error — orchestration must provide it."""
     node = PlanNode(
         directive=Directive(type="embedm_file", source="input.md"),
         status=[],
@@ -248,12 +251,12 @@ def test_no_file_cache_returns_empty():
     )
     plugin = EmbedmFilePlugin()
 
-    result = plugin.transform(node, [])
+    with pytest.raises(AssertionError):
+        plugin.transform(node, [])
 
-    assert result == ""
 
-
-def test_directive_with_unknown_plugin_is_skipped(tmp_path: Path):
+def test_unknown_plugin_renders_error_note(tmp_path: Path):
+    """Unknown plugin at compile time renders a visible caution block."""
     source = tmp_path / "input.md"
     source.write_text(
         "Before\n"
@@ -264,11 +267,10 @@ def test_directive_with_unknown_plugin_is_skipped(tmp_path: Path):
     )
 
     context = _make_context(tmp_path)
-    # register unknown_plugin so planner doesn't reject it, but don't register in file plugin's context
     _register_mock_plugin(context, "unknown_plugin")
     plan = plan_file(str(source), context)
 
-    # now remove the plugin so the file plugin can't find it
+    # remove the plugin to simulate it being unavailable at compile time
     del context.plugin_registry.lookup["unknown_plugin"]
     plugin = EmbedmFilePlugin()
 
@@ -276,6 +278,32 @@ def test_directive_with_unknown_plugin_is_skipped(tmp_path: Path):
 
     assert "Before\n" in result
     assert "After\n" in result
+    assert "> [!CAUTION]" in result
+    assert "unknown_plugin" in result
+
+
+def test_source_not_in_children_renders_error_note(tmp_path: Path):
+    """A directive whose source wasn't built by the planner renders an error note."""
+    source = tmp_path / "input.md"
+    source.write_text(
+        "Before\n"
+        "```yaml embedm\n"
+        "type: embedm_file\n"
+        f"source: {tmp_path / 'missing.md'}\n"
+        "```\n"
+        "After\n"
+    )
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    plugin = EmbedmFilePlugin()
+
+    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "Before\n" in result
+    assert "After\n" in result
+    assert "> [!CAUTION]" in result
+    assert "could not be processed" in result
 
 
 # --- validate_directive ---

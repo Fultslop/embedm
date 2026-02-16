@@ -155,5 +155,9 @@ def test_circular_dependency_produces_error(tmp_path: Path):
     assert plan.children is not None
     assert len(plan.children) == 1
     child = plan.children[0]
-    assert child.document is None
+    assert child.document is not None
     assert any("circular" in s.description.lower() for s in child.status)
+
+    # Compilation renders the cycle as a visible caution block
+    result = _compile(file_a, context)
+    assert "> [!CAUTION]" in result

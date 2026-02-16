@@ -4,6 +4,16 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 16/02/26 [Feat] Interactive continue/abort prompt in orchestration — after planning, tree errors are collected and presented, user can continue (errors render as Note blocks) or abort. Respects is_force_set and FATAL errors.
+
+* 16/02/26 [Feat] Error directives render as GFM `> [!CAUTION]` blocks during compilation — unknown plugins, unbuildable sources, and error nodes produce visible markers instead of silent empty output
+
+* 16/02/26 [Code] Planner collect-and-continue — always builds document and children, collects all errors without short-circuiting. Orchestration uses tree-wide error collection instead of document-is-None check.
+
+* 16/02/26 [Code] Assert preconditions at pipeline boundaries — transformer asserts document/source cached, plugin asserts file_cache/plugin_registry provided. Coding errors crash fast per error-handling guidelines.
+
+* 16/02/26 [Standards] Error handling guidelines — coding errors crash via assert, input errors collect Status and recover. Boundary rule: if a user could cause it via bad markdown or args, it's an input error. See doc/project/error-handling.md
+
 * 16/02/26 [Task] Add integration tests in tests/integration/ — full pipeline (file → parse → plan → compile → output) with real plugins, no mocks
 
 * 16/02/26 [Arch] No IoC container — project scale doesn't justify the abstraction overhead. Plugin system already provides IoC via entry points. Revisit if plugin construction needs injected dependencies.

@@ -33,7 +33,10 @@ class EmbedmFilePlugin(PluginBase):
         file_cache: FileCache | None = None,
         plugin_registry: PluginRegistry | None = None,
     ) -> str:
-        if plan_node.document is None or file_cache is None or plugin_registry is None:
+        assert file_cache is not None, "file_cache is required — orchestration must provide it"
+        assert plugin_registry is not None, "plugin_registry is required — orchestration must provide it"
+
+        if plan_node.document is None:
             return ""
 
         transformer = EmbedmFileTransformer()
