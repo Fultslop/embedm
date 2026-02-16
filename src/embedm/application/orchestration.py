@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
@@ -39,8 +40,7 @@ def main() -> None:
         result = _process_file(config.input, context)
         _write_output(result, config)
     elif config.input_mode == InputMode.DIRECTORY:
-        # TODO: expand directory into file list and process each
-        present_errors("directory mode not yet implemented")
+        _process_directory(config, context)
     elif config.input_mode == InputMode.STDIN:
         # TODO: handle stdin content
         present_errors("stdin mode not yet implemented")
@@ -83,6 +83,98 @@ def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]
     ), errors
 
 
+def _process_directory(config: Configuration, context: EmbedmContext) -> None:
+    """Expand directory input to .md files, process each, skipping embedded dependencies."""
+    files = _expand_directory_input(config.input)
+    if not files:
+        present_errors(f"no .md files found in '{config.input}'")
+        return
+
+    base_dir = _extract_base_dir(config.input)
+    embedded: set[str] = set()
+
+    for file_path in files:
+        resolved = str(Path(file_path).resolve())
+        if resolved in embedded:
+            continue
+
+        plan_root = plan_file(file_path, context)
+
+        # track all sources this file embeds so we skip them as standalone roots
+        _collect_embedded_sources(plan_root, embedded)
+
+        result = _compile_plan(plan_root, context)
+        if result:
+            _write_directory_output(file_path, base_dir, config, result)
+
+
+def _expand_directory_input(input_path: str) -> list[str]:
+    """Expand a directory or glob pattern to a sorted list of .md files."""
+    if "**" in input_path:
+        base = input_path.replace("/**", "").replace("**", ".")
+        return sorted(str(p) for p in Path(base).rglob("*.md"))
+    if "*" in input_path:
+        base = input_path.replace("/*", "").replace("*", ".")
+        return sorted(str(p) for p in Path(base).glob("*.md"))
+    return sorted(str(p) for p in Path(input_path).glob("*.md"))
+
+
+def _collect_embedded_sources(node: PlanNode, sources: set[str]) -> None:
+    """Walk the plan tree and collect all embedded source paths."""
+    for child in node.children or []:
+        if child.directive.source:
+            sources.add(str(Path(child.directive.source).resolve()))
+        _collect_embedded_sources(child, sources)
+
+
+def _compile_plan(plan_root: PlanNode, context: EmbedmContext) -> str:
+    """Compile a plan tree into output with interactive error prompting."""
+    if plan_root.document is None:
+        present_errors(plan_root.status)
+        return ""
+
+    tree_errors = _collect_tree_errors(plan_root)
+    if tree_errors:
+        present_errors(tree_errors)
+        has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
+        if has_fatal or (not context.config.is_force_set and not prompt_continue()):
+            return ""
+
+    return _compile_plan_node(plan_root, context)
+
+
+def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext) -> str:
+    """Compile a validated plan node via its plugin."""
+    plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
+    assert plugin is not None, (
+        f"no plugin for directive type '{plan_root.directive.type}' — planner should have caught this"
+    )
+    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
+
+
+def _extract_base_dir(input_path: str) -> Path:
+    """Extract the base directory from a directory input or glob pattern."""
+    cleaned = input_path.replace("/**", "").replace("/*", "").replace("**", ".").replace("*", ".")
+    return Path(cleaned).resolve()
+
+
+def _write_directory_output(
+    file_path: str,
+    base_dir: Path,
+    config: Configuration,
+    result: str,
+) -> None:
+    """Write a compiled file's output to the output directory (mirroring structure) or stdout."""
+    if config.is_dry_run or not config.output_directory:
+        present_result(result)
+        return
+
+    relative = Path(file_path).resolve().relative_to(base_dir)
+    output_path = Path(config.output_directory) / relative
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(result, encoding="utf-8")
+
+
 def _build_context(config: Configuration) -> EmbedmContext:
     """Build the runtime context from configuration."""
     file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
@@ -95,26 +187,7 @@ def _build_context(config: Configuration) -> EmbedmContext:
 def _process_file(file_name: str, context: EmbedmContext) -> str:
     """Plan and compile a single input file."""
     plan_root = plan_file(file_name, context)
-
-    # Root file couldn't be loaded — nothing to compile
-    if plan_root.document is None:
-        present_errors(plan_root.status)
-        return ""
-
-    # Collect all errors across the plan tree and let the user decide
-    tree_errors = _collect_tree_errors(plan_root)
-    if tree_errors:
-        present_errors(tree_errors)
-        has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
-        if has_fatal or (not context.config.is_force_set and not prompt_continue()):
-            return ""
-
-    plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
-    assert plugin is not None, (
-        f"no plugin for directive type '{plan_root.directive.type}' — planner should have caught this"
-    )
-
-    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
+    return _compile_plan(plan_root, context)
 
 
 def _collect_tree_errors(node: PlanNode) -> list[Status]:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import patch
 
 from embedm.application.cli import parse_command_line_arguments
@@ -172,3 +173,38 @@ def test_init_skips_input_validation() -> None:
 
     assert not errors
     assert config.init_path == "."
+
+
+# --- directory detection ---
+
+
+def test_glob_star_detected_as_directory() -> None:
+    config, errors = parse_command_line_arguments(["./*"])
+
+    assert not errors
+    assert config.input_mode == InputMode.DIRECTORY
+    assert config.input == "./*"
+
+
+def test_glob_double_star_detected_as_directory() -> None:
+    config, errors = parse_command_line_arguments(["./**"])
+
+    assert not errors
+    assert config.input_mode == InputMode.DIRECTORY
+    assert config.input == "./**"
+
+
+def test_existing_directory_detected_as_directory(tmp_path: Path) -> None:
+    config, errors = parse_command_line_arguments([str(tmp_path)])
+
+    assert not errors
+    assert config.input_mode == InputMode.DIRECTORY
+    assert config.input == str(tmp_path)
+
+
+def test_output_file_with_directory_input_returns_error() -> None:
+    config, errors = parse_command_line_arguments(["./*", "-o", "out.md"])
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "output-dir" in errors[0].description.lower()

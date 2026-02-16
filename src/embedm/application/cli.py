@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from embedm.domain.status_level import Status, StatusLevel
 
@@ -52,6 +53,9 @@ def _validate(parsed: argparse.Namespace) -> list[Status]:
     if parsed.output_file and parsed.output_dir:
         errors.append(Status(StatusLevel.ERROR, "cannot specify both --output-file and --output-dir"))
 
+    if parsed.output_file and _is_directory_input(parsed.input):
+        errors.append(Status(StatusLevel.ERROR, "cannot use --output-file with directory input, use --output-dir"))
+
     if not parsed.input and sys.stdin.isatty():
         errors.append(Status(StatusLevel.ERROR, "no input provided; pass a file/directory or pipe via stdin"))
 
@@ -62,6 +66,15 @@ def _resolve_input(parsed: argparse.Namespace) -> tuple[InputMode, str]:
     """Determine input mode and value from parsed arguments."""
     if not parsed.input:
         return InputMode.STDIN, sys.stdin.read()
-    if parsed.output_dir:
+    if parsed.output_dir or _is_directory_input(parsed.input):
         return InputMode.DIRECTORY, parsed.input
     return InputMode.FILE, parsed.input
+
+
+def _is_directory_input(input_path: str | None) -> bool:
+    """Check if the input looks like a directory or glob pattern."""
+    if not input_path:
+        return False
+    if "*" in input_path:
+        return True
+    return Path(input_path).is_dir()
