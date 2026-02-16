@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from embedm.domain.directive import Directive
 from embedm.domain.span import Span
 from embedm.domain.status_level import StatusLevel
@@ -291,3 +293,61 @@ def test_parse_blocks_skips_invalid_continues_to_valid():
     assert fragments[2] == Directive(type="hello_world")
     assert isinstance(fragments[3], Span)
     assert _span_text(content, fragments[3]) == "End\n"
+
+
+# --- parse_yaml_embed_block: base_dir resolution ---
+
+
+def test_parse_block_resolves_relative_source_against_base_dir(tmp_path: Path):
+    base_dir = str(tmp_path / "docs")
+    yaml_content = "type: file_embed\nsource: ./chapter.md"
+
+    directive, errors = parse_yaml_embed_block(yaml_content, base_dir=base_dir)
+
+    assert errors == []
+    assert directive is not None
+    expected = str((tmp_path / "docs" / "chapter.md").resolve())
+    assert directive.source == expected
+
+
+def test_parse_block_leaves_absolute_source_unchanged(tmp_path: Path):
+    absolute_path = str(tmp_path / "absolute.md")
+    yaml_content = f"type: file_embed\nsource: {absolute_path}"
+
+    directive, errors = parse_yaml_embed_block(yaml_content, base_dir=str(tmp_path / "other"))
+
+    assert errors == []
+    assert directive is not None
+    assert directive.source == absolute_path
+
+
+def test_parse_block_no_base_dir_leaves_relative_source():
+    yaml_content = "type: file_embed\nsource: ./relative.md"
+
+    directive, errors = parse_yaml_embed_block(yaml_content)
+
+    assert errors == []
+    assert directive is not None
+    assert directive.source == "./relative.md"
+
+
+# --- parse_yaml_embed_blocks: base_dir resolution ---
+
+
+def test_parse_blocks_resolves_sources_with_base_dir(tmp_path: Path):
+    base_dir = str(tmp_path / "docs")
+    content = (
+        "Intro\n"
+        "```yaml embedm\n"
+        "type: file_embed\n"
+        "source: ./chapter.md\n"
+        "```\n"
+    )
+
+    fragments, errors = parse_yaml_embed_blocks(content, base_dir=base_dir)
+
+    assert errors == []
+    directive = fragments[1]
+    assert isinstance(directive, Directive)
+    expected = str((tmp_path / "docs" / "chapter.md").resolve())
+    assert directive.source == expected

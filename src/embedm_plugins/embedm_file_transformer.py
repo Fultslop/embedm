@@ -38,17 +38,12 @@ class EmbedmFileTransformer(TransformerBase[EmbedmFileParams]):
             return ""
 
         # step 2: resolve spans into text, keep directives and strings as-is
-        resolved: list[str | Directive] = _resolve_fragments(
-            params.plan_node.document.fragments, source_content
-        )
+        resolved: list[str | Directive] = _resolve_fragments(params.plan_node.document.fragments, source_content)
 
         # step 3: resolve directives via their plugins (DFS — children compiled on demand)
-        child_lookup = {
-            child.directive.source: child for child in (params.plan_node.children or [])
-        }
-        resolved = _resolve_directives(
-            resolved, child_lookup, params.file_cache, params.plugin_registry
-        )
+        # TODO: dict keyed by source loses duplicates when two directives share a source file
+        child_lookup = {child.directive.source: child for child in (params.plan_node.children or [])}
+        resolved = _resolve_directives(resolved, child_lookup, params.file_cache, params.plugin_registry)
 
         return "".join(s for s in resolved if isinstance(s, str))
 

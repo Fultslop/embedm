@@ -22,15 +22,12 @@ class HelloWorldPlugin(PluginBase):
     api_version = 1
     directive_type = "hello_world"
 
-    def validate_directive(
-        self, directive: Directive, _configuration: PluginConfiguration
-    ) -> list[Status]:
+    def validate_directive(self, directive: Directive, _configuration: PluginConfiguration) -> list[Status]:
         if directive.type != self.directive_type:
             return [
                 Status(
                     StatusLevel.FATAL,
-                    f"directive type does not match. "
-                    f"Expected '{self.directive_type}', provided: '{directive.type}'.",
+                    f"directive type does not match. Expected '{self.directive_type}', provided: '{directive.type}'.",
                 )
             ]
         return []

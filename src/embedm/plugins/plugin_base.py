@@ -22,9 +22,7 @@ class PluginBase(ABC):
     directive_type: ClassVar[str]
 
     @abstractmethod
-    def validate_directive(
-        self, directive: Directive, configuration: PluginConfiguration
-    ) -> list[Status]:
+    def validate_directive(self, directive: Directive, configuration: PluginConfiguration) -> list[Status]:
         pass
 
     @abstractmethod

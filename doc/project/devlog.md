@@ -4,6 +4,16 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 16/02/26 [Code] Move relative path resolution from planner into parser via base_dir param — directives now store absolute paths from creation
+
+* 16/02/26 [Code] Standardize path handling on pathlib, remove os.path usage from planner and parser
+
+* 16/02/26 [Code] Convert Document to @dataclass, TransformerBase.execute to @abstractmethod
+
+* 16/02/26 [Code] Replace hardcoded version string with importlib.metadata.version()
+
+* 16/02/26 [Standards] Add TODO for transformer child_lookup dict losing duplicate same-source directives
+
 * 15/02/26 [Task] Wire up orchestration with CLI, planner, plugin dispatch, and output writing for FILE mode
 
 * 15/02/26 [Feat] Implement CLI argument parser with argparse — supports file, directory, stdin input modes and output options

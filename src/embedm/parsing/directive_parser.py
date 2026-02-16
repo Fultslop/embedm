@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 from typing import NamedTuple
 
 import yaml
@@ -23,8 +24,8 @@ class RawDirectiveBlock(NamedTuple):
     end: int
 
 
-def parse_yaml_embed_block(content: str) -> tuple[Directive | None, list[Status]]:
-    """Parse a YAML string into a Directive."""
+def parse_yaml_embed_block(content: str, base_dir: str = "") -> tuple[Directive | None, list[Status]]:
+    """Parse a YAML string into a Directive. Resolves relative sources against base_dir."""
     if not content.strip():
         return None, [Status(StatusLevel.ERROR, "empty embedm block")]
 
@@ -40,14 +41,17 @@ def parse_yaml_embed_block(content: str) -> tuple[Directive | None, list[Status]
         return None, [Status(StatusLevel.ERROR, "embedm block is missing required 'type' field")]
 
     directive_type = str(parsed[DIRECTIVE_TYPE_KEY])
-    source = str(parsed.get(DIRECTIVE_SOURCE_KEY, ""))
-    options = {
-        str(k): str(v)
-        for k, v in parsed.items()
-        if k not in (DIRECTIVE_TYPE_KEY, DIRECTIVE_SOURCE_KEY)
-    }
+    source = _resolve_source(str(parsed.get(DIRECTIVE_SOURCE_KEY, "")), base_dir)
+    options = {str(k): str(v) for k, v in parsed.items() if k not in (DIRECTIVE_TYPE_KEY, DIRECTIVE_SOURCE_KEY)}
 
     return Directive(type=directive_type, source=source, options=options), []
+
+
+def _resolve_source(source: str, base_dir: str) -> str:
+    """Resolve a relative source path against base_dir, returning it unchanged if absolute or empty."""
+    if source and base_dir and not Path(source).is_absolute():
+        return str((Path(base_dir) / source).resolve())
+    return source
 
 
 def find_yaml_embed_block(content: str) -> RawDirectiveBlock | None:
@@ -96,15 +100,13 @@ def _find_all_raw_blocks(
 
         raw_content = content[content_start : closing.start()]
         block_end = closing.end() + 1 if closing.end() < len(content) else closing.end()
-        blocks.append(
-            RawDirectiveBlock(raw_content=raw_content, start=opening.start(), end=block_end)
-        )
+        blocks.append(RawDirectiveBlock(raw_content=raw_content, start=opening.start(), end=block_end))
         position = block_end
 
     return blocks, errors, len(content)
 
 
-def parse_yaml_embed_blocks(content: str) -> tuple[list[Fragment], list[Status]]:
+def parse_yaml_embed_blocks(content: str, base_dir: str = "") -> tuple[list[Fragment], list[Status]]:
     """Parse all embedm blocks in markdown content into fragments and errors."""
     if not content:
         return [], []
@@ -118,7 +120,7 @@ def parse_yaml_embed_blocks(content: str) -> tuple[list[Fragment], list[Status]]
         if text_length > 0:
             fragments.append(Span(position, text_length))
 
-        directive, block_errors = parse_yaml_embed_block(block.raw_content)
+        directive, block_errors = parse_yaml_embed_block(block.raw_content, base_dir=base_dir)
         if directive is not None:
             fragments.append(directive)
         errors.extend(block_errors)

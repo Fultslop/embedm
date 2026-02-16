@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Document
@@ -14,14 +14,15 @@ EMBEDM_FILE_DIRECTIVE_TYPE = "embedm_file"
 
 def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
     """Create a plan for a file, using an embedm_file root directive."""
-    root_directive = Directive(type=EMBEDM_FILE_DIRECTIVE_TYPE, source=file_name)
-    content, errors = context.file_cache.get_file(file_name)
+    resolved = str(Path(file_name).resolve())
+    root_directive = Directive(type=EMBEDM_FILE_DIRECTIVE_TYPE, source=resolved)
+    content, errors = context.file_cache.get_file(resolved)
     if errors or content is None:
         return _error_node(
             root_directive,
-            errors if errors else [Status(StatusLevel.ERROR, f"failed to load file '{file_name}'")],
+            errors if errors else [Status(StatusLevel.ERROR, f"failed to load file '{resolved}'")],
         )
-    return create_plan(root_directive, content, 0, context, frozenset({file_name}))
+    return create_plan(root_directive, content, 0, context, frozenset({resolved}))
 
 
 def create_plan(
@@ -32,8 +33,9 @@ def create_plan(
     ancestors: frozenset[str] = frozenset(),
 ) -> PlanNode:
     """Build a validated plan tree from content, catching all issues before compilation."""
-    # step 1: parse content into fragments
-    fragments, parse_errors = parse_yaml_embed_blocks(content)
+    # step 1: parse content into fragments, resolving relative sources against parent directory
+    base_dir = str(Path(directive.source).parent) if directive.source else ""
+    fragments, parse_errors = parse_yaml_embed_blocks(content, base_dir=base_dir)
     if parse_errors:
         return _error_node(directive, parse_errors)
 
@@ -41,10 +43,7 @@ def create_plan(
     document = Document(file_name=directive.source, fragments=fragments)
     directives = [f for f in fragments if isinstance(f, Directive)]
 
-    # step 3: resolve relative source paths against the parent file's directory
-    _resolve_source_paths(directives, directive.source)
-
-    # steps 4-5: validate directives and source files
+    # step 3: validate directives and source files
     plugin_config = PluginConfiguration(
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
@@ -53,7 +52,7 @@ def create_plan(
     if errors:
         return _error_node(directive, errors)
 
-    # step 6: recurse into source directives
+    # step 4: recurse into source directives
     children = _build_children(directives, depth, ancestors, context)
 
     return PlanNode(
@@ -77,9 +76,7 @@ def _validate_directives(
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
-            errors.append(
-                Status(StatusLevel.ERROR, f"no plugin registered for directive type '{d.type}'")
-            )
+            errors.append(Status(StatusLevel.ERROR, f"no plugin registered for directive type '{d.type}'"))
         else:
             errors.extend(plugin.validate_directive(d, plugin_config))
 
@@ -120,16 +117,6 @@ def _build_children(
         children.append(child)
 
     return children
-
-
-def _resolve_source_paths(directives: list[Directive], parent_source: str) -> None:
-    """Resolve relative directive sources against the parent file's directory."""
-    parent_dir = os.path.dirname(parent_source) if parent_source else ""
-    if not parent_dir:
-        return
-    for d in directives:
-        if d.source and not os.path.isabs(d.source):
-            d.source = os.path.normpath(os.path.join(parent_dir, d.source))
 
 
 def _error_node(directive: Directive, errors: list[Status]) -> PlanNode:

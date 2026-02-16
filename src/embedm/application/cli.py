@@ -44,14 +44,10 @@ def _validate(parsed: argparse.Namespace) -> list[Status]:
     errors: list[Status] = []
 
     if parsed.output_file and parsed.output_dir:
-        errors.append(
-            Status(StatusLevel.ERROR, "cannot specify both --output-file and --output-dir")
-        )
+        errors.append(Status(StatusLevel.ERROR, "cannot specify both --output-file and --output-dir"))
 
     if not parsed.input and sys.stdin.isatty():
-        errors.append(
-            Status(StatusLevel.ERROR, "no input provided; pass a file/directory or pipe via stdin")
-        )
+        errors.append(Status(StatusLevel.ERROR, "no input provided; pass a file/directory or pipe via stdin"))
 
     return errors
 
