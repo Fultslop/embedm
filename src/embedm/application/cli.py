@@ -15,6 +15,10 @@ def parse_command_line_arguments(
     parser = _build_parser()
     parsed = parser.parse_args(args)
 
+    if parsed.init is not None:
+        init_path = parsed.init if parsed.init else "."
+        return Configuration(init_path=init_path), []
+
     errors = _validate(parsed)
     if errors:
         return Configuration(), errors
@@ -26,6 +30,7 @@ def parse_command_line_arguments(
         input=input_value,
         output_file=parsed.output_file,
         output_directory=parsed.output_dir,
+        config_file=parsed.config,
     ), []
 
 
@@ -36,6 +41,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-o", "--output-file", default=None, help="output file path")
     parser.add_argument("-d", "--output-dir", default=None, help="output directory path")
     parser.add_argument("-c", "--config", default=None, help="configuration file path")
+    parser.add_argument("--init", nargs="?", const="", default=None, help="generate embedm-config.yaml in directory")
     return parser
 
 

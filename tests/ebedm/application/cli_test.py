@@ -71,12 +71,14 @@ def test_config_short_flag() -> None:
 
     assert not errors
     assert config.input == "input.md"
+    assert config.config_file == "config.yaml"
 
 
 def test_config_long_flag() -> None:
     config, errors = parse_command_line_arguments(["input.md", "--config", "config.yaml"])
 
     assert not errors
+    assert config.config_file == "config.yaml"
 
 
 # --- stdin ---
@@ -143,3 +145,30 @@ def test_output_file_and_dir_conflict() -> None:
     assert len(errors) == 1
     assert errors[0].level == StatusLevel.ERROR
     assert "output" in errors[0].description.lower()
+
+
+# --- init ---
+
+
+def test_init_without_path_defaults_to_current_dir() -> None:
+    config, errors = parse_command_line_arguments(["--init"])
+
+    assert not errors
+    assert config.init_path == "."
+
+
+def test_init_with_path() -> None:
+    config, errors = parse_command_line_arguments(["--init", "./my_dir"])
+
+    assert not errors
+    assert config.init_path == "./my_dir"
+
+
+def test_init_skips_input_validation() -> None:
+    with patch("sys.stdin") as mock_stdin:
+        mock_stdin.isatty.return_value = True
+
+        config, errors = parse_command_line_arguments(["--init"])
+
+    assert not errors
+    assert config.init_path == "."

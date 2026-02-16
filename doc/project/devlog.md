@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 16/02/26 [Feat] Config file support — `--init [path]` generates `embedm-config.yaml` with commented defaults, `--config` loads explicit config, auto-discovers config in input file's directory. Precedence: --config > auto-discovered > defaults.
+
 * 16/02/26 [Arch] Move root directive type from hardcoded constant in planner to `root_directive_type` config — eliminates planner's implicit dependency on the file plugin
 
 * 16/02/26 [Feat] Interactive continue/abort prompt in orchestration — after planning, tree errors are collected and presented, user can continue (errors render as Note blocks) or abort. Respects is_force_set and FATAL errors.

@@ -2,8 +2,6 @@
 
 ## Planned
 
-* Error handling pass, user interaction
-  * add tests for regression testing
 * Orchestration add InputMode.DIRECTORY, InputMode.STDIN
 * Setup regression testing
 * ToC plugin
@@ -25,3 +23,5 @@
   * Write 3-4 integration tests for the happy path
   * Stop mutating directives in-place
   * Add error channel to compilation result
+* Error handling pass, user interaction
+  * add tests for regression testing

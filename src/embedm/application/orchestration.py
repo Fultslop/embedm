@@ -8,6 +8,7 @@ from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .cli import parse_command_line_arguments
+from .config_loader import discover_config, generate_default_config, load_config_file
 from .configuration import Configuration, InputMode
 from .console import present_errors, present_result, present_title, prompt_continue
 from .embedm_context import EmbedmContext
@@ -23,6 +24,15 @@ def main() -> None:
         present_errors(errors)
         sys.exit(1)
 
+    if config.init_path is not None:
+        _handle_init(config.init_path)
+        return
+
+    config, errors = _resolve_config(config)
+    if errors:
+        present_errors(errors)
+        sys.exit(1)
+
     context = _build_context(config)
 
     if config.input_mode == InputMode.FILE:
@@ -34,6 +44,43 @@ def main() -> None:
     elif config.input_mode == InputMode.STDIN:
         # TODO: handle stdin content
         present_errors("stdin mode not yet implemented")
+
+
+def _handle_init(directory: str) -> None:
+    """Generate a default config file and exit."""
+    path, errors = generate_default_config(directory)
+    if errors:
+        present_errors(errors)
+        sys.exit(1)
+    present_result(f"created {path}\n")
+
+
+def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]:
+    """Resolve configuration from file (explicit or auto-discovered) and merge with CLI config."""
+    config_path = config.config_file or discover_config(config.input)
+    if config_path is None:
+        return config, []
+
+    file_config, errors = load_config_file(config_path)
+    if any(s.level == StatusLevel.ERROR for s in errors):
+        return config, errors
+
+    # merge: config file provides base values, CLI-only fields come from the parsed config
+    return Configuration(
+        input_mode=config.input_mode,
+        input=config.input,
+        output_file=config.output_file,
+        output_directory=config.output_directory,
+        max_file_size=file_config.max_file_size,
+        max_recursion=file_config.max_recursion,
+        max_memory=file_config.max_memory,
+        max_embed_size=file_config.max_embed_size,
+        root_directive_type=file_config.root_directive_type,
+        plugin_sequence=file_config.plugin_sequence,
+        is_force_set=config.is_force_set,
+        is_dry_run=config.is_dry_run,
+        config_file=config_path,
+    ), errors
 
 
 def _build_context(config: Configuration) -> EmbedmContext:
