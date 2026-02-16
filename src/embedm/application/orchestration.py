@@ -13,7 +13,7 @@ from .config_loader import discover_config, generate_default_config, load_config
 from .configuration import Configuration, InputMode
 from .console import present_errors, present_result, present_title, prompt_continue
 from .embedm_context import EmbedmContext
-from .planner import plan_file
+from .planner import plan_content, plan_file
 
 
 def main() -> None:
@@ -42,8 +42,9 @@ def main() -> None:
     elif config.input_mode == InputMode.DIRECTORY:
         _process_directory(config, context)
     elif config.input_mode == InputMode.STDIN:
-        # TODO: handle stdin content
-        present_errors("stdin mode not yet implemented")
+        plan_root = plan_content(config.input, context)
+        result = _compile_plan(plan_root, context)
+        _write_output(result, config)
 
 
 def _handle_init(directory: str) -> None:
