@@ -24,3 +24,12 @@ def present_errors(errors: Sequence[Status] | str) -> None:
 def present_result(result: str) -> None:
     """Print compilation result to stdout."""
     print(result, end="")
+
+
+def prompt_continue() -> bool:
+    """Prompt the user to continue or abort compilation. Returns True to continue."""
+    try:
+        response = input("Continue with compilation? [y/N] ")
+        return response.strip().lower() in ("y", "yes")
+    except (EOFError, KeyboardInterrupt):
+        return False

@@ -144,8 +144,8 @@ def test_create_plan_unknown_directive_type(tmp_path: Path):
     plan = create_plan(directive, content, depth=0, context=context)
 
     assert plan.directive == directive
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
 
 
@@ -165,8 +165,8 @@ def test_create_plan_plugin_validation_fails(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
 
 
@@ -183,9 +183,13 @@ def test_create_plan_source_file_not_found(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
-    assert any(s.level == StatusLevel.ERROR for s in plan.status)
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].document is None
+    assert any(s.level == StatusLevel.ERROR for s in plan.children[0].status)
+    # Source errors live on the error child, not the parent
+    assert any(s.level == StatusLevel.OK for s in plan.status)
 
 
 def test_create_plan_max_recursion_exceeded(tmp_path: Path):
@@ -204,12 +208,17 @@ def test_create_plan_max_recursion_exceeded(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=2, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
-    assert any(s.level == StatusLevel.ERROR for s in plan.status)
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].document is None
+    assert any("max recursion" in s.description for s in plan.children[0].status)
+    # Source errors live on the error child, not the parent
+    assert any(s.level == StatusLevel.OK for s in plan.status)
 
 
-def test_create_plan_parser_errors_return_with_error(tmp_path: Path):
+def test_create_plan_parser_errors_still_builds_partial_document(tmp_path: Path):
+    """Unclosed fence: partial fragments are preserved alongside the error."""
     context = _make_context(tmp_path)
     directive = Directive(type="root")
     content = (
@@ -220,9 +229,11 @@ def test_create_plan_parser_errors_return_with_error(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     assert any(s.level == StatusLevel.ERROR for s in plan.status)
+    # The text before the unclosed block is preserved as a fragment
+    assert len(plan.document.fragments) >= 1
 
 
 # --- create_plan: error collection ---
@@ -242,8 +253,8 @@ def test_create_plan_collects_multiple_errors(tmp_path: Path):
 
     plan = create_plan(directive, content, depth=0, context=context)
 
-    assert plan.document is None
-    assert plan.children is None
+    assert plan.document is not None
+    assert plan.children is not None
     error_count = sum(1 for s in plan.status if s.level == StatusLevel.ERROR)
     assert error_count >= 2
 
@@ -320,13 +331,13 @@ def test_plan_file_resolves_nested_relative_paths(tmp_path: Path):
     root_file.write_text(
         "# Root\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         "source: ./chapter.md\n"
         "```\n"
     )
 
     context = _make_context(tmp_path)
-    _register_plugin(context, "embedm_file")
+    _register_plugin(context, "file")
 
     plan = plan_file(str(root_file), context)
 
@@ -354,8 +365,13 @@ def test_create_plan_detects_self_reference(tmp_path: Path):
 
     plan = plan_file(str(self_ref), context)
 
-    assert plan.document is None
-    assert any("circular" in s.description.lower() for s in plan.status)
+    assert plan.document is not None
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].document is None
+    assert any("circular" in s.description.lower() for s in plan.children[0].status)
+    # Source errors live on the error child, not the parent
+    assert any(s.level == StatusLevel.OK for s in plan.status)
 
 
 def test_create_plan_detects_indirect_cycle(tmp_path: Path):
@@ -381,13 +397,17 @@ def test_create_plan_detects_indirect_cycle(tmp_path: Path):
 
     plan = plan_file(str(file_a), context)
 
-    # Root succeeds, but the child (b.md) should have a cycle error
+    # Root and child (b.md) succeed; the cycle error is on b's error child for a.md
     assert plan.document is not None
     assert plan.children is not None
     assert len(plan.children) == 1
-    child = plan.children[0]
-    assert child.document is None
-    assert any("circular" in s.description.lower() for s in child.status)
+    child_b = plan.children[0]
+    assert child_b.document is not None
+    assert any(s.level == StatusLevel.OK for s in child_b.status)
+    # b.md's child is an error node for the cycle back to a.md
+    assert child_b.children is not None
+    assert len(child_b.children) == 1
+    assert any("circular" in s.description.lower() for s in child_b.children[0].status)
 
 
 # --- duplicate source handling ---

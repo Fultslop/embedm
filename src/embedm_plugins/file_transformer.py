@@ -8,6 +8,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.span import Span
+from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.transformer_base import TransformerBase
 
@@ -16,26 +17,23 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class EmbedmFileParams:
+class FileParams:
     plan_node: PlanNode
     parent_document: Sequence[Fragment]
     file_cache: FileCache
     plugin_registry: PluginRegistry
 
 
-class EmbedmFileTransformer(TransformerBase[EmbedmFileParams]):
-    params_type = EmbedmFileParams
+class FileTransformer(TransformerBase[FileParams]):
+    params_type = FileParams
 
-    def execute(self, params: EmbedmFileParams) -> str:
+    def execute(self, params: FileParams) -> str:
         """Compile a document by resolving spans and applying plugin transforms to directives."""
-        if params.plan_node.document is None:
-            return ""
+        assert params.plan_node.document is not None, "transformer requires a planned document"
 
-        # step 1: load source content for span resolution
-        # todo is this a programming error ?
+        # step 1: load source content for span resolution (planner already validated and cached)
         source_content, errors = params.file_cache.get_file(params.plan_node.directive.source)
-        if errors or source_content is None:
-            return ""
+        assert not errors and source_content is not None, "source file should be cached after planning"
 
         # step 2: resolve spans into text, keep directives and strings as-is
         resolved: list[str | Directive] = _resolve_fragments(params.plan_node.document.fragments, source_content)
@@ -89,9 +87,14 @@ def _transform_directive(
     """Find the plugin for a directive and execute its transform."""
     plugin = plugin_registry.find_plugin_by_directive_type(directive.type)
     if plugin is None:
-        return None
+        return _render_error_note([f"no plugin registered for directive type '{directive.type}'"])
 
     node = _find_or_create_node(directive, child_lookup)
+
+    if _node_has_errors(node) and node.document is None:
+        error_msgs = [s.description for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
+        return _render_error_note(error_msgs)
+
     return plugin.transform(node, parent_document, file_cache, plugin_registry)
 
 
@@ -101,4 +104,22 @@ def _find_or_create_node(directive: Directive, child_lookup: dict[str, PlanNode]
         child = child_lookup.get(directive.source)
         if child is not None:
             return child
+        return PlanNode(
+            directive=directive,
+            status=[Status(StatusLevel.ERROR, f"source '{directive.source}' could not be processed")],
+            document=None,
+            children=None,
+        )
     return PlanNode(directive=directive, status=[], document=None, children=None)
+
+
+def _render_error_note(messages: list[str]) -> str:
+    """Render error messages as a GitHub-flavored markdown caution block."""
+    lines = ["> [!CAUTION]"]
+    for msg in messages:
+        lines.append(f"> **embedm:** {msg}")
+    return "\n".join(lines) + "\n"
+
+
+def _node_has_errors(node: PlanNode) -> bool:
+    return any(s.level in (StatusLevel.ERROR, StatusLevel.FATAL) for s in node.status)

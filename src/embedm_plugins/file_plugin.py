@@ -10,20 +10,20 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
-from embedm_plugins.embedm_file_transformer import EmbedmFileParams, EmbedmFileTransformer
+from embedm_plugins.file_transformer import FileParams, FileTransformer
 
 if TYPE_CHECKING:
     from embedm.plugins.plugin_registry import PluginRegistry
 
 
-class EmbedmFilePlugin(PluginBase):
-    name = "embedm file plugin"
+class FilePlugin(PluginBase):
+    name = "file plugin"
     api_version = 1
-    directive_type = "embedm_file"
+    directive_type = "file"
 
     def validate_directive(self, directive: Directive, _configuration: PluginConfiguration) -> list[Status]:
         if not directive.source:
-            return [Status(StatusLevel.ERROR, "embedm_file directive requires a source")]
+            return [Status(StatusLevel.ERROR, "'file' directive requires a source")]
         return []
 
     def transform(
@@ -33,12 +33,15 @@ class EmbedmFilePlugin(PluginBase):
         file_cache: FileCache | None = None,
         plugin_registry: PluginRegistry | None = None,
     ) -> str:
-        if plan_node.document is None or file_cache is None or plugin_registry is None:
+        assert file_cache is not None, "file_cache is required — orchestration must provide it"
+        assert plugin_registry is not None, "plugin_registry is required — orchestration must provide it"
+
+        if plan_node.document is None:
             return ""
 
-        transformer = EmbedmFileTransformer()
+        transformer = FileTransformer()
         return transformer.execute(
-            EmbedmFileParams(
+            FileParams(
                 plan_node=plan_node,
                 parent_document=parent_document,
                 file_cache=file_cache,

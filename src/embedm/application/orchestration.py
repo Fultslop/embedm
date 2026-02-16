@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import sys
 
+from embedm.domain.plan_node import PlanNode
+from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .cli import parse_command_line_arguments
 from .configuration import Configuration, InputMode
-from .console import present_errors, present_result, present_title
+from .console import present_errors, present_result, present_title, prompt_continue
 from .embedm_context import EmbedmContext
 from .planner import plan_file
 
@@ -47,16 +49,33 @@ def _process_file(file_name: str, context: EmbedmContext) -> str:
     """Plan and compile a single input file."""
     plan_root = plan_file(file_name, context)
 
+    # Root file couldn't be loaded — nothing to compile
     if plan_root.document is None:
         present_errors(plan_root.status)
         return ""
 
+    # Collect all errors across the plan tree and let the user decide
+    tree_errors = _collect_tree_errors(plan_root)
+    if tree_errors:
+        present_errors(tree_errors)
+        has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
+        if has_fatal or (not context.config.is_force_set and not prompt_continue()):
+            return ""
+
     plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
-    if plugin is None:
-        present_errors(f"no plugin for directive type '{plan_root.directive.type}'")
-        return ""
+    assert plugin is not None, (
+        f"no plugin for directive type '{plan_root.directive.type}' — planner should have caught this"
+    )
 
     return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
+
+
+def _collect_tree_errors(node: PlanNode) -> list[Status]:
+    """Walk the plan tree and collect all error/fatal statuses."""
+    errors = [s for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
+    for child in node.children or []:
+        errors.extend(_collect_tree_errors(child))
+    return errors
 
 
 def _write_output(result: str, config: Configuration) -> None:
