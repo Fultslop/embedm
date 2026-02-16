@@ -3,14 +3,15 @@
 ## Planned
 
 * Error handling pass, user interaction
+  * add tests for regression testing
 * Orchestration add InputMode.DIRECTORY, InputMode.STDIN
 * Setup regression testing
 * ToC plugin
 * Table plugin with sql-ish syntax
-* File 
-* Add progress indicator
+* File properties
 * --silent --yes-to-all --dry-run --verify
 * Enabled plugins
+* Add progress indicator
 
 ## To do
 

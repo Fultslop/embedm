@@ -1,7 +1,7 @@
 This is the root
 
 ```yaml embedm
-type: embedm_file
+type: file
 source: ./c1-1.md
 ```
 

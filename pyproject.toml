@@ -44,7 +44,7 @@ embedm = "embedm.application.orchestration:main"
 
 # md.start:entry_points
 [project.entry-points."embedm.plugins"]
-embedm_file = "embedm_plugins.embedm_file_plugin:EmbedmFilePlugin"
+embedm_file = "embedm_plugins.file_plugin:FilePlugin"
 hello_world = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
 # md.end:entry_points
 

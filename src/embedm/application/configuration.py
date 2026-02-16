@@ -14,8 +14,9 @@ DEFAULT_MAX_FILE_SIZE = 1_048_576  # 1 MB
 DEFAULT_MAX_RECURSION = 8
 DEFAULT_MAX_MEMORY = 104_857_600  # 100 MB
 DEFAULT_MAX_EMBED_SIZE = 524_288  # 512 KB
+DEFAULT_ROOT_DIRECTIVE_TYPE = "file"
 DEFAULT_PLUGIN_SEQUENCE = [
-    "embedm_plugins.embedm_file_plugin",
+    "embedm_plugins.file_plugin",
     "embedm_plugins.hello_world_plugin",
 ]
 
@@ -46,6 +47,9 @@ class Configuration:
 
     # max number of characters in a resolved embed block
     max_embed_size: int = DEFAULT_MAX_EMBED_SIZE
+
+    # directive type used for the root plan node
+    root_directive_type: str = DEFAULT_ROOT_DIRECTIVE_TYPE
 
     # order in which plugins must be executed during the compile stage
     plugin_sequence: list[str] = field(default_factory=lambda: list(DEFAULT_PLUGIN_SEQUENCE))

@@ -9,13 +9,11 @@ from embedm.plugins.plugin_configuration import PluginConfiguration
 
 from .embedm_context import EmbedmContext
 
-EMBEDM_FILE_DIRECTIVE_TYPE = "embedm_file"
-
 
 def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
-    """Create a plan for a file, using an embedm_file root directive."""
+    """Create a plan for a file, using the configured root directive type."""
     resolved = str(Path(file_name).resolve())
-    root_directive = Directive(type=EMBEDM_FILE_DIRECTIVE_TYPE, source=resolved)
+    root_directive = Directive(type=context.config.root_directive_type, source=resolved)
     content, errors = context.file_cache.get_file(resolved)
     if errors or content is None:
         return _error_node(
@@ -49,11 +47,17 @@ def create_plan(
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
     )
-    validation_errors, buildable = _validate_directives(directives, depth, ancestors, context, plugin_config)
+    validation_errors, buildable, error_children = _validate_directives(
+        directives,
+        depth,
+        ancestors,
+        context,
+        plugin_config,
+    )
     all_errors.extend(validation_errors)
 
-    # step 4: recurse into buildable source directives
-    children = _build_children(buildable, depth, ancestors, context)
+    # step 4: recurse into buildable source directives, include error children
+    children = _build_children(buildable, depth, ancestors, context) + error_children
 
     if not all_errors:
         all_errors.append(Status(StatusLevel.OK, "plan created successfully"))
@@ -72,10 +76,11 @@ def _validate_directives(
     ancestors: frozenset[str],
     context: EmbedmContext,
     plugin_config: PluginConfiguration,
-) -> tuple[list[Status], list[Directive]]:
-    """Validate directives. Returns (all_errors, buildable_directives)."""
+) -> tuple[list[Status], list[Directive], list[PlanNode]]:
+    """Validate directives. Returns (all_errors, buildable_directives, error_children)."""
     errors: list[Status] = []
     buildable: list[Directive] = []
+    error_children: list[PlanNode] = []
 
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
@@ -84,26 +89,33 @@ def _validate_directives(
         else:
             errors.extend(plugin.validate_directive(d, plugin_config))
 
-    for d in directives:
-        if not d.source:
-            continue
-        if d.source in ancestors:
-            errors.append(Status(StatusLevel.ERROR, f"circular dependency detected: '{d.source}'"))
-        elif depth >= context.config.max_recursion:
-            errors.append(
-                Status(
-                    StatusLevel.ERROR,
-                    f"max recursion depth ({context.config.max_recursion}) reached",
-                )
-            )
-        else:
-            source_errors = context.file_cache.validate(d.source)
-            if source_errors:
-                errors.extend(source_errors)
-            else:
-                buildable.append(d)
+    valid_directives = (d for d in directives if d.source)
 
-    return errors, buildable
+    for d in valid_directives:
+        error = _validate_source(d, depth, ancestors, context)
+        if error:
+            error_children.append(_error_node(d, [error]))
+        else:
+            buildable.append(d)
+
+    return errors, buildable, error_children
+
+
+def _validate_source(
+    directive: Directive,
+    depth: int,
+    ancestors: frozenset[str],
+    context: EmbedmContext,
+) -> Status | None:
+    """Check a single source directive for cycles, depth, and file access. Returns error or None."""
+    if directive.source in ancestors:
+        return Status(StatusLevel.ERROR, f"circular dependency detected: '{directive.source}'")
+    if depth >= context.config.max_recursion:
+        return Status(StatusLevel.ERROR, f"max recursion depth ({context.config.max_recursion}) reached")
+    source_errors = context.file_cache.validate(directive.source)
+    if source_errors:
+        return source_errors[0]
+    return None
 
 
 def _build_children(
@@ -115,14 +127,16 @@ def _build_children(
     """Recursively build child plan nodes for directives with sources."""
     children: list[PlanNode] = []
 
-    for d in directives:
-        if not d.source:
-            continue
+    valid_directives = (d for d in directives if d.source)
+
+    for d in valid_directives:
         source_content, load_errors = context.file_cache.get_file(d.source)
         if load_errors or source_content is None:
-            continue
-        child = create_plan(d, source_content, depth + 1, context, ancestors | {d.source})
-        children.append(child)
+            errors = load_errors or [Status(StatusLevel.ERROR, f"failed to load '{d.source}'")]
+            children.append(_error_node(d, errors))
+        else:
+            child = create_plan(d, source_content, depth + 1, context, ancestors | {d.source})
+            children.append(child)
 
     return children
 

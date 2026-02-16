@@ -67,7 +67,7 @@ def test_nested_file_embed_with_relative_path(tmp_path: Path):
     root.write_text(
         "Root intro\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         "source: ./chapter.md\n"
         "```\n"
         "Root outro\n"
@@ -97,7 +97,7 @@ def test_three_level_nesting_across_directories(tmp_path: Path):
     middle.write_text(
         "Middle start\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         "source: ./deep/leaf.md\n"
         "```\n"
         "Middle end\n"
@@ -107,7 +107,7 @@ def test_three_level_nesting_across_directories(tmp_path: Path):
     root.write_text(
         "Root start\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         "source: ./sub/middle.md\n"
         "```\n"
         "Root end\n"
@@ -133,13 +133,13 @@ def test_circular_dependency_produces_error(tmp_path: Path):
 
     file_a.write_text(
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {file_b}\n"
         "```\n"
     )
     file_b.write_text(
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {file_a}\n"
         "```\n"
     )
@@ -151,12 +151,14 @@ def test_circular_dependency_produces_error(tmp_path: Path):
     assert plan.document is not None
     assert any(s.level == StatusLevel.OK for s in plan.status)
 
-    # Child (b.md) detects the cycle
+    # Child (b.md) succeeds; the cycle error is on b's error child for a.md
     assert plan.children is not None
     assert len(plan.children) == 1
-    child = plan.children[0]
-    assert child.document is not None
-    assert any("circular" in s.description.lower() for s in child.status)
+    child_b = plan.children[0]
+    assert child_b.document is not None
+    assert child_b.children is not None
+    assert len(child_b.children) == 1
+    assert any("circular" in s.description.lower() for s in child_b.children[0].status)
 
     # Compilation renders the cycle as a visible caution block
     result = _compile(file_a, context)

@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 16/02/26 [Arch] Move root directive type from hardcoded constant in planner to `root_directive_type` config — eliminates planner's implicit dependency on the file plugin
+
 * 16/02/26 [Feat] Interactive continue/abort prompt in orchestration — after planning, tree errors are collected and presented, user can continue (errors render as Note blocks) or abort. Respects is_force_set and FATAL errors.
 
 * 16/02/26 [Feat] Error directives render as GFM `> [!CAUTION]` blocks during compilation — unknown plugins, unbuildable sources, and error nodes produce visible markers instead of silent empty output

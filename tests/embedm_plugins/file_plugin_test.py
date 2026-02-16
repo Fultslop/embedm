@@ -13,7 +13,7 @@ from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_registry import PluginRegistry
-from embedm_plugins.embedm_file_plugin import EmbedmFilePlugin
+from embedm_plugins.file_plugin import FilePlugin
 
 
 def _make_context(tmp_path: Path, max_recursion: int = 10) -> EmbedmContext:
@@ -25,7 +25,7 @@ def _make_context(tmp_path: Path, max_recursion: int = 10) -> EmbedmContext:
         allowed_paths=[str(tmp_path)],
     )
     registry = PluginRegistry()
-    registry.lookup["embedm file plugin"] = EmbedmFilePlugin()
+    registry.lookup["embedm file plugin"] = FilePlugin()
     return EmbedmContext(config=config, file_cache=file_cache, plugin_registry=registry)
 
 
@@ -52,7 +52,7 @@ def test_plain_text_no_directives(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -66,7 +66,7 @@ def test_multiline_plain_text(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -89,7 +89,7 @@ def test_directive_without_source(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_mock_plugin(context, "hello_world", transform_result="hello embedded world!")
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -115,7 +115,7 @@ def test_multiple_directives(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_mock_plugin(context, "hello_world", transform_result="HW")
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -136,7 +136,7 @@ def test_directive_with_source_compiles_child(tmp_path: Path):
     source.write_text(
         "Before\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {child_file}\n"
         "```\n"
         "After\n"
@@ -144,7 +144,7 @@ def test_directive_with_source_compiles_child(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -161,7 +161,7 @@ def test_nested_recursion(tmp_path: Path):
     child.write_text(
         "Child start\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {grandchild}\n"
         "```\n"
         "Child end\n"
@@ -171,7 +171,7 @@ def test_nested_recursion(tmp_path: Path):
     source.write_text(
         "Root start\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {child}\n"
         "```\n"
         "Root end\n"
@@ -179,7 +179,7 @@ def test_nested_recursion(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -204,7 +204,7 @@ def test_source_with_mixed_directives(tmp_path: Path):
     source.write_text(
         "Root\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {child}\n"
         "```\n"
     )
@@ -212,7 +212,7 @@ def test_source_with_mixed_directives(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_mock_plugin(context, "hello_world", transform_result="HW")
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -227,12 +227,12 @@ def test_source_with_mixed_directives(tmp_path: Path):
 
 def test_no_document_returns_empty(tmp_path: Path):
     node = PlanNode(
-        directive=Directive(type="embedm_file", source="missing.md"),
+        directive=Directive(type="file", source="missing.md"),
         status=[],
         document=None,
         children=None,
     )
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
     file_cache = FileCache(1024, 4096, [str(tmp_path)])
     registry = PluginRegistry()
 
@@ -244,12 +244,12 @@ def test_no_document_returns_empty(tmp_path: Path):
 def test_no_file_cache_asserts():
     """Missing file_cache is a coding error — orchestration must provide it."""
     node = PlanNode(
-        directive=Directive(type="embedm_file", source="input.md"),
+        directive=Directive(type="file", source="input.md"),
         status=[],
         document=Document(file_name="input.md", fragments=[Span(0, 5)]),
         children=None,
     )
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     with pytest.raises(AssertionError):
         plugin.transform(node, [])
@@ -272,7 +272,7 @@ def test_unknown_plugin_renders_error_note(tmp_path: Path):
 
     # remove the plugin to simulate it being unavailable at compile time
     del context.plugin_registry.lookup["unknown_plugin"]
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
@@ -288,7 +288,7 @@ def test_source_not_in_children_renders_error_note(tmp_path: Path):
     source.write_text(
         "Before\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         f"source: {tmp_path / 'missing.md'}\n"
         "```\n"
         "After\n"
@@ -296,23 +296,23 @@ def test_source_not_in_children_renders_error_note(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
 
     result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
     assert "Before\n" in result
     assert "After\n" in result
     assert "> [!CAUTION]" in result
-    assert "could not be processed" in result
+    assert "missing.md" in result
 
 
 # --- validate_directive ---
 
 
 def test_validate_directive_missing_source():
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
     config = MagicMock()
-    directive = Directive(type="embedm_file")
+    directive = Directive(type="file")
 
     errors = plugin.validate_directive(directive, config)
 
@@ -321,9 +321,9 @@ def test_validate_directive_missing_source():
 
 
 def test_validate_directive_with_source():
-    plugin = EmbedmFilePlugin()
+    plugin = FilePlugin()
     config = MagicMock()
-    directive = Directive(type="embedm_file", source="some/file.md")
+    directive = Directive(type="file", source="some/file.md")
 
     errors = plugin.validate_directive(directive, config)
 

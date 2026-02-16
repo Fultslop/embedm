@@ -17,17 +17,17 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class EmbedmFileParams:
+class FileParams:
     plan_node: PlanNode
     parent_document: Sequence[Fragment]
     file_cache: FileCache
     plugin_registry: PluginRegistry
 
 
-class EmbedmFileTransformer(TransformerBase[EmbedmFileParams]):
-    params_type = EmbedmFileParams
+class FileTransformer(TransformerBase[FileParams]):
+    params_type = FileParams
 
-    def execute(self, params: EmbedmFileParams) -> str:
+    def execute(self, params: FileParams) -> str:
         """Compile a document by resolving spans and applying plugin transforms to directives."""
         assert params.plan_node.document is not None, "transformer requires a planned document"
 

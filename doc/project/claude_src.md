@@ -75,6 +75,7 @@ For non-trivial tasks, briefly outline the intended approach before starting imp
 - **Functional Code**: Use functional and stateless approaches where they improve clarity
 - **Clean logic**: Keep core logic clean and push implementation details to the edges
 - **File Organsiation**: Balance file organization with simplicity - use an appropriate number of files for the project scale
+- **Prefer positives**: Prefer 'if condition' as opposed to 'if not condition' unless this complicates the code.
 
 ## Python Tools
 

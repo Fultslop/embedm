@@ -185,8 +185,11 @@ def test_create_plan_source_file_not_found(tmp_path: Path):
 
     assert plan.document is not None
     assert plan.children is not None
-    assert len(plan.children) == 0
-    assert any(s.level == StatusLevel.ERROR for s in plan.status)
+    assert len(plan.children) == 1
+    assert plan.children[0].document is None
+    assert any(s.level == StatusLevel.ERROR for s in plan.children[0].status)
+    # Source errors live on the error child, not the parent
+    assert any(s.level == StatusLevel.OK for s in plan.status)
 
 
 def test_create_plan_max_recursion_exceeded(tmp_path: Path):
@@ -207,8 +210,11 @@ def test_create_plan_max_recursion_exceeded(tmp_path: Path):
 
     assert plan.document is not None
     assert plan.children is not None
-    assert len(plan.children) == 0
-    assert any(s.level == StatusLevel.ERROR for s in plan.status)
+    assert len(plan.children) == 1
+    assert plan.children[0].document is None
+    assert any("max recursion" in s.description for s in plan.children[0].status)
+    # Source errors live on the error child, not the parent
+    assert any(s.level == StatusLevel.OK for s in plan.status)
 
 
 def test_create_plan_parser_errors_still_builds_partial_document(tmp_path: Path):
@@ -325,13 +331,13 @@ def test_plan_file_resolves_nested_relative_paths(tmp_path: Path):
     root_file.write_text(
         "# Root\n"
         "```yaml embedm\n"
-        "type: embedm_file\n"
+        "type: file\n"
         "source: ./chapter.md\n"
         "```\n"
     )
 
     context = _make_context(tmp_path)
-    _register_plugin(context, "embedm_file")
+    _register_plugin(context, "file")
 
     plan = plan_file(str(root_file), context)
 
@@ -361,8 +367,11 @@ def test_create_plan_detects_self_reference(tmp_path: Path):
 
     assert plan.document is not None
     assert plan.children is not None
-    assert len(plan.children) == 0
-    assert any("circular" in s.description.lower() for s in plan.status)
+    assert len(plan.children) == 1
+    assert plan.children[0].document is None
+    assert any("circular" in s.description.lower() for s in plan.children[0].status)
+    # Source errors live on the error child, not the parent
+    assert any(s.level == StatusLevel.OK for s in plan.status)
 
 
 def test_create_plan_detects_indirect_cycle(tmp_path: Path):
@@ -388,13 +397,17 @@ def test_create_plan_detects_indirect_cycle(tmp_path: Path):
 
     plan = plan_file(str(file_a), context)
 
-    # Root succeeds, but the child (b.md) should have a cycle error
+    # Root and child (b.md) succeed; the cycle error is on b's error child for a.md
     assert plan.document is not None
     assert plan.children is not None
     assert len(plan.children) == 1
-    child = plan.children[0]
-    assert child.document is not None
-    assert any("circular" in s.description.lower() for s in child.status)
+    child_b = plan.children[0]
+    assert child_b.document is not None
+    assert any(s.level == StatusLevel.OK for s in child_b.status)
+    # b.md's child is an error node for the cycle back to a.md
+    assert child_b.children is not None
+    assert len(child_b.children) == 1
+    assert any("circular" in s.description.lower() for s in child_b.children[0].status)
 
 
 # --- duplicate source handling ---
