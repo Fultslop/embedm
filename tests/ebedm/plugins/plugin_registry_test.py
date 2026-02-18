@@ -19,7 +19,6 @@ def test_plugin_discovery():
     mock_ep.load.return_value = mock_class
 
     with patch("embedm.plugins.plugin_registry.entry_points") as mock_entry_points:
-
         mock_entry_points.return_value = [mock_ep]
 
         registry = PluginRegistry()
@@ -28,7 +27,8 @@ def test_plugin_discovery():
 
         assert registry.count == 1
         assert registry.get_plugin(plugin_name) is not None
-        assert registry.get_plugin('foo') is None
+        assert registry.get_plugin("foo") is None
+
 
 def test_reject_plugin():
     plugin_name = "hello_world"
@@ -44,7 +44,6 @@ def test_reject_plugin():
     mock_ep.load.return_value = mock_class
 
     with patch("embedm.plugins.plugin_registry.entry_points") as mock_entry_points:
-
         mock_entry_points.return_value = [mock_ep]
 
         registry = PluginRegistry()
@@ -54,7 +53,7 @@ def test_reject_plugin():
 
         assert registry.count == 0
         assert registry.get_plugin(plugin_name) is None
-        assert registry.get_plugin('foo') is None
+        assert registry.get_plugin("foo") is None
 
 
 # --- find_plugin_by_directive_type ---

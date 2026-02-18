@@ -12,12 +12,10 @@ from embedm.application.configuration import (
     DEFAULT_MAX_EMBED_SIZE,
     DEFAULT_MAX_FILE_SIZE,
     DEFAULT_MAX_MEMORY,
-    DEFAULT_MAX_RECURSION,
     DEFAULT_PLUGIN_SEQUENCE,
     DEFAULT_ROOT_DIRECTIVE_TYPE,
 )
 from embedm.domain.status_level import StatusLevel
-
 
 # --- generate_default_config ---
 

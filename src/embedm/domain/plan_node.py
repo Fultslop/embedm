@@ -12,5 +12,5 @@ from .document import Document
 class PlanNode:
     directive: Directive
     status: list[Status]
-    document: Document | None
-    children: list[PlanNode] | None
+    document: Document | None = None
+    children: list[PlanNode] | None = None

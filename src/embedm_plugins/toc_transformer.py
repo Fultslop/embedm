@@ -6,6 +6,11 @@ from embedm.domain.document import Fragment
 from embedm.plugins.transformer_base import TransformerBase
 from embedm_plugins.plugin_resources import str_resources
 
+MAX_DEPTH_KEY = "max_depth"
+ADD_SLUGS_KEY = "add_slugs"
+
+TOC_OPTION_KEY_TYPES = {MAX_DEPTH_KEY: int, ADD_SLUGS_KEY: bool}
+
 
 @dataclass
 class ToCParams:

@@ -39,13 +39,7 @@ def _compile(file_path: Path, context: EmbedmContext) -> str:
 def test_hello_world_directive_compiles(tmp_path: Path):
     """A file with text and a hello_world block produces the expected output."""
     source = tmp_path / "input.md"
-    source.write_text(
-        "Before\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-        "After\n"
-    )
+    source.write_text("Before\n```yaml embedm\ntype: hello_world\n```\nAfter\n")
 
     context = _build_context(tmp_path)
     result = _compile(source, context)
@@ -64,14 +58,7 @@ def test_nested_file_embed_with_relative_path(tmp_path: Path):
     child.write_text("Chapter content\n")
 
     root = tmp_path / "root.md"
-    root.write_text(
-        "Root intro\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        "source: ./chapter.md\n"
-        "```\n"
-        "Root outro\n"
-    )
+    root.write_text("Root intro\n```yaml embedm\ntype: file\nsource: ./chapter.md\n```\nRoot outro\n")
 
     context = _build_context(tmp_path)
     result = _compile(root, context)
@@ -94,24 +81,10 @@ def test_three_level_nesting_across_directories(tmp_path: Path):
     leaf.write_text("Leaf content\n")
 
     middle = sub / "middle.md"
-    middle.write_text(
-        "Middle start\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        "source: ./deep/leaf.md\n"
-        "```\n"
-        "Middle end\n"
-    )
+    middle.write_text("Middle start\n```yaml embedm\ntype: file\nsource: ./deep/leaf.md\n```\nMiddle end\n")
 
     root = tmp_path / "root.md"
-    root.write_text(
-        "Root start\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        "source: ./sub/middle.md\n"
-        "```\n"
-        "Root end\n"
-    )
+    root.write_text("Root start\n```yaml embedm\ntype: file\nsource: ./sub/middle.md\n```\nRoot end\n")
 
     context = _build_context(tmp_path)
     result = _compile(root, context)
@@ -131,18 +104,8 @@ def test_circular_dependency_produces_error(tmp_path: Path):
     file_a = tmp_path / "a.md"
     file_b = tmp_path / "b.md"
 
-    file_a.write_text(
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {file_b}\n"
-        "```\n"
-    )
-    file_b.write_text(
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {file_a}\n"
-        "```\n"
-    )
+    file_a.write_text(f"```yaml embedm\ntype: file\nsource: {file_b}\n```\n")
+    file_b.write_text(f"```yaml embedm\ntype: file\nsource: {file_a}\n```\n")
 
     context = _build_context(tmp_path)
     plan = plan_file(str(file_a), context)
@@ -179,13 +142,7 @@ def test_directory_mode_skips_embedded_files(tmp_path: Path):
     child.write_text("Child content\n")
 
     root = tmp_path / "root.md"
-    root.write_text(
-        "Root\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        "source: ./child.md\n"
-        "```\n"
-    )
+    root.write_text("Root\n```yaml embedm\ntype: file\nsource: ./child.md\n```\n")
 
     standalone = tmp_path / "standalone.md"
     standalone.write_text("Standalone content\n")

@@ -7,10 +7,10 @@ from embedm_plugins.hello_world_transformer import HelloWorldTransformer
 
 def test_transformer_execute():
     transformer = HelloWorldTransformer()
-    assert transformer.execute(NoParams()) == 'hello embedded world!'
+    assert transformer.execute(NoParams()) == "hello embedded world!"
 
 
 def test_plugin_transform():
     plugin = HelloWorldPlugin()
     node = PlanNode(directive=Directive(type="hello_world"), status=[], document=None, children=None)
-    assert plugin.transform(node, []) == 'hello embedded world!'
+    assert plugin.transform(node, []) == "hello embedded world!"
