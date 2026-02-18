@@ -78,13 +78,13 @@ def test_parse_block_invalid_yaml():
 
 
 def test_find_block_returns_match():
-    content = "Some text before\n```yaml embedm\ntype: hello_world\n```\nSome text after\n"
+    content = "Some text before\n```yaml embedm\ntype: hello_world\n```\n\nSome text after\n"
     result = find_yaml_embed_block(content)
 
     assert result is not None
     assert result.raw_content == "type: hello_world\n"
     assert result.start == content.index("```yaml embedm\n")
-    assert result.end == content.index("```\nSome text after\n") + len("```\n")
+    assert result.end == content.index("```\n\nSome text after\n") + len("```\n")
 
 
 # --- find_yaml_embed_block: edge cases ---

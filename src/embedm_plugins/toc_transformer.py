@@ -8,13 +8,15 @@ from embedm_plugins.plugin_resources import str_resources
 
 MAX_DEPTH_KEY = "max_depth"
 ADD_SLUGS_KEY = "add_slugs"
+START_FRAGMENT_KEY = "start_fragment"
 
-TOC_OPTION_KEY_TYPES = {MAX_DEPTH_KEY: int, ADD_SLUGS_KEY: bool}
+TOC_OPTION_KEY_TYPES = {START_FRAGMENT_KEY: int, MAX_DEPTH_KEY: int, ADD_SLUGS_KEY: bool}
 
 
 @dataclass
 class ToCParams:
     parent_document: Sequence[Fragment]
+    start_fragment: int
     max_depth: int
     add_slugs: bool
 
@@ -26,11 +28,11 @@ class ToCTransformer(TransformerBase[ToCParams]):
         toc_lines = []
         heading_counts: dict[str, int] = {}  # Track duplicate headings for unique anchors
 
-        for _index, fragment in enumerate(params.parent_document):
+        for _index, fragment in enumerate(params.parent_document[params.start_fragment :]):
             if isinstance(fragment, str):
                 toc_lines.append(self._parse_str_fragment(fragment, params.max_depth, heading_counts, params.add_slugs))
 
-        return "\n".join(toc_lines) if toc_lines else str_resources.note_no_toc_content
+        return "\n".join(toc_lines) + "\n" if toc_lines else str_resources.note_no_toc_content
 
     def _parse_str_fragment(self, content: str, max_depth: int, heading_counts: dict[str, int], add_slugs: bool) -> str:
         # Normalize line endings first

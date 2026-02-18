@@ -164,3 +164,44 @@ def test_directory_mode_skips_embedded_files(tmp_path: Path):
     # standalone.md is NOT embedded
     standalone_resolved = str(standalone.resolve())
     assert standalone_resolved not in embedded
+
+
+# -- test toc
+
+
+def test_toc_directive_compiles(tmp_path: Path):
+    source_text = """
+Before
+# Title
+
+```yaml embedm
+    type: toc
+```
+
+## header A
+text
+
+### header B
+After
+"""
+
+    source = tmp_path / "input.md"
+    source.write_text(source_text)
+
+    context = _build_context(tmp_path)
+    result = _compile(source, context)
+
+    expected_text = """
+Before
+# Title
+
+  - header A
+    - header B
+
+## header A
+text
+
+### header B
+After
+"""
+    assert result == expected_text

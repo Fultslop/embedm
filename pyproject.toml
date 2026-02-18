@@ -45,6 +45,7 @@ embedm = "embedm.application.orchestration:main"
 # md.start:entry_points
 [project.entry-points."embedm.plugins"]
 embedm_file = "embedm_plugins.file_plugin:FilePlugin"
+table_of_contents = "embedm_plugins.toc_plugin:ToCPlugin"
 hello_world = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
 # md.end:entry_points
 

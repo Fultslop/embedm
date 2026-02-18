@@ -59,7 +59,7 @@ def test_plugin_transform_document_with_default_options():
     plan_node = PlanNode(Directive(type="toc"), [])
     output = plugin.transform(plan_node, parent_document=["## header"])
 
-    assert output == "  - header"
+    assert output == "  - header\n"
 
 
 def test_plugin_transform_document_with_max_depth():
@@ -68,7 +68,7 @@ def test_plugin_transform_document_with_max_depth():
     plan_node = PlanNode(Directive(type="toc", options=options), [])
     output = plugin.transform(plan_node, parent_document=["## header\n### header"])
 
-    assert output == "  - header"
+    assert output == "  - header\n"
 
 
 def test_plugin_transform_document_with_add_slugs():
@@ -77,4 +77,15 @@ def test_plugin_transform_document_with_add_slugs():
     plan_node = PlanNode(Directive(type="toc", options=options), [])
     output = plugin.transform(plan_node, parent_document=["## header"])
 
-    assert output == "  - [header](#header)"
+    assert output == "  - [header](#header)\n"
+
+
+# The ToC should only generate headings after its own directive
+def test_plugin_transform_document_expect_headings_after_toc():
+    plugin = ToCPlugin()
+    toc_directive = Directive(type="toc")
+    plan_node = PlanNode(toc_directive, [])
+    parent_document = ["# title", toc_directive, "## header"]
+    output = plugin.transform(plan_node, parent_document)
+
+    assert output == "  - header\n"

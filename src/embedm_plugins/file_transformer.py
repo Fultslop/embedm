@@ -63,14 +63,15 @@ def _resolve_directives(
     file_cache: FileCache,
     plugin_registry: PluginRegistry,
 ) -> list[str | Directive]:
-    """Resolve each directive by finding its plugin and calling transform."""
+
     result: list[str | Directive] = []
+
     for item in resolved:
         if not isinstance(item, Directive):
             result.append(item)
             continue
 
-        transformed = _transform_directive(item, child_lookup, result, file_cache, plugin_registry)
+        transformed = _transform_directive(item, child_lookup, resolved, file_cache, plugin_registry)
         if transformed is not None:
             result.append(transformed)
 
