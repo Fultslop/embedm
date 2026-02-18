@@ -374,8 +374,8 @@ def test_get_file_evicts_multiple_to_fit_large_file(tmp_path: Path):
     file_a = tmp_path / "a.md"
     file_b = tmp_path / "b.md"
     file_large = tmp_path / "large.md"
-    file_a.write_text("aa")   # 2 bytes
-    file_b.write_text("bb")   # 2 bytes
+    file_a.write_text("aa")  # 2 bytes
+    file_b.write_text("bb")  # 2 bytes
     file_large.write_text("x" * 6)  # 6 bytes
 
     cache = FileCache(

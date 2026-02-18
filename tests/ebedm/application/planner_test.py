@@ -62,13 +62,7 @@ def test_create_plan_directive_without_source(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_plugin(context, "hello_world")
     directive = Directive(type="root")
-    content = (
-        "Before\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-        "After\n"
-    )
+    content = "Before\n```yaml embedm\ntype: hello_world\n```\nAfter\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -86,14 +80,7 @@ def test_create_plan_directive_with_source(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_plugin(context, "file_embed")
     directive = Directive(type="root")
-    content = (
-        "Before\n"
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {source_file}\n"
-        "```\n"
-        "After\n"
-    )
+    content = f"Before\n```yaml embedm\ntype: file_embed\nsource: {source_file}\n```\nAfter\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -113,12 +100,7 @@ def test_create_plan_child_has_document(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_plugin(context, "file_embed")
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {source_file}\n"
-        "```\n"
-    )
+    content = f"```yaml embedm\ntype: file_embed\nsource: {source_file}\n```\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -135,11 +117,7 @@ def test_create_plan_child_has_document(tmp_path: Path):
 def test_create_plan_unknown_directive_type(tmp_path: Path):
     context = _make_context(tmp_path)
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: unknown_plugin\n"
-        "```\n"
-    )
+    content = "```yaml embedm\ntype: unknown_plugin\n```\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -157,11 +135,7 @@ def test_create_plan_plugin_validation_fails(tmp_path: Path):
         validate_errors=[Status(StatusLevel.ERROR, "invalid directive")],
     )
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-    )
+    content = "```yaml embedm\ntype: hello_world\n```\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -174,12 +148,7 @@ def test_create_plan_source_file_not_found(tmp_path: Path):
     context = _make_context(tmp_path)
     _register_plugin(context, "file_embed")
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {tmp_path / 'nonexistent.md'}\n"
-        "```\n"
-    )
+    content = f"```yaml embedm\ntype: file_embed\nsource: {tmp_path / 'nonexistent.md'}\n```\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -199,12 +168,7 @@ def test_create_plan_max_recursion_exceeded(tmp_path: Path):
     context = _make_context(tmp_path, max_recursion=2)
     _register_plugin(context, "file_embed")
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {source_file}\n"
-        "```\n"
-    )
+    content = f"```yaml embedm\ntype: file_embed\nsource: {source_file}\n```\n"
 
     plan = create_plan(directive, content, depth=2, context=context)
 
@@ -221,11 +185,7 @@ def test_create_plan_parser_errors_still_builds_partial_document(tmp_path: Path)
     """Unclosed fence: partial fragments are preserved alongside the error."""
     context = _make_context(tmp_path)
     directive = Directive(type="root")
-    content = (
-        "Text before\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-    )
+    content = "Text before\n```yaml embedm\ntype: hello_world\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -242,14 +202,7 @@ def test_create_plan_parser_errors_still_builds_partial_document(tmp_path: Path)
 def test_create_plan_collects_multiple_errors(tmp_path: Path):
     context = _make_context(tmp_path)
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: unknown_one\n"
-        "```\n"
-        "```yaml embedm\n"
-        "type: unknown_two\n"
-        "```\n"
-    )
+    content = "```yaml embedm\ntype: unknown_one\n```\n```yaml embedm\ntype: unknown_two\n```\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -261,21 +214,12 @@ def test_create_plan_collects_multiple_errors(tmp_path: Path):
 
 def test_create_plan_child_errors_dont_fail_parent(tmp_path: Path):
     source_file = tmp_path / "include.md"
-    source_file.write_text(
-        "```yaml embedm\n"
-        "type: unknown_plugin\n"
-        "```\n"
-    )
+    source_file.write_text("```yaml embedm\ntype: unknown_plugin\n```\n")
 
     context = _make_context(tmp_path)
     _register_plugin(context, "file_embed")
     directive = Directive(type="root")
-    content = (
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {source_file}\n"
-        "```\n"
-    )
+    content = f"```yaml embedm\ntype: file_embed\nsource: {source_file}\n```\n"
 
     plan = create_plan(directive, content, depth=0, context=context)
 
@@ -302,13 +246,7 @@ def test_create_plan_resolves_relative_source_against_parent(tmp_path: Path):
     _register_plugin(context, "file_embed")
     # Parent directive lives in subdir
     parent_directive = Directive(type="root", source=str(subdir / "root.md"))
-    content = (
-        "Before\n"
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        "source: ./child.md\n"
-        "```\n"
-    )
+    content = "Before\n```yaml embedm\ntype: file_embed\nsource: ./child.md\n```\n"
 
     plan = create_plan(parent_directive, content, depth=0, context=context)
 
@@ -328,13 +266,7 @@ def test_plan_file_resolves_nested_relative_paths(tmp_path: Path):
     child_file = subdir / "chapter.md"
 
     child_file.write_text("chapter content\n")
-    root_file.write_text(
-        "# Root\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        "source: ./chapter.md\n"
-        "```\n"
-    )
+    root_file.write_text("# Root\n```yaml embedm\ntype: file\nsource: ./chapter.md\n```\n")
 
     context = _make_context(tmp_path)
     _register_plugin(context, "file")
@@ -353,12 +285,7 @@ def test_plan_file_resolves_nested_relative_paths(tmp_path: Path):
 def test_create_plan_detects_self_reference(tmp_path: Path):
     """A file that includes itself is detected as a cycle."""
     self_ref = tmp_path / "self.md"
-    self_ref.write_text(
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {self_ref}\n"
-        "```\n"
-    )
+    self_ref.write_text(f"```yaml embedm\ntype: file_embed\nsource: {self_ref}\n```\n")
 
     context = _make_context(tmp_path)
     _register_plugin(context, "file_embed")
@@ -379,18 +306,8 @@ def test_create_plan_detects_indirect_cycle(tmp_path: Path):
     file_a = tmp_path / "a.md"
     file_b = tmp_path / "b.md"
 
-    file_a.write_text(
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {file_b}\n"
-        "```\n"
-    )
-    file_b.write_text(
-        "```yaml embedm\n"
-        "type: file_embed\n"
-        f"source: {file_a}\n"
-        "```\n"
-    )
+    file_a.write_text(f"```yaml embedm\ntype: file_embed\nsource: {file_b}\n```\n")
+    file_b.write_text(f"```yaml embedm\ntype: file_embed\nsource: {file_a}\n```\n")
 
     context = _make_context(tmp_path)
     _register_plugin(context, "file_embed")

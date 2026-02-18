@@ -2,16 +2,15 @@
 
 ## Planned
 
-* Orchestration add InputMode.DIRECTORY, InputMode.STDIN
-* Setup regression testing
 * ToC plugin
+* Setup regression testing
 * Table plugin with sql-ish syntax
 * File properties
 * --silent --yes-to-all --dry-run --verify
 * Enabled plugins
 * Add progress indicator
 
-## To do
+## Done
 
 * Discuss IoC
 * Integration tests
@@ -25,3 +24,4 @@
   * Add error channel to compilation result
 * Error handling pass, user interaction
   * add tests for regression testing
+* Orchestration add InputMode.DIRECTORY, InputMode.STDIN

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
 
 from embedm.application.orchestration import (
     _collect_embedded_sources,
@@ -12,7 +11,6 @@ from embedm.application.orchestration import (
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
-
 
 # --- _expand_directory_input ---
 

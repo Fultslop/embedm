@@ -78,13 +78,7 @@ def test_multiline_plain_text(tmp_path: Path):
 
 def test_directive_without_source(tmp_path: Path):
     source = tmp_path / "input.md"
-    source.write_text(
-        "Before\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-        "After\n"
-    )
+    source.write_text("Before\n```yaml embedm\ntype: hello_world\n```\nAfter\n")
 
     context = _make_context(tmp_path)
     _register_mock_plugin(context, "hello_world", transform_result="hello embedded world!")
@@ -101,15 +95,7 @@ def test_directive_without_source(tmp_path: Path):
 def test_multiple_directives(tmp_path: Path):
     source = tmp_path / "input.md"
     source.write_text(
-        "Start\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-        "Middle\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-        "End\n"
+        "Start\n```yaml embedm\ntype: hello_world\n```\nMiddle\n```yaml embedm\ntype: hello_world\n```\nEnd\n"
     )
 
     context = _make_context(tmp_path)
@@ -133,14 +119,7 @@ def test_directive_with_source_compiles_child(tmp_path: Path):
     child_file.write_text("Child content\n")
 
     source = tmp_path / "input.md"
-    source.write_text(
-        "Before\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {child_file}\n"
-        "```\n"
-        "After\n"
-    )
+    source.write_text(f"Before\n```yaml embedm\ntype: file\nsource: {child_file}\n```\nAfter\n")
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
@@ -158,24 +137,10 @@ def test_nested_recursion(tmp_path: Path):
     grandchild.write_text("Grandchild\n")
 
     child = tmp_path / "child.md"
-    child.write_text(
-        "Child start\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {grandchild}\n"
-        "```\n"
-        "Child end\n"
-    )
+    child.write_text(f"Child start\n```yaml embedm\ntype: file\nsource: {grandchild}\n```\nChild end\n")
 
     source = tmp_path / "input.md"
-    source.write_text(
-        "Root start\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {child}\n"
-        "```\n"
-        "Root end\n"
-    )
+    source.write_text(f"Root start\n```yaml embedm\ntype: file\nsource: {child}\n```\nRoot end\n")
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
@@ -192,22 +157,10 @@ def test_nested_recursion(tmp_path: Path):
 
 def test_source_with_mixed_directives(tmp_path: Path):
     child = tmp_path / "child.md"
-    child.write_text(
-        "Child has\n"
-        "```yaml embedm\n"
-        "type: hello_world\n"
-        "```\n"
-        "inside\n"
-    )
+    child.write_text("Child has\n```yaml embedm\ntype: hello_world\n```\ninside\n")
 
     source = tmp_path / "input.md"
-    source.write_text(
-        "Root\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {child}\n"
-        "```\n"
-    )
+    source.write_text(f"Root\n```yaml embedm\ntype: file\nsource: {child}\n```\n")
 
     context = _make_context(tmp_path)
     _register_mock_plugin(context, "hello_world", transform_result="HW")
@@ -258,13 +211,7 @@ def test_no_file_cache_asserts():
 def test_unknown_plugin_renders_error_note(tmp_path: Path):
     """Unknown plugin at compile time renders a visible caution block."""
     source = tmp_path / "input.md"
-    source.write_text(
-        "Before\n"
-        "```yaml embedm\n"
-        "type: unknown_plugin\n"
-        "```\n"
-        "After\n"
-    )
+    source.write_text("Before\n```yaml embedm\ntype: unknown_plugin\n```\nAfter\n")
 
     context = _make_context(tmp_path)
     _register_mock_plugin(context, "unknown_plugin")
@@ -285,14 +232,7 @@ def test_unknown_plugin_renders_error_note(tmp_path: Path):
 def test_source_not_in_children_renders_error_note(tmp_path: Path):
     """A directive whose source wasn't built by the planner renders an error note."""
     source = tmp_path / "input.md"
-    source.write_text(
-        "Before\n"
-        "```yaml embedm\n"
-        "type: file\n"
-        f"source: {tmp_path / 'missing.md'}\n"
-        "```\n"
-        "After\n"
-    )
+    source.write_text(f"Before\n```yaml embedm\ntype: file\nsource: {tmp_path / 'missing.md'}\n```\nAfter\n")
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)

@@ -60,7 +60,6 @@ For non-trivial tasks, briefly outline the intended approach before starting imp
 ## Coding Best Practices
 
 - **Clear documentation**:Write minimal documentation if needed. NEVER give usage examples in the doc. 
-- **Early Returns**: Use to avoid nested conditions
 - **Descriptive Names**: Use clear variable/function names (prefix handlers with "handle")
 - **Constants Over Functions**: Use constants where possible
 - **DRY Code**: Don't repeat yourself
@@ -76,6 +75,8 @@ For non-trivial tasks, briefly outline the intended approach before starting imp
 - **Clean logic**: Keep core logic clean and push implementation details to the edges
 - **File Organsiation**: Balance file organization with simplicity - use an appropriate number of files for the project scale
 - **Prefer positives**: Prefer 'if condition' as opposed to 'if not condition' unless this complicates the code.
+- **String resources**: User facing string resources must be in a central place in the package and referenced from the code. Programming errors/exceptions can have strings in code
+- **Assert preconditions**: For all public methods, validate the parameters and if necessary the object's state via asserts. 
 
 ## Python Tools
 

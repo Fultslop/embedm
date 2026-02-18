@@ -10,7 +10,7 @@ from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 
 EMBEDM_FENCE_PATTERN = re.compile(r"^```yaml embedm\s*$", re.MULTILINE)
-CLOSING_FENCE_PATTERN = re.compile(r"^```\s*$", re.MULTILINE)
+CLOSING_FENCE_PATTERN = re.compile(r"^```[ \t]*$", re.MULTILINE)
 
 DIRECTIVE_TYPE_KEY = "type"
 DIRECTIVE_SOURCE_KEY = "source"

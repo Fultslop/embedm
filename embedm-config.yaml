@@ -20,3 +20,4 @@ root_directive_type: file
 plugin_sequence:
   - embedm_plugins.file_plugin
   - embedm_plugins.hello_world_plugin
+  - embedm_plugins.toc_plugin

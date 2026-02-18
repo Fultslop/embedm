@@ -22,7 +22,9 @@ class HelloWorldPlugin(PluginBase):
     api_version = 1
     directive_type = "hello_world"
 
-    def validate_directive(self, directive: Directive, _configuration: PluginConfiguration) -> list[Status]:
+    def validate_directive(
+        self, directive: Directive, _configuration: PluginConfiguration | None = None
+    ) -> list[Status]:
         if directive.type != self.directive_type:
             return [
                 Status(

@@ -16,9 +16,12 @@ DEFAULT_MAX_MEMORY = 104_857_600  # 100 MB
 DEFAULT_MAX_EMBED_SIZE = 524_288  # 512 KB
 DEFAULT_ROOT_DIRECTIVE_TYPE = "file"
 CONFIG_FILE_NAME = "embedm-config.yaml"
+
+# include standard embedm plugins
 DEFAULT_PLUGIN_SEQUENCE = [
     "embedm_plugins.file_plugin",
     "embedm_plugins.hello_world_plugin",
+    "embedm_plugins.toc_plugin",
 ]
 
 
