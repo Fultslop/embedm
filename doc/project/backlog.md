@@ -3,12 +3,12 @@
 ## Planned
 
 * Collect user facing strings
+* Enabled plugins -> should be covered by plugin sequence ?
 * --yes-to-all
 * Setup regression testing
 * Table plugin with sql-ish syntax
-* File properties
+* File properties, region, line, s
 * --silent --dry-run --verify
-* Enabled plugins -> should be covered by plugin sequence ?
 * Add progress indicator
 
 ## Review findings (18/02/26)
@@ -17,9 +17,6 @@
 
 **Code quality**
 
-* `_expand_directory_input` (orchestration.py): glob base extraction uses fragile string
-  replacement (`replace("/**", "")`) rather than proper path parsing. Would break on patterns like
-  `src/**/docs/*.md`.
 
 
 **Design / speculation**
