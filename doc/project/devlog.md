@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 19/02/26 [Arch] Plugin output size enforcement — `max_embed_size` is now enforced post-transform in `file_transformer._transform_directive()`. Exceeding the limit replaces the directive output with a caution block. `FileCache` is the chosen carrier for the limit (it already owns `max_file_size` and `memory_limit`), threaded from config via `orchestration._build_context()`. Value 0 disables enforcement. In-transform memory consumption (allocations before `transform()` returns) cannot be enforced in pure Python without OS-level process isolation; this is an accepted limitation. The plugin trust model relies on users controlling `plugin_sequence` in their config.
+
+* 19/02/26 [Feat] Table plugin — renders CSV, TSV, and JSON as markdown tables. Options: select (column projection with AS aliases), filter (structured conditions per column: exact match or op literal where op ∈ {=, !=, <, <=, >, >=}, ANDed), order_by (multi-column, asc/desc), limit, offset, date_format, null_string, max_cell_length. Nested YAML filter map serialized as JSON via a `_to_option_str` hook in the directive parser.
+
 * 19/02/26 [Feat] Accept-all prompt option — interactive 'a'/'always' choice in the continue prompt persists across files in a directory run. `-A`/`--accept-all` CLI flag pre-sets this. Errors always shown; fatal errors still halt. `ContinueChoice` enum replaces the bool return from `prompt_continue`.
 
 * 19/02/26 [Arch] Plugin load failures treated as user errors — `load_plugins` now returns `list[Status]` and catches per-entry exceptions gracefully. Errors are surfaced via `present_errors` in orchestration but processing continues. Missing plugins fall through to the existing "no plugin registered" document error path.
