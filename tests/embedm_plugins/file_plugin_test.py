@@ -268,3 +268,69 @@ def test_validate_directive_with_source():
     errors = plugin.validate_directive(directive, config)
 
     assert len(errors) == 0
+
+
+# --- max_embed_size enforcement ---
+
+
+def _make_context_with_embed_limit(tmp_path: Path, max_embed_size: int) -> EmbedmContext:
+    config = MagicMock()
+    config.max_recursion = 10
+    file_cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+        max_embed_size=max_embed_size,
+    )
+    registry = PluginRegistry()
+    registry.lookup["embedm file plugin"] = FilePlugin()
+    return EmbedmContext(config=config, file_cache=file_cache, plugin_registry=registry)
+
+
+def test_embed_size_exceeded_renders_error_note(tmp_path: Path):
+    """A directive whose output exceeds max_embed_size renders a caution block."""
+    source = tmp_path / "input.md"
+    source.write_text("Before\n```yaml embedm\ntype: hello_world\n```\nAfter\n")
+
+    context = _make_context_with_embed_limit(tmp_path, max_embed_size=5)
+    _register_mock_plugin(context, "hello_world", transform_result="hello world!")  # 12 bytes > 5
+
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "Before\n" in result
+    assert "After\n" in result
+    assert "> [!CAUTION]" in result
+    assert "max_embed_size" in result
+    assert "hello world!" not in result
+
+
+def test_embed_size_within_limit_passes_through(tmp_path: Path):
+    """A directive whose output is within max_embed_size is returned unchanged."""
+    source = tmp_path / "input.md"
+    source.write_text("Before\n```yaml embedm\ntype: hello_world\n```\nAfter\n")
+
+    context = _make_context_with_embed_limit(tmp_path, max_embed_size=100)
+    _register_mock_plugin(context, "hello_world", transform_result="hello world!")
+
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "hello world!" in result
+    assert "> [!CAUTION]" not in result
+
+
+def test_embed_size_zero_disables_limit(tmp_path: Path):
+    """max_embed_size=0 disables output size enforcement."""
+    source = tmp_path / "input.md"
+    source.write_text("Before\n```yaml embedm\ntype: hello_world\n```\nAfter\n")
+
+    context = _make_context_with_embed_limit(tmp_path, max_embed_size=0)
+    large_output = "x" * 10000
+    _register_mock_plugin(context, "hello_world", transform_result=large_output)
+
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert large_output in result
+    assert "> [!CAUTION]" not in result

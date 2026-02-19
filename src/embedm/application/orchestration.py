@@ -192,7 +192,7 @@ def _write_directory_output(
 
 def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
-    file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
+    file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size)
     plugin_registry = PluginRegistry()
     errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
     return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors

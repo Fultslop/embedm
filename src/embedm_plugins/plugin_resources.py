@@ -12,4 +12,5 @@ str_resources = SimpleNamespace(
     err_table_invalid_select="invalid select expression: '{expr}'.",
     err_table_invalid_order_by="invalid order_by expression: '{expr}'.",
     err_table_invalid_filter_operator="invalid filter operator in '{expr}'. Supported: =, !=, <, <=, >, >=.",
+    err_embed_size_exceeded="embedded content exceeds max_embed_size ({limit} bytes).",
 )

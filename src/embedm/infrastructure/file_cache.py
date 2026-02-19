@@ -34,6 +34,7 @@ class FileCache:
         memory_limit: int,
         allowed_paths: list[str],
         write_mode: WriteMode = WriteMode.CREATE_NEW,
+        max_embed_size: int = 0,
     ):
         assert memory_limit > max_file_size, (
             f"memory_limit ({memory_limit}) must be greater than max_file_size ({max_file_size})"
@@ -42,6 +43,7 @@ class FileCache:
         self.memory_limit = memory_limit
         self.allowed_paths = allowed_paths
         self.write_mode = write_mode
+        self.max_embed_size = max_embed_size
         self._cache: OrderedDict[str, str | None] = OrderedDict()
         self._memory_in_use = 0
 

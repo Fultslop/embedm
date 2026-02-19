@@ -11,6 +11,7 @@ from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.transformer_base import TransformerBase
+from embedm_plugins.plugin_resources import str_resources
 
 if TYPE_CHECKING:
     from embedm.plugins.plugin_registry import PluginRegistry
@@ -96,7 +97,10 @@ def _transform_directive(
         error_msgs = [s.description for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
         return _render_error_note(error_msgs)
 
-    return plugin.transform(node, parent_document, file_cache, plugin_registry)
+    result = plugin.transform(node, parent_document, file_cache, plugin_registry)
+    if file_cache.max_embed_size > 0 and len(result) > file_cache.max_embed_size:
+        return _render_error_note([str_resources.err_embed_size_exceeded.format(limit=file_cache.max_embed_size)])
+    return result
 
 
 def _find_or_create_node(directive: Directive, child_lookup: dict[int, PlanNode]) -> PlanNode:
