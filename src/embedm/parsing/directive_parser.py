@@ -1,6 +1,7 @@
+import json
 import re
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 import yaml
 
@@ -44,9 +45,18 @@ def parse_yaml_embed_block(content: str, base_dir: str = "") -> tuple[Directive 
 
     directive_type = str(parsed[DIRECTIVE_TYPE_KEY])
     source = _resolve_source(str(parsed.get(DIRECTIVE_SOURCE_KEY, "")), base_dir)
-    options = {str(k): str(v) for k, v in parsed.items() if k not in (DIRECTIVE_TYPE_KEY, DIRECTIVE_SOURCE_KEY)}
+    options = {
+        str(k): _to_option_str(v) for k, v in parsed.items() if k not in (DIRECTIVE_TYPE_KEY, DIRECTIVE_SOURCE_KEY)
+    }
 
     return Directive(type=directive_type, source=source, options=options), []
+
+
+def _to_option_str(value: Any) -> str:
+    """Serialize a YAML option value to string. Dicts and lists are JSON-encoded to preserve structure."""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value)
+    return str(value)
 
 
 def _resolve_source(source: str, base_dir: str) -> str:

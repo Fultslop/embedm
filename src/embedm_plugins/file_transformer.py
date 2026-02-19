@@ -39,8 +39,8 @@ class FileTransformer(TransformerBase[FileParams]):
         resolved: list[str | Directive] = _resolve_fragments(params.plan_node.document.fragments, source_content)
 
         # step 3: resolve directives via their plugins (DFS — children compiled on demand)
-        # TODO: dict keyed by source loses duplicates when two directives share a source file
-        child_lookup = {child.directive.source: child for child in (params.plan_node.children or [])}
+        # keyed by directive identity so multiple directives sharing a source are each matched to their own child
+        child_lookup = {id(child.directive): child for child in (params.plan_node.children or [])}
         resolved = _resolve_directives(resolved, child_lookup, params.file_cache, params.plugin_registry)
 
         return "".join(s for s in resolved if isinstance(s, str))
@@ -59,7 +59,7 @@ def _resolve_fragments(fragments: list[Fragment], source_content: str) -> list[s
 
 def _resolve_directives(
     resolved: list[str | Directive],
-    child_lookup: dict[str, PlanNode],
+    child_lookup: dict[int, PlanNode],
     file_cache: FileCache,
     plugin_registry: PluginRegistry,
 ) -> list[str | Directive]:
@@ -80,7 +80,7 @@ def _resolve_directives(
 
 def _transform_directive(
     directive: Directive,
-    child_lookup: dict[str, PlanNode],
+    child_lookup: dict[int, PlanNode],
     parent_document: list[str | Directive],
     file_cache: FileCache,
     plugin_registry: PluginRegistry,
@@ -99,10 +99,10 @@ def _transform_directive(
     return plugin.transform(node, parent_document, file_cache, plugin_registry)
 
 
-def _find_or_create_node(directive: Directive, child_lookup: dict[str, PlanNode]) -> PlanNode:
+def _find_or_create_node(directive: Directive, child_lookup: dict[int, PlanNode]) -> PlanNode:
     """Look up the pre-planned child node, or create a leaf node for source-less directives."""
     if directive.source:
-        child = child_lookup.get(directive.source)
+        child = child_lookup.get(id(directive))
         if child is not None:
             return child
         return PlanNode(

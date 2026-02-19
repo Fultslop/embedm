@@ -22,6 +22,7 @@ DEFAULT_PLUGIN_SEQUENCE = [
     "embedm_plugins.file_plugin",
     "embedm_plugins.hello_world_plugin",
     "embedm_plugins.toc_plugin",
+    "embedm_plugins.table_plugin",
 ]
 
 
