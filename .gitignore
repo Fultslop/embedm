@@ -212,8 +212,8 @@ __marimo__/
 claude.md
 notes.md
 compiled/
-!doc/manual/src/compiled/
-!doc/manual/src/compiled/**
+!doc/manual/compiled/
+!doc/manual/compiled/**
 !doc/readme/compiled/
 !doc/readme/compiled/**
 .claude/
