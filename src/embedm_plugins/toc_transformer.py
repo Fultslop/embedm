@@ -28,7 +28,7 @@ class ToCTransformer(TransformerBase[ToCParams]):
         toc_lines = []
         heading_counts: dict[str, int] = {}  # Track duplicate headings for unique anchors
 
-        for _index, fragment in enumerate(params.parent_document[params.start_fragment :]):
+        for fragment in params.parent_document[params.start_fragment :]:
             if isinstance(fragment, str):
                 fragment_content = self._parse_str_fragment(
                     fragment, params.max_depth, heading_counts, params.add_slugs
@@ -82,7 +82,7 @@ class ToCTransformer(TransformerBase[ToCParams]):
 
         level = len(match.group(1))
 
-        if max_depth is not None and level > max_depth:
+        if level > max_depth:
             return None
 
         return level, match.group(2).strip()

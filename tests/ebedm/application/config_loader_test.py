@@ -145,6 +145,18 @@ def test_load_invalid_yaml_returns_error(tmp_path: Path) -> None:
     assert "parse" in errors[0].description.lower()
 
 
+def test_load_memory_not_greater_than_file_size_returns_error(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_file_size: 8192\nmax_memory: 4096\n", encoding="utf-8")
+
+    _, errors = load_config_file(str(config_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "max_memory" in errors[0].description
+    assert "max_file_size" in errors[0].description
+
+
 def test_load_non_mapping_returns_error(tmp_path: Path) -> None:
     config_file = tmp_path / CONFIG_FILE_NAME
     config_file.write_text("- item1\n- item2\n", encoding="utf-8")

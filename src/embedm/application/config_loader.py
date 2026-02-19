@@ -5,6 +5,7 @@ from typing import Any
 
 import yaml
 
+from embedm.domain.domain_resources import str_resources
 from embedm.domain.status_level import Status, StatusLevel
 
 from .configuration import (
@@ -125,4 +126,12 @@ def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
     if has_errors:
         return Configuration(), errors
 
-    return Configuration(**overrides), errors
+    config = Configuration(**overrides)
+
+    if config.max_memory <= config.max_file_size:
+        msg = str_resources.config_memory_must_exceed_file_size.format(
+            max_memory=config.max_memory, max_file_size=config.max_file_size
+        )
+        return Configuration(), [Status(StatusLevel.ERROR, msg)]
+
+    return config, errors

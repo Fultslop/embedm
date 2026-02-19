@@ -33,6 +33,9 @@ class FileCache:
         allowed_paths: list[str],
         write_mode: WriteMode = WriteMode.CREATE_NEW,
     ):
+        assert memory_limit > max_file_size, (
+            f"memory_limit ({memory_limit}) must be greater than max_file_size ({max_file_size})"
+        )
         self.max_file_size = max_file_size
         self.memory_limit = memory_limit
         self.allowed_paths = allowed_paths
