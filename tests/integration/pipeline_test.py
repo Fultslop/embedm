@@ -5,12 +5,13 @@ from pathlib import Path
 from embedm.application.configuration import Configuration
 from embedm.application.embedm_context import EmbedmContext
 from embedm.application.planner import plan_file
+from embedm.application.application_resources import str_resources
 from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_registry import PluginRegistry
 
 
-def _build_context(tmp_path: Path) -> EmbedmContext:
+def _build_context(tmp_path: Path, enabled_plugs: set[str] | None = None) -> EmbedmContext:
     """Build a real pipeline context with loaded plugins, rooted at tmp_path."""
     config = Configuration()
     file_cache = FileCache(
@@ -19,7 +20,7 @@ def _build_context(tmp_path: Path) -> EmbedmContext:
         allowed_paths=[str(tmp_path)],
     )
     registry = PluginRegistry()
-    registry.load_plugins()
+    registry.load_plugins(enabled_plugs)
     return EmbedmContext(config=config, file_cache=file_cache, plugin_registry=registry)
 
 
@@ -33,9 +34,6 @@ def _compile(file_path: Path, context: EmbedmContext) -> str:
     return plugin.transform(plan, [], context.file_cache, context.plugin_registry)
 
 
-# --- test 1: single file with hello_world directive ---
-
-
 def test_hello_world_directive_compiles(tmp_path: Path):
     """A file with text and a hello_world block produces the expected output."""
     source = tmp_path / "input.md"
@@ -47,9 +45,6 @@ def test_hello_world_directive_compiles(tmp_path: Path):
     assert "Before\n" in result
     assert "hello embedded world!" in result
     assert "After\n" in result
-
-
-# --- test 2: nested file embedding with relative paths ---
 
 
 def test_nested_file_embed_with_relative_path(tmp_path: Path):
@@ -66,10 +61,6 @@ def test_nested_file_embed_with_relative_path(tmp_path: Path):
     assert "Root intro\n" in result
     assert "Chapter content\n" in result
     assert "Root outro\n" in result
-
-
-# --- test 3: three-level nesting across directories ---
-
 
 def test_three_level_nesting_across_directories(tmp_path: Path):
     """root.md → sub/middle.md → sub/deep/leaf.md all resolve and inline correctly."""
@@ -94,10 +85,6 @@ def test_three_level_nesting_across_directories(tmp_path: Path):
     assert "Leaf content\n" in result
     assert "Middle end\n" in result
     assert "Root end\n" in result
-
-
-# --- test 4: circular dependency produces clean error ---
-
 
 def test_circular_dependency_produces_error(tmp_path: Path):
     """A→B→A cycle is caught during planning without crash or infinite loop."""
@@ -126,10 +113,6 @@ def test_circular_dependency_produces_error(tmp_path: Path):
     # Compilation renders the cycle as a visible caution block
     result = _compile(file_a, context)
     assert "> [!CAUTION]" in result
-
-
-# --- test 5: directory mode with deduplication ---
-
 
 def test_directory_mode_skips_embedded_files(tmp_path: Path):
     """When processing a directory, files already embedded as children are skipped."""
@@ -205,3 +188,16 @@ text
 After
 """
     assert result == expected_text
+
+def test_disabled_plugin(tmp_path: Path):
+    plugin_type = "hello_world"
+    source = tmp_path / "input.md"
+    source.write_text(f"Before\n```yaml embedm\ntype: {plugin_type}\n```\nAfter\n")
+
+    # only leave the file plugin, make sure the default hello_world is removed
+    context = _build_context(tmp_path, ["embedm_plugins.file_plugin"])
+
+    plan = plan_file(source, context)
+
+    assert plan.status[0].level == StatusLevel.ERROR
+    assert plan.status[0].description == str_resources.err_plan_no_plugin.format(directive_type=plugin_type)

@@ -7,6 +7,7 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.parsing.directive_parser import parse_yaml_embed_blocks
 from embedm.plugins.plugin_configuration import PluginConfiguration
 
+from .application_resources import str_resources
 from .embedm_context import EmbedmContext
 
 
@@ -92,7 +93,7 @@ def _validate_directives(
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
-            errors.append(Status(StatusLevel.ERROR, f"no plugin registered for directive type '{d.type}'"))
+            errors.append(Status(StatusLevel.ERROR, str_resources.err_plan_no_plugin.format(directive_type=d.type)))
         else:
             errors.extend(plugin.validate_directive(d, plugin_config))
 
