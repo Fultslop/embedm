@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 19/02/26 [Arch] Plugin load failures treated as user errors — `load_plugins` now returns `list[Status]` and catches per-entry exceptions gracefully. Errors are surfaced via `present_errors` in orchestration but processing continues. Missing plugins fall through to the existing "no plugin registered" document error path.
+
 * 16/02/26 [Feat] Directory mode — `embedm .` (non-recursive), `embedm ./*` (non-recursive), `embedm ./**` (recursive). Processes all .md files, skipping files already embedded as dependencies via plan tree walk. Auto-detects directory/glob inputs. `-o` blocked for directory input; `-d` writes to output directory.
 
 * 16/02/26 [Feat] Config file support — `--init [path]` generates `embedm-config.yaml` with commented defaults, `--config` loads explicit config, auto-discovers config in input file's directory. Precedence: --config > auto-discovered > defaults.

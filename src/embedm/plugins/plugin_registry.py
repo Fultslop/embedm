@@ -1,5 +1,7 @@
 from importlib.metadata import entry_points
 
+from embedm.domain.status_level import Status, StatusLevel
+
 from .plugin_base import PluginBase
 from .plugin_resources import str_resources
 
@@ -13,17 +15,23 @@ class PluginRegistry:
     def count(self) -> int:
         return len(self.lookup)
 
-    def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> None:
+    def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> list[Status]:
+        """Load all registered plugins. Returns errors for any that fail to load."""
         plugins = entry_points(group="embedm.plugins")
+        errors: list[Status] = []
 
         if verbose:
             print(str_resources.registry_show_len_plugins.format(len_plugins=len(plugins)))
 
-        # load the plugins
         for entry in plugins:
-            # todo: catch failure to load plugin
-            plugin_class = entry.load()
-            instance = plugin_class()
+            try:
+                plugin_class = entry.load()
+                instance = plugin_class()
+            except Exception as exc:
+                errors.append(
+                    Status(StatusLevel.ERROR, str_resources.err_plugin_load_failed.format(name=entry.name, exc=exc))
+                )
+                continue
 
             if enabled_plugins is None or instance.name in enabled_plugins:
                 if verbose:
@@ -31,6 +39,8 @@ class PluginRegistry:
                 self.lookup[instance.name] = instance
             elif verbose:
                 print(f"    rejected plugin '{instance.name}'.")
+
+        return errors
 
     def get_plugin(self, name: str) -> PluginBase | None:
         return self.lookup.get(name)

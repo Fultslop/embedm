@@ -34,7 +34,9 @@ def main() -> None:
         present_errors(errors)
         sys.exit(1)
 
-    context = _build_context(config)
+    context, load_errors = _build_context(config)
+    if load_errors:
+        present_errors(load_errors)
 
     if config.input_mode == InputMode.FILE:
         result = _process_file(config.input, context)
@@ -183,13 +185,13 @@ def _write_directory_output(
     output_path.write_text(result, encoding="utf-8")
 
 
-def _build_context(config: Configuration) -> EmbedmContext:
+def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
     file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
     plugin_registry = PluginRegistry()
     # TODO: filter by config.plugin_sequence
-    plugin_registry.load_plugins()
-    return EmbedmContext(config, file_cache, plugin_registry)
+    errors = plugin_registry.load_plugins()
+    return EmbedmContext(config, file_cache, plugin_registry), errors
 
 
 def _process_file(file_name: str, context: EmbedmContext) -> str:

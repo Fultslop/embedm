@@ -2,10 +2,6 @@
 
 ## Planned
 
-* Collect user facing strings
-* def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> None:
-  hides failure to load plugins come up with a proposal and implement
-
 * Enabled plugins -> should be covered by plugin sequence ?
 * --accept-all -A
 * Setup regression testing
@@ -137,3 +133,8 @@ Anything that doesn't fit renders as a truncated string. The user excludes colum
 
 * `find_yaml_embed_block` returns `None` silently for unclosed fences; `_find_all_raw_blocks`
   returns an explicit error `Status`. Inconsistent contract for the same underlying problem.
+
+* Collect user facing strings - they sit in resources now
+
+* * def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> None:
+  hides failure to load plugins come up with a proposal and implement
