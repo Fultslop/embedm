@@ -58,9 +58,8 @@ class Configuration:
     # order in which plugins must be executed during the compile stage
     plugin_sequence: list[str] = field(default_factory=lambda: list(DEFAULT_PLUGIN_SEQUENCE))
 
-    # if set, warnings and errors will be skipped during the validation
-    # step unless the errors affect the limits
-    is_force_set: bool = False
+    # if set, the user will not be prompted to continue on errors (errors still shown)
+    is_accept_all: bool = False
 
     # will only run, does not save any files
     is_dry_run: bool = False

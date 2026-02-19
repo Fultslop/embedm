@@ -11,7 +11,7 @@ from embedm.plugins.plugin_registry import PluginRegistry
 from .cli import parse_command_line_arguments
 from .config_loader import discover_config, generate_default_config, load_config_file
 from .configuration import Configuration, InputMode
-from .console import present_errors, present_result, present_title, prompt_continue
+from .console import ContinueChoice, present_errors, present_result, present_title, prompt_continue
 from .embedm_context import EmbedmContext
 from .planner import plan_content, plan_file
 
@@ -80,7 +80,7 @@ def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]
         max_embed_size=file_config.max_embed_size,
         root_directive_type=file_config.root_directive_type,
         plugin_sequence=file_config.plugin_sequence,
-        is_force_set=config.is_force_set,
+        is_accept_all=config.is_accept_all,
         is_dry_run=config.is_dry_run,
         config_file=config_path,
     ), errors
@@ -138,8 +138,14 @@ def _compile_plan(plan_root: PlanNode, context: EmbedmContext) -> str:
     if tree_errors:
         present_errors(tree_errors)
         has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
-        if has_fatal or (not context.config.is_force_set and not prompt_continue()):
+        if has_fatal:
             return ""
+        if not context.accept_all:
+            choice = prompt_continue()
+            if choice == ContinueChoice.NO:
+                return ""
+            if choice == ContinueChoice.ALWAYS:
+                context.accept_all = True
 
     return _compile_plan_node(plan_root, context)
 
@@ -147,9 +153,8 @@ def _compile_plan(plan_root: PlanNode, context: EmbedmContext) -> str:
 def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext) -> str:
     """Compile a validated plan node via its plugin."""
     plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
-    assert plugin is not None, (
-        f"no plugin for directive type '{plan_root.directive.type}' — planner should have caught this"
-    )
+    if plugin is None:
+        return ""
     return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
 
 
@@ -189,8 +194,8 @@ def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
     file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
     plugin_registry = PluginRegistry()
-    errors = plugin_registry.load_plugins(enabled_plugins=set(config.plugin_sequence))
-    return EmbedmContext(config, file_cache, plugin_registry), errors
+    errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
+    return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors
 
 
 def _process_file(file_name: str, context: EmbedmContext) -> str:

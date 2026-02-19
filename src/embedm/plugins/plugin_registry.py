@@ -15,8 +15,12 @@ class PluginRegistry:
     def count(self) -> int:
         return len(self.lookup)
 
-    def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> list[Status]:
-        """Load all registered plugins. Returns errors for any that fail to load."""
+    def load_plugins(self, enabled_modules: set[str] | None = None, verbose: bool = False) -> list[Status]:
+        """Load all registered plugins. Returns errors for any that fail to load.
+
+        enabled_modules: set of module paths (e.g. 'embedm_plugins.file_plugin') to load.
+        If None, all discovered plugins are loaded.
+        """
         plugins = entry_points(group="embedm.plugins")
         errors: list[Status] = []
 
@@ -24,6 +28,11 @@ class PluginRegistry:
             print(str_resources.registry_show_len_plugins.format(len_plugins=len(plugins)))
 
         for entry in plugins:
+            if enabled_modules is not None and entry.value.split(":")[0] not in enabled_modules:
+                if verbose:
+                    print(f"    skipping plugin '{entry.name}'.")
+                continue
+
             try:
                 plugin_class = entry.load()
                 instance = plugin_class()
@@ -33,12 +42,9 @@ class PluginRegistry:
                 )
                 continue
 
-            if enabled_plugins is None or instance.name in enabled_plugins:
-                if verbose:
-                    print(f"    adding plugin '{instance.name}'.")
-                self.lookup[instance.name] = instance
-            elif verbose:
-                print(f"    rejected plugin '{instance.name}'.")
+            if verbose:
+                print(f"    adding plugin '{instance.name}'.")
+            self.lookup[instance.name] = instance
 
         return errors
 

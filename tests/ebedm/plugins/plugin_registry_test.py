@@ -42,6 +42,7 @@ def test_reject_plugin():
 
     mock_ep = MagicMock(spec=EntryPoint)
     mock_ep.name = "hello_world"
+    mock_ep.value = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
     mock_ep.load.return_value = mock_class
 
     with patch("embedm.plugins.plugin_registry.entry_points") as mock_entry_points:
@@ -49,12 +50,11 @@ def test_reject_plugin():
 
         registry = PluginRegistry()
 
-        # do not allow hello_world
-        registry.load_plugins(enabled_plugins=["foo"], verbose=True)
+        # only allow a different module — hello_world_plugin should be skipped
+        registry.load_plugins(enabled_modules={"embedm_plugins.other_plugin"}, verbose=True)
 
         assert registry.count == 0
         assert registry.get_plugin(plugin_name) is None
-        assert registry.get_plugin("foo") is None
 
 
 def test_load_plugins_returns_error_on_failure():

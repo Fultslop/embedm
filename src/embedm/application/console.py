@@ -2,10 +2,17 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Sequence
+from enum import Enum
 from importlib.metadata import version
 
 from embedm.application.application_resources import str_resources
 from embedm.domain.status_level import Status
+
+
+class ContinueChoice(Enum):
+    YES = "yes"
+    NO = "no"
+    ALWAYS = "always"
 
 
 def present_title() -> None:
@@ -27,10 +34,14 @@ def present_result(result: str) -> None:
     print(result, end="")
 
 
-def prompt_continue() -> bool:
-    """Prompt the user to continue or abort compilation. Returns True to continue."""
+def prompt_continue() -> ContinueChoice:
+    """Prompt the user to continue, abort, or accept all. Returns the user's choice."""
     try:
-        response = input(str_resources.continue_compilation)
-        return response.strip().lower() in ("y", "yes")
+        response = input(str_resources.continue_compilation).strip().lower()
+        if response in ("a", "always"):
+            return ContinueChoice.ALWAYS
+        if response in ("y", "yes"):
+            return ContinueChoice.YES
+        return ContinueChoice.NO
     except (EOFError, KeyboardInterrupt):
-        return False
+        return ContinueChoice.NO
