@@ -3,7 +3,7 @@ List of commands to run
 
 ## Update snapshot
 
-`py .\src\embedm\ .\tests\regression\** -d .\tests\regression_snapshot\`
+`py .\src\embedm\ .\tests\regression\src\** -d .\tests\regression\snapshot\`
 
 ## Reinstall Embedm
 
