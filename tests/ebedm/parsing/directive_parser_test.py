@@ -79,45 +79,53 @@ def test_parse_block_invalid_yaml():
 
 def test_find_block_returns_match():
     content = "Some text before\n```yaml embedm\ntype: hello_world\n```\n\nSome text after\n"
-    result = find_yaml_embed_block(content)
+    block, errors = find_yaml_embed_block(content)
 
-    assert result is not None
-    assert result.raw_content == "type: hello_world\n"
-    assert result.start == content.index("```yaml embedm\n")
-    assert result.end == content.index("```\n\nSome text after\n") + len("```\n")
+    assert not errors
+    assert block is not None
+    assert block.raw_content == "type: hello_world\n"
+    assert block.start == content.index("```yaml embedm\n")
+    assert block.end == content.index("```\n\nSome text after\n") + len("```\n")
 
 
 # --- find_yaml_embed_block: edge cases ---
 
 
 def test_find_block_returns_none_when_no_block():
-    result = find_yaml_embed_block("Just some regular markdown\nwith no embedm blocks\n")
-    assert result is None
+    block, errors = find_yaml_embed_block("Just some regular markdown\nwith no embedm blocks\n")
+    assert block is None
+    assert not errors
 
 
 def test_find_block_empty_string():
-    result = find_yaml_embed_block("")
-    assert result is None
+    block, errors = find_yaml_embed_block("")
+    assert block is None
+    assert not errors
 
 
 def test_find_block_unclosed_fence():
     content = "Some text\n```yaml embedm\ntype: hello_world\n"
-    result = find_yaml_embed_block(content)
-    assert result is None
+    block, errors = find_yaml_embed_block(content)
+
+    assert block is None
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
 
 
 def test_find_block_ignores_non_embedm_fence():
     content = "```yaml\nkey: value\n```\n"
-    result = find_yaml_embed_block(content)
-    assert result is None
+    block, errors = find_yaml_embed_block(content)
+    assert block is None
+    assert not errors
 
 
 def test_find_block_empty_embedm_block():
     content = "```yaml embedm\n```\n"
-    result = find_yaml_embed_block(content)
+    block, errors = find_yaml_embed_block(content)
 
-    assert result is not None
-    assert result.raw_content == ""
+    assert not errors
+    assert block is not None
+    assert block.raw_content == ""
 
 
 # --- parse_yaml_embed_blocks: happy path ---

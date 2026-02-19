@@ -21,8 +21,6 @@
   replacement (`replace("/**", "")`) rather than proper path parsing. Would break on patterns like
   `src/**/docs/*.md`.
 
-* `find_yaml_embed_block` returns `None` silently for unclosed fences; `_find_all_raw_blocks`
-  returns an explicit error `Status`. Inconsistent contract for the same underlying problem.
 
 **Design / speculation**
 
@@ -30,9 +28,6 @@
   `load_plugins()` — the TODO has been there a while. Consider whether the feature is still wanted
   or should be removed to avoid misleading config.
 
-* `get_option` return type (`T | Status | None`) forces callers to assert the type after the call
-  to satisfy mypy. Overloading or a two-step validate/get pattern would be cleaner and remove the
-  runtime asserts-for-types pattern that is currently needed.
 
 ## Done
 
@@ -71,3 +66,9 @@
   `get_option(cast=bool)` must then handle `"True"`/`"False"` strings — worth verifying this
   round-trip is actually tested.
 
+* `get_option` return type (`T | Status | None`) forces callers to assert the type after the call
+  to satisfy mypy. Overloading or a two-step validate/get pattern would be cleaner and remove the
+  runtime asserts-for-types pattern that is currently needed.
+
+* `find_yaml_embed_block` returns `None` silently for unclosed fences; `_find_all_raw_blocks`
+  returns an explicit error `Status`. Inconsistent contract for the same underlying problem.
