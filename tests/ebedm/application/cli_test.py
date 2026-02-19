@@ -122,7 +122,6 @@ def test_defaults_are_applied() -> None:
     assert config.max_memory == DEFAULT_MAX_MEMORY
     assert config.max_embed_size == DEFAULT_MAX_EMBED_SIZE
     assert config.plugin_sequence == DEFAULT_PLUGIN_SEQUENCE
-    assert config.is_force_set is False
     assert config.is_dry_run is False
 
 
@@ -173,6 +172,30 @@ def test_init_skips_input_validation() -> None:
 
     assert not errors
     assert config.init_path == "."
+
+
+# --- accept all ---
+
+
+def test_accept_all_short_flag() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "-A"])
+
+    assert not errors
+    assert config.is_accept_all is True
+
+
+def test_accept_all_long_flag() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "--accept-all"])
+
+    assert not errors
+    assert config.is_accept_all is True
+
+
+def test_accept_all_defaults_to_false() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md"])
+
+    assert not errors
+    assert config.is_accept_all is False
 
 
 # --- directory detection ---

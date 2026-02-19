@@ -11,3 +11,4 @@ class EmbedmContext:
     config: Configuration
     file_cache: FileCache
     plugin_registry: PluginRegistry
+    accept_all: bool = False
