@@ -302,23 +302,33 @@ def test_parse_blocks_resolves_sources_with_base_dir(tmp_path: Path):
     assert directive.source == expected
 
 
-# --- Directive.get_option: bool casting ---
+# --- Directive.get_option / validate_option: bool casting ---
 # Options are stored as strings by the parser (str(v)), so YAML `true` becomes "True".
 
 
 def test_directive_get_option_bool_true_string():
     d = Directive(type="toc", options={"flag": "True"})
-    assert d.get_option("flag", cast=bool) is True
+    assert d.get_option("flag", cast=bool, default_value=False) is True
 
 
 def test_directive_get_option_bool_false_string():
     d = Directive(type="toc", options={"flag": "False"})
-    assert d.get_option("flag", cast=bool) is False
+    assert d.get_option("flag", cast=bool, default_value=True) is False
 
 
-def test_directive_get_option_bool_invalid_string_returns_error():
+def test_directive_validate_option_bool_invalid_string_returns_error():
     d = Directive(type="toc", options={"flag": "yes"})
-    result = d.get_option("flag", cast=bool)
+    result = d.validate_option("flag", cast=bool)
     assert isinstance(result, Status)
     assert result.level == StatusLevel.ERROR
     assert "flag" in result.description
+
+
+def test_directive_validate_option_returns_none_when_absent():
+    d = Directive(type="toc", options={})
+    assert d.validate_option("flag", cast=bool) is None
+
+
+def test_directive_validate_option_returns_none_when_valid():
+    d = Directive(type="toc", options={"flag": "True"})
+    assert d.validate_option("flag", cast=bool) is None
