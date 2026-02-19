@@ -5,9 +5,9 @@ from typing import Any
 
 import yaml
 
-from embedm.domain.domain_resources import str_resources
 from embedm.domain.status_level import Status, StatusLevel
 
+from .application_resources import str_resources
 from .configuration import (
     CONFIG_FILE_NAME,
     DEFAULT_MAX_EMBED_SIZE,
@@ -65,21 +65,20 @@ def generate_default_config(directory: str) -> tuple[str, list[Status]]:
     """Generate a default embedm-config.yaml in the given directory."""
     dir_path = Path(directory)
     if not dir_path.is_dir():
-        return "", [Status(StatusLevel.ERROR, f"directory '{directory}' does not exist")]
+        return "", [Status(StatusLevel.ERROR, str_resources.err_config_no_dir.format(directory=directory))]
 
     config_path = dir_path / CONFIG_FILE_NAME
     if config_path.exists():
-        return "", [Status(StatusLevel.ERROR, f"'{config_path}' already exists")]
+        return "", [Status(StatusLevel.ERROR, str_resources.err_config_dir_exist.format(config_path=config_path))]
 
     config_path.write_text(_build_default_template(), encoding="utf-8")
     return str(config_path), []
 
 
 def load_config_file(path: str) -> tuple[Configuration, list[Status]]:
-    """Load a config file and return a Configuration with overridden fields."""
     config_path = Path(path)
     if not config_path.is_file():
-        return Configuration(), [Status(StatusLevel.ERROR, f"config file '{path}' not found")]
+        return Configuration(), [Status(StatusLevel.ERROR, str_resources.err_config_no_file.format(path=path))]
 
     try:
         raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
@@ -129,7 +128,7 @@ def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
     config = Configuration(**overrides)
 
     if config.max_memory <= config.max_file_size:
-        msg = str_resources.config_memory_must_exceed_file_size.format(
+        msg = str_resources.err_config_memory_must_exceed_file_size.format(
             max_memory=config.max_memory, max_file_size=config.max_file_size
         )
         return Configuration(), [Status(StatusLevel.ERROR, msg)]

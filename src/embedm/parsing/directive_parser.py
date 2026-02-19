@@ -9,6 +9,8 @@ from embedm.domain.document import Fragment
 from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 
+from .parsing_resources import str_resources
+
 EMBEDM_FENCE_PATTERN = re.compile(r"^```yaml embedm\s*$", re.MULTILINE)
 CLOSING_FENCE_PATTERN = re.compile(r"^```[ \t]*$", re.MULTILINE)
 
@@ -63,7 +65,7 @@ def find_yaml_embed_block(content: str) -> tuple[RawDirectiveBlock | None, list[
     content_start = opening.end() + 1  # skip the newline after opening fence
     closing = CLOSING_FENCE_PATTERN.search(content, content_start)
     if closing is None:
-        return None, [Status(StatusLevel.ERROR, "unclosed embedm block")]
+        return None, [Status(StatusLevel.ERROR, str_resources.err_unclosed_block)]
 
     raw_content = content[content_start : closing.start()]
     block_end = closing.end() + 1 if closing.end() < len(content) else closing.end()
