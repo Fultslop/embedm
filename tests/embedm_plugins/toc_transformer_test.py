@@ -7,7 +7,7 @@ def test_transformer_execute_with_empty_content():
     transformer = ToCTransformer()
     params = ToCParams(parent_document=[], start_fragment=0, max_depth=1, add_slugs=False)
 
-    assert transformer.execute(params) == str_resources.note_no_toc_content
+    assert transformer.execute(params) == f"{str_resources.note_no_toc_content}\n"
 
 
 def test_transformer_execute_with_single_header():
@@ -72,5 +72,15 @@ def test_transformer_execute_include_sections_after_start():
     parent_document = ["# title", toc_directive, "\n## heading"]
 
     params = ToCParams(parent_document, 1, 10, False)
+
+    assert transformer.execute(params) == "  - heading\n"
+
+
+def test_transformer_execute_only_notifies_when_no_heading_in_any_fragment():
+    transformer = ToCTransformer()
+
+    parent_document = ["## heading", "no heading here"]
+
+    params = ToCParams(parent_document, 0, 10, False)
 
     assert transformer.execute(params) == "  - heading\n"

@@ -33,12 +33,11 @@ class ToCPlugin(PluginBase):
     ) -> list[Status]:
         assert directive is not None, "directive is required — orchestration must provide it"
 
-        status_messages = [
-            result
+        return [
+            status
             for key, cast_type in TOC_OPTION_KEY_TYPES.items()
-            if isinstance(result := directive.get_option(key, cast=cast_type), Status)
+            if (status := directive.validate_option(key, cast=cast_type)) is not None
         ]
-        return status_messages
 
     def transform(
         self,
@@ -52,29 +51,17 @@ class ToCPlugin(PluginBase):
 
         transformer = ToCTransformer()
 
-        # get the start fragment if defined in the options (unlikely but..)
         start_fragment = _get_start_fragment(plan_node, parent_document)
-
         max_depth = plan_node.directive.get_option(MAX_DEPTH_KEY, cast=int, default_value=5)
         add_slugs = plan_node.directive.get_option(ADD_SLUGS_KEY, cast=bool, default_value=False)
-
-        # satisfy MyPy
-        assert isinstance(max_depth, int), f"Expected int, got {type(max_depth)}"
-        assert isinstance(add_slugs, bool), f"Expected bool, got {type(add_slugs)}"
 
         return transformer.execute(ToCParams(parent_document, start_fragment, max_depth, add_slugs))
 
 
 def _get_start_fragment(plan_node: PlanNode, parent_document: Sequence[Fragment]) -> int:
-    # get the start fragment if defined in the options (unlikely but..)
     start_fragment = plan_node.directive.get_option(START_FRAGMENT_KEY, cast=int, default_value=-1)
 
     if start_fragment == -1:
-        # if start_fragment is not defined, get it starting
-        # from the ToC directive in the parent_doc, 0 as fallback
         start_fragment = next((i for i, x in enumerate(parent_document) if x is plan_node.directive), 0)
-
-    # this should have been verified via validate, if not crash and burn
-    assert isinstance(start_fragment, int), f"Expected int, got {type(start_fragment)}"
 
     return start_fragment

@@ -112,11 +112,9 @@ def _process_directory(config: Configuration, context: EmbedmContext) -> None:
 def _expand_directory_input(input_path: str) -> list[str]:
     """Expand a directory or glob pattern to a sorted list of .md files."""
     if "**" in input_path:
-        base = input_path.replace("/**", "").replace("**", ".")
-        return sorted(str(p) for p in Path(base).rglob("*.md"))
+        return sorted(str(p) for p in _glob_base(input_path).rglob("*.md"))
     if "*" in input_path:
-        base = input_path.replace("/*", "").replace("*", ".")
-        return sorted(str(p) for p in Path(base).glob("*.md"))
+        return sorted(str(p) for p in _glob_base(input_path).glob("*.md"))
     return sorted(str(p) for p in Path(input_path).glob("*.md"))
 
 
@@ -153,10 +151,19 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext) -> str:
     return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
 
 
+def _glob_base(pattern: str) -> Path:
+    """Return the directory prefix of a glob pattern: all parts before the first wildcard."""
+    base: list[str] = []
+    for part in Path(pattern).parts:
+        if "*" in part:
+            break
+        base.append(part)
+    return Path(*base) if base else Path(".")
+
+
 def _extract_base_dir(input_path: str) -> Path:
     """Extract the base directory from a directory input or glob pattern."""
-    cleaned = input_path.replace("/**", "").replace("/*", "").replace("**", ".").replace("*", ".")
-    return Path(cleaned).resolve()
+    return _glob_base(input_path).resolve() if "*" in input_path else Path(input_path).resolve()
 
 
 def _write_directory_output(

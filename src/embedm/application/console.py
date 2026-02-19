@@ -4,6 +4,7 @@ import sys
 from collections.abc import Sequence
 from importlib.metadata import version
 
+from embedm.application.application_resources import str_resources
 from embedm.domain.status_level import Status
 
 
@@ -29,7 +30,7 @@ def present_result(result: str) -> None:
 def prompt_continue() -> bool:
     """Prompt the user to continue or abort compilation. Returns True to continue."""
     try:
-        response = input("Continue with compilation? [y/N] ")
+        response = input(str_resources.continue_compilation)
         return response.strip().lower() in ("y", "yes")
     except (EOFError, KeyboardInterrupt):
         return False

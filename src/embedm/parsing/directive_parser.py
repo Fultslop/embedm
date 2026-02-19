@@ -9,6 +9,8 @@ from embedm.domain.document import Fragment
 from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 
+from .parsing_resources import str_resources
+
 EMBEDM_FENCE_PATTERN = re.compile(r"^```yaml embedm\s*$", re.MULTILINE)
 CLOSING_FENCE_PATTERN = re.compile(r"^```[ \t]*$", re.MULTILINE)
 
@@ -54,25 +56,21 @@ def _resolve_source(source: str, base_dir: str) -> str:
     return source
 
 
-def find_yaml_embed_block(content: str) -> RawDirectiveBlock | None:
+def find_yaml_embed_block(content: str) -> tuple[RawDirectiveBlock | None, list[Status]]:
     """Find the first embedm block in markdown content."""
     opening = EMBEDM_FENCE_PATTERN.search(content)
     if opening is None:
-        return None
+        return None, []
 
     content_start = opening.end() + 1  # skip the newline after opening fence
     closing = CLOSING_FENCE_PATTERN.search(content, content_start)
     if closing is None:
-        return None
+        return None, [Status(StatusLevel.ERROR, str_resources.err_unclosed_block)]
 
     raw_content = content[content_start : closing.start()]
     block_end = closing.end() + 1 if closing.end() < len(content) else closing.end()
 
-    return RawDirectiveBlock(
-        raw_content=raw_content,
-        start=opening.start(),
-        end=block_end,
-    )
+    return RawDirectiveBlock(raw_content=raw_content, start=opening.start(), end=block_end), []
 
 
 def _find_all_raw_blocks(

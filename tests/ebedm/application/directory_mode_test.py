@@ -7,6 +7,7 @@ from pathlib import Path
 from embedm.application.orchestration import (
     _collect_embedded_sources,
     _expand_directory_input,
+    _glob_base,
 )
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
@@ -55,10 +56,43 @@ def test_expand_double_star_pattern(tmp_path: Path) -> None:
     assert any("nested.md" in p for p in result)
 
 
+def test_expand_mid_path_double_star_pattern(tmp_path: Path) -> None:
+    (tmp_path / "a.md").write_text("a")
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    (sub / "nested.md").write_text("nested")
+
+    # Pattern with wildcard in the middle: base/**/*.md
+    result = _expand_directory_input(str(tmp_path / "**" / "*.md"))
+
+    assert len(result) == 2
+    assert any("a.md" in p for p in result)
+    assert any("nested.md" in p for p in result)
+
+
 def test_expand_empty_directory(tmp_path: Path) -> None:
     result = _expand_directory_input(str(tmp_path))
 
     assert result == []
+
+
+# --- _glob_base ---
+
+
+def test_glob_base_double_star_at_end(tmp_path: Path) -> None:
+    assert _glob_base(str(tmp_path / "**")) == tmp_path
+
+
+def test_glob_base_double_star_in_middle(tmp_path: Path) -> None:
+    assert _glob_base(str(tmp_path / "**" / "*.md")) == tmp_path
+
+
+def test_glob_base_single_star(tmp_path: Path) -> None:
+    assert _glob_base(str(tmp_path / "*")) == tmp_path
+
+
+def test_glob_base_bare_star_returns_current_dir() -> None:
+    assert _glob_base("*") == Path(".")
 
 
 # --- _collect_embedded_sources ---

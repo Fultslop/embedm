@@ -1,6 +1,7 @@
 from importlib.metadata import entry_points
 
 from .plugin_base import PluginBase
+from .plugin_resources import str_resources
 
 
 class PluginRegistry:
@@ -16,7 +17,7 @@ class PluginRegistry:
         plugins = entry_points(group="embedm.plugins")
 
         if verbose:
-            print(f"discovered {len(plugins)} plugins.")
+            print(str_resources.registry_show_len_plugins.format(len_plugins=len(plugins)))
 
         # load the plugins
         for entry in plugins:

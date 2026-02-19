@@ -6,13 +6,14 @@ from pathlib import Path
 
 from embedm.domain.status_level import Status, StatusLevel
 
+from .application_resources import str_resources
 from .configuration import Configuration, InputMode
 
 
 def parse_command_line_arguments(
     args: list[str] | None = None,
 ) -> tuple[Configuration, list[Status]]:
-    """Parse command line arguments into a Configuration."""
+
     parser = _build_parser()
     parsed = parser.parse_args(args)
 
@@ -36,7 +37,7 @@ def parse_command_line_arguments(
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    """Build the argument parser for embedm CLI."""
+
     parser = argparse.ArgumentParser(prog="embedm", add_help=True)
     parser.add_argument("input", nargs="?", default=None, help="input file or directory")
     parser.add_argument("-o", "--output-file", default=None, help="output file path")
@@ -47,23 +48,23 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _validate(parsed: argparse.Namespace) -> list[Status]:
-    """Validate parsed arguments and return errors."""
+
     errors: list[Status] = []
 
     if parsed.output_file and parsed.output_dir:
-        errors.append(Status(StatusLevel.ERROR, "cannot specify both --output-file and --output-dir"))
+        errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_file_and_dir_output))
 
     if parsed.output_file and _is_directory_input(parsed.input):
-        errors.append(Status(StatusLevel.ERROR, "cannot use --output-file with directory input, use --output-dir"))
+        errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_out_file_and_dir_input))
 
     if not parsed.input and sys.stdin.isatty():
-        errors.append(Status(StatusLevel.ERROR, "no input provided; pass a file/directory or pipe via stdin"))
+        errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_no_input))
 
     return errors
 
 
 def _resolve_input(parsed: argparse.Namespace) -> tuple[InputMode, str]:
-    """Determine input mode and value from parsed arguments."""
+
     if not parsed.input:
         return InputMode.STDIN, sys.stdin.read()
     if parsed.output_dir or _is_directory_input(parsed.input):
@@ -72,7 +73,7 @@ def _resolve_input(parsed: argparse.Namespace) -> tuple[InputMode, str]:
 
 
 def _is_directory_input(input_path: str | None) -> bool:
-    """Check if the input looks like a directory or glob pattern."""
+
     if not input_path:
         return False
     if "*" in input_path:

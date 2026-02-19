@@ -19,7 +19,7 @@ def test_plugin_validate_directive_greenpath():
 def test_plugin_validate_directive_greenpath_all_params():
     plugin = ToCPlugin()
 
-    directive = Directive(type="toc", options={MAX_DEPTH_KEY: 1, ADD_SLUGS_KEY: True})
+    directive = Directive(type="toc", options={MAX_DEPTH_KEY: "1", ADD_SLUGS_KEY: "True"})
 
     status_list = plugin.validate_directive(directive)
 
@@ -73,7 +73,7 @@ def test_plugin_transform_document_with_max_depth():
 
 def test_plugin_transform_document_with_add_slugs():
     plugin = ToCPlugin()
-    options = {ADD_SLUGS_KEY: True}
+    options = {ADD_SLUGS_KEY: "True"}  # "True" is the string produced by the parser (str(True))
     plan_node = PlanNode(Directive(type="toc", options=options), [])
     output = plugin.transform(plan_node, parent_document=["## header"])
 

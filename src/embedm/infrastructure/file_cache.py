@@ -7,6 +7,8 @@ from pathlib import Path
 
 from embedm.domain.status_level import Status, StatusLevel
 
+from .infrastructure_resources import str_resources
+
 
 class WriteMode(Enum):
     OVERWRITE = 1
@@ -33,6 +35,9 @@ class FileCache:
         allowed_paths: list[str],
         write_mode: WriteMode = WriteMode.CREATE_NEW,
     ):
+        assert memory_limit > max_file_size, (
+            f"memory_limit ({memory_limit}) must be greater than max_file_size ({max_file_size})"
+        )
         self.max_file_size = max_file_size
         self.memory_limit = memory_limit
         self.allowed_paths = allowed_paths
@@ -114,7 +119,7 @@ class FileCache:
         The written file is added to the cache.
         """
         if not _is_path_allowed(path, self.allowed_paths):
-            return None, [Status(StatusLevel.FATAL, f"path is not in allowed paths: '{path}'")]
+            return None, [Status(StatusLevel.FATAL, str_resources.err_path_not_allowed.format(path=path))]
 
         actual_path = path
         if os.path.isfile(path) and self.write_mode == WriteMode.CREATE_NEW:

@@ -92,7 +92,7 @@ def test_get_file_evicts_lru_when_memory_full(tmp_path: Path):
 
     # memory limit fits only 2 files
     cache = FileCache(
-        max_file_size=1024,
+        max_file_size=4,
         memory_limit=8,
         allowed_paths=[str(tmp_path)],
     )
@@ -320,8 +320,8 @@ def test_get_file_reloads_evicted_file(tmp_path: Path):
     file_b.write_text("bbbb")
 
     cache = FileCache(
-        max_file_size=1024,
-        memory_limit=4,
+        max_file_size=4,
+        memory_limit=5,
         allowed_paths=[str(tmp_path)],
     )
 
@@ -351,7 +351,7 @@ def test_get_file_access_promotes_entry_preventing_eviction(tmp_path: Path):
     file_c.write_text("cccc")
 
     cache = FileCache(
-        max_file_size=1024,
+        max_file_size=4,
         memory_limit=8,
         allowed_paths=[str(tmp_path)],
     )
@@ -379,8 +379,8 @@ def test_get_file_evicts_multiple_to_fit_large_file(tmp_path: Path):
     file_large.write_text("x" * 6)  # 6 bytes
 
     cache = FileCache(
-        max_file_size=1024,
-        memory_limit=6,
+        max_file_size=6,
+        memory_limit=7,
         allowed_paths=[str(tmp_path)],
     )
 
