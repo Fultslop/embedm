@@ -2,9 +2,11 @@
 
 ## Planned
 
-* Enabled plugins -> should be covered by plugin sequence ?
 * --accept-all -A
 * Setup regression testing
+* Create table_reader transformer
+* Create table_converter transformer
+* Create table_plugin
 * Table plugin with sql-ish syntax
 * Embedm short hand `embedm.file(source='bla', )` `embedm.toc`
 * File properties, region, line, symbol
@@ -92,6 +94,7 @@ Anything that doesn't fit renders as a truncated string. The user excludes colum
 
 ## Done
 
+* Enabled plugins -> should be covered by plugin sequence ?
 * ToC plugin
 * Discuss IoC
 * Integration tests

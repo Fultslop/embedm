@@ -189,8 +189,7 @@ def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
     file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"])
     plugin_registry = PluginRegistry()
-    # TODO: filter by config.plugin_sequence
-    errors = plugin_registry.load_plugins()
+    errors = plugin_registry.load_plugins(enabled_plugins=set(config.plugin_sequence))
     return EmbedmContext(config, file_cache, plugin_registry), errors
 
 

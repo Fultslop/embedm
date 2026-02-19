@@ -12,4 +12,5 @@ str_resources = SimpleNamespace(
     err_config_memory_must_exceed_file_size=(
         "'max_memory' ({max_memory}) must be greater than 'max_file_size' ({max_file_size})"
     ),
+    err_plan_no_plugin="no plugin registered for directive type '{directive_type}'",
 )
