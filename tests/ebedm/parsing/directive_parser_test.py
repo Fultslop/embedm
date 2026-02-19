@@ -2,7 +2,7 @@ from pathlib import Path
 
 from embedm.domain.directive import Directive
 from embedm.domain.span import Span
-from embedm.domain.status_level import StatusLevel
+from embedm.domain.status_level import Status, StatusLevel
 from embedm.parsing.directive_parser import (
     find_yaml_embed_block,
     parse_yaml_embed_block,
@@ -300,3 +300,25 @@ def test_parse_blocks_resolves_sources_with_base_dir(tmp_path: Path):
     assert isinstance(directive, Directive)
     expected = str((tmp_path / "docs" / "chapter.md").resolve())
     assert directive.source == expected
+
+
+# --- Directive.get_option: bool casting ---
+# Options are stored as strings by the parser (str(v)), so YAML `true` becomes "True".
+
+
+def test_directive_get_option_bool_true_string():
+    d = Directive(type="toc", options={"flag": "True"})
+    assert d.get_option("flag", cast=bool) is True
+
+
+def test_directive_get_option_bool_false_string():
+    d = Directive(type="toc", options={"flag": "False"})
+    assert d.get_option("flag", cast=bool) is False
+
+
+def test_directive_get_option_bool_invalid_string_returns_error():
+    d = Directive(type="toc", options={"flag": "yes"})
+    result = d.get_option("flag", cast=bool)
+    assert isinstance(result, Status)
+    assert result.level == StatusLevel.ERROR
+    assert "flag" in result.description

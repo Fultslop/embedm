@@ -15,15 +15,6 @@
 
 **Bugs**
 
-* Boolean option casting: `directive_parser` converts all option values to `str` at parse time
-  (`str(v)`). This means a YAML native bool (`add_slugs: true`) becomes the string `"True"`.
-  `get_option(cast=bool)` must then handle `"True"`/`"False"` strings — worth verifying this
-  round-trip is actually tested.
-
-* Memory limit can be exceeded: `file_cache._make_room` loops until it cannot evict further, then
-  breaks and loads the file anyway. A single file larger than `memory_limit` (but within
-  `max_file_size`) will silently exceed the memory budget.
-
 **Code quality**
 
 * `_expand_directory_input` (orchestration.py): glob base extraction uses fragile string
@@ -70,4 +61,13 @@
 
 * `toc_transformer._parse_str_fragment`: `if max_depth is not None` is a dead check — `max_depth`
   is typed `int` and asserted as such before the call.
+
+  * Memory limit can be exceeded: `file_cache._make_room` loops until it cannot evict further, then
+  breaks and loads the file anyway. A single file larger than `memory_limit` (but within
+  `max_file_size`) will silently exceed the memory budget.
+
+* Boolean option casting: `directive_parser` converts all option values to `str` at parse time
+  (`str(v)`). This means a YAML native bool (`add_slugs: true`) becomes the string `"True"`.
+  `get_option(cast=bool)` must then handle `"True"`/`"False"` strings — worth verifying this
+  round-trip is actually tested.
 
