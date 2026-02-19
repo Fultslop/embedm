@@ -2,13 +2,10 @@
 
 ## Planned
 
-* --accept-all -A
-* Setup regression testing
 * Create table_reader transformer
 * Create table_converter transformer
 * Create table_plugin
 * Table plugin with sql-ish syntax
-* Embedm short hand `embedm.file(source='bla', )` `embedm.toc`
 * File properties, region, line, symbol
 * --silent --dry-run --verify
 * Add progress indicator
@@ -141,3 +138,7 @@ Anything that doesn't fit renders as a truncated string. The user excludes colum
 
 * * def load_plugins(self, enabled_plugins: set[str] | None = None, verbose: bool = False) -> None:
   hides failure to load plugins come up with a proposal and implement
+
+* --accept-all -A
+
+* Setup regression testing
