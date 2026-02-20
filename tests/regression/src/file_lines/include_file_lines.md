@@ -37,4 +37,16 @@ Include `c#`, lines 4 until 7
 type: file
 source: Hello.cs
 lines: "4..7"
+title: "Hello c#"
+line_numbers_range: true
+link: true
+```
+
+```yaml embedm
+type: file
+source: ../file_region/hello.py
+lines: "5.."
+title: "Hello python"
+line_numbers_range: true
+link: true
 ```

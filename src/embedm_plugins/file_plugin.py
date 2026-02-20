@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -96,12 +97,17 @@ class FilePlugin(PluginBase):
         if isinstance(content, Status):
             return render_error_note([content.description])
 
+        title = plan_node.directive.options.get("title")
+        show_link = plan_node.directive.get_option("link", bool, False)
+        show_line_range = plan_node.directive.get_option("line_numbers_range", bool, False)
+        header = _build_header(source_path, plan_node.directive.base_dir, title, show_line_range, show_link, line_range)
+
         is_markdown = Path(source_path).suffix.lower() in _MARKDOWN_EXTENSIONS
         if not is_markdown:
             ext = Path(source_path).suffix.lstrip(".") or "text"
-            return f"```{ext}\n{content.rstrip()}\n```"
+            return f"{header}```{ext}\n{content.rstrip()}\n```"
 
-        return content
+        return f"{header}{content}"
 
 
 def _apply_region(compiled: str, region: str, source_path: str) -> str | Status:
@@ -129,6 +135,44 @@ def _apply_symbol(compiled: str, symbol: str, source_path: str) -> str | Status:
         msg = str_resources.err_file_symbol_not_found.format(symbol=symbol, source=source_path)
         return Status(StatusLevel.ERROR, msg)
     return result
+
+
+def _build_header(
+    source_path: str,
+    base_dir: str,
+    title: str | None,
+    show_line_range: bool,
+    show_link: bool,
+    line_range: str | None,
+) -> str:
+    """Build an optional header line to prepend above the code block.
+
+    Elements are emitted in order: title, line_numbers_range, link.
+    Returns an empty string if no elements are active.
+    """
+    parts: list[str] = []
+    if title:
+        parts.append(f'**"{title}"**')
+    if show_line_range and line_range:
+        parts.append(f"(lines {line_range})")
+    if show_link:
+        filename = Path(source_path).name
+        link_target = _relative_link_path(source_path, base_dir)
+        parts.append(f"[link {filename}]({link_target})")
+    return "> " + " ".join(parts) + "\n" if parts else ""
+
+
+def _relative_link_path(source_path: str, base_dir: str) -> str:
+    """Return the path from base_dir to source_path using POSIX separators.
+
+    Falls back to the filename if base_dir is unset or on a different drive.
+    """
+    if not base_dir:
+        return Path(source_path).name
+    try:
+        return Path(os.path.relpath(source_path, base_dir)).as_posix()
+    except ValueError:
+        return Path(source_path).name
 
 
 def _apply_extraction(

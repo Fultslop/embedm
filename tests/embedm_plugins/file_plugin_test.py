@@ -499,6 +499,86 @@ def test_symbol_extraction_from_cs_file(tmp_path: Path):
     assert "> [!CAUTION]" not in result
 
 
+def test_title_option_prepends_bold_label(tmp_path: Path):
+    code_file = tmp_path / "util.cs"
+    code_file.write_text("public class Util { }\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\ntitle: My Utility\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert '**"My Utility"**' in result
+    assert result.index('**"My Utility"**') < result.index("```cs")
+
+
+def test_link_option_prepends_filename_link(tmp_path: Path):
+    code_file = tmp_path / "util.cs"
+    code_file.write_text("public class Util { }\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nlink: true\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "[link util.cs](util.cs)" in result
+    assert result.index("[link util.cs]") < result.index("```cs")
+
+
+def test_line_numbers_range_with_lines_option(tmp_path: Path):
+    code_file = tmp_path / "data.cs"
+    code_file.write_text("line1\nline2\nline3\nline4\nline5\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nlines: 2..4\nline_numbers_range: true\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "(lines 2..4)" in result
+    assert result.index("(lines 2..4)") < result.index("```cs")
+
+
+def test_line_numbers_range_without_lines_option_shows_nothing(tmp_path: Path):
+    code_file = tmp_path / "data.cs"
+    code_file.write_text("public class X { }\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nline_numbers_range: true\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    # line_numbers_range with no lines option produces no range header
+    assert result.startswith("```cs")
+
+
+def test_all_header_options_ordered_title_range_link(tmp_path: Path):
+    code_file = tmp_path / "util.cs"
+    code_file.write_text("line1\nline2\nline3\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(
+        f"```yaml embedm\ntype: file\nsource: {code_file}\n"
+        f"title: My Label\nlines: 1..2\nline_numbers_range: true\nlink: true\n```\n"
+    )
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    title_pos = result.index('**"My Label"**')
+    range_pos = result.index("(lines 1..2)")
+    link_pos = result.index("[link util.cs]")
+    assert title_pos < range_pos < link_pos
+
+
 def test_symbol_not_found_renders_error(tmp_path: Path):
     code_file = tmp_path / "calculator.cs"
     code_file.write_text("public class Calc { }\n")

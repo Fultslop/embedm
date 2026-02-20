@@ -21,6 +21,13 @@ namespace test
             InnerValue2 = 1
         }
 
+        /* this should be ignored as it's in a comment
+            public void doSomething() 
+            {
+                // you found a comment
+            }    
+        */
+
         public class Example
         {
             public void doSomething() 
@@ -91,6 +98,13 @@ Include `c#`, Example class
             InnerValue2 = 1
         }
 
+        /* this should be ignored as it's in a comment
+            public void doSomething() 
+            {
+                // you found a comment
+            }    
+        */
+
         public class Example
         {
             public void doSomething() 
@@ -123,10 +137,10 @@ Include `c#`, Example class
 Include `c#`, doSomething
 
 ```cs
-        public void doSomething() 
-        {
-            // base version
-        }
+            public void doSomething() 
+            {
+                // you found a comment
+            }
 ```
 Include `c#`, doSomethingElse
 

@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 20/02/26 [Feat] File plugin header decorators — `title` (bold label), `link: true` (filename as link), `line_numbers_range: true` (shows `lines` value when present). Rendered in order title → line_numbers_range → link as a single line above the code block. Uses `Directive.get_option` for bool casting.
+
 * 20/02/26 [Fix] Symbol parser: qualified lookup (e.g. `Example.doSomething()`) now restricts to direct members of the narrowed scope using brace-depth tracking, fixing inner-class name collision bug.
 
 * 20/02/26 [Feat] File extraction — region (md.start/end markers), line range (..), symbol (C/C++, C#, Java: namespace/class/struct/enum/interface/function/method). Pipeline: FileTransformer compiles, extraction transformers post-process. Non-markdown sources wrapped in fenced code block.
