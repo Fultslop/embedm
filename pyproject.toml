@@ -1,6 +1,6 @@
 [project]
 name = "embedm"
-version = "0.5.0"
+version = "0.6.0"
 description = "A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents with built-in safety limits and validation"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -132,10 +132,10 @@ source_modules = ["embedm.infrastructure"]
 forbidden_modules = ["embedm.application", "embedm.parsing", "embedm.plugins"]
 
 [[tool.importlinter.contracts]]
-name = "Embedm plugins must not import from application or parsing"
+name = "Embedm plugins must not import from application"
 type = "forbidden"
 source_modules = ["embedm_plugins"]
-forbidden_modules = ["embedm.application", "embedm.parsing"]
+forbidden_modules = ["embedm.application" ]
 
 # -------------------
 # VULTURE

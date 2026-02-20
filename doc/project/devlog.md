@@ -4,6 +4,12 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 20/02/26 [Fix] Symbol parser: qualified lookup (e.g. `Example.doSomething()`) now restricts to direct members of the narrowed scope using brace-depth tracking, fixing inner-class name collision bug.
+
+* 20/02/26 [Feat] File extraction — region (md.start/end markers), line range (..), symbol (C/C++, C#, Java: namespace/class/struct/enum/interface/function/method). Pipeline: FileTransformer compiles, extraction transformers post-process. Non-markdown sources wrapped in fenced code block.
+
+
+
 * 19/02/26 [Arch] Plugin output size enforcement — `max_embed_size` is now enforced post-transform in `file_transformer._transform_directive()`. Exceeding the limit replaces the directive output with a caution block. `FileCache` is the chosen carrier for the limit (it already owns `max_file_size` and `memory_limit`), threaded from config via `orchestration._build_context()`. Value 0 disables enforcement. In-transform memory consumption (allocations before `transform()` returns) cannot be enforced in pure Python without OS-level process isolation; this is an accepted limitation. The plugin trust model relies on users controlling `plugin_sequence` in their config.
 
 * 19/02/26 [Feat] Table plugin — renders CSV, TSV, and JSON as markdown tables. Options: select (column projection with AS aliases), filter (structured conditions per column: exact match or op literal where op ∈ {=, !=, <, <=, >, >=}, ANDed), order_by (multi-column, asc/desc), limit, offset, date_format, null_string, max_cell_length. Nested YAML filter map serialized as JSON via a `_to_option_str` hook in the directive parser.

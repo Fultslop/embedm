@@ -334,3 +334,181 @@ def test_embed_size_zero_disables_limit(tmp_path: Path):
 
     assert large_output in result
     assert "> [!CAUTION]" not in result
+
+
+# --- non-markdown source: code block wrapping ---
+
+
+def test_non_markdown_source_wrapped_in_code_block(tmp_path: Path):
+    code_file = tmp_path / "hello.cs"
+    code_file.write_text("public class Hello { }\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "```cs" in result
+    assert "public class Hello" in result
+
+
+# --- validate_directive: extraction options ---
+
+
+def test_validate_directive_exclusive_region_and_lines():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.cs", options={"region": "r", "lines": "1..5"})
+
+    errors = plugin.validate_directive(directive)
+
+    assert any("exclusive" in e.description or "one of" in e.description for e in errors)
+    assert all(e.level == StatusLevel.ERROR for e in errors)
+
+
+def test_validate_directive_exclusive_region_and_symbol():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.cs", options={"region": "r", "symbol": "MyClass"})
+
+    errors = plugin.validate_directive(directive)
+
+    assert len(errors) >= 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+def test_validate_directive_invalid_lines_format():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.cs", options={"lines": "1-5"})
+
+    errors = plugin.validate_directive(directive)
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+def test_validate_directive_valid_lines_format():
+    plugin = FilePlugin()
+    for valid in ("10", "5..10", "10..", "..10"):
+        directive = Directive(type="file", source="foo.cs", options={"lines": valid})
+        assert plugin.validate_directive(directive) == []
+
+
+def test_validate_directive_symbol_unsupported_extension():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.py", options={"symbol": "MyClass"})
+
+    errors = plugin.validate_directive(directive)
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+
+
+def test_validate_directive_symbol_supported_extension():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.cs", options={"symbol": "MyClass"})
+
+    assert plugin.validate_directive(directive) == []
+
+
+# --- region extraction ---
+
+
+def test_region_extraction_from_code_file(tmp_path: Path):
+    code_file = tmp_path / "service.cs"
+    code_file.write_text(
+        "public class S {\n"
+        "    // md.start: doWork\n"
+        "    public void DoWork() { }\n"
+        "    // md.end: doWork\n"
+        "}\n"
+    )
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nregion: doWork\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "DoWork" in result
+    assert "class S" not in result
+    assert "> [!CAUTION]" not in result
+
+
+def test_region_not_found_renders_error(tmp_path: Path):
+    code_file = tmp_path / "service.cs"
+    code_file.write_text("public class S { }\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nregion: missing\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "> [!CAUTION]" in result
+    assert "missing" in result
+
+
+# --- line range extraction ---
+
+
+def test_line_extraction_from_code_file(tmp_path: Path):
+    code_file = tmp_path / "data.cs"
+    code_file.write_text("line1\nline2\nline3\nline4\nline5\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nlines: 2..4\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "line2" in result
+    assert "line4" in result
+    assert "line1" not in result
+    assert "line5" not in result
+
+
+# --- symbol extraction ---
+
+
+def test_symbol_extraction_from_cs_file(tmp_path: Path):
+    code_file = tmp_path / "calculator.cs"
+    code_file.write_text(
+        "public class Calculator\n"
+        "{\n"
+        "    public int Add(int a, int b)\n"
+        "    {\n"
+        "        return a + b;\n"
+        "    }\n"
+        "}\n"
+    )
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nsymbol: Add\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "Add" in result
+    assert "return a + b" in result
+    assert "class Calculator" not in result
+    assert "> [!CAUTION]" not in result
+
+
+def test_symbol_not_found_renders_error(tmp_path: Path):
+    code_file = tmp_path / "calculator.cs"
+    code_file.write_text("public class Calc { }\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nsymbol: Missing\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "> [!CAUTION]" in result
+    assert "Missing" in result

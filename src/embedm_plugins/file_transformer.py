@@ -11,7 +11,7 @@ from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.plugin_resources import render_error_note, str_resources
 
 if TYPE_CHECKING:
     from embedm.plugins.plugin_registry import PluginRegistry
@@ -89,17 +89,17 @@ def _transform_directive(
     """Find the plugin for a directive and execute its transform."""
     plugin = plugin_registry.find_plugin_by_directive_type(directive.type)
     if plugin is None:
-        return _render_error_note([f"no plugin registered for directive type '{directive.type}'"])
+        return render_error_note([f"no plugin registered for directive type '{directive.type}'"])
 
     node = _find_or_create_node(directive, child_lookup)
 
     if _node_has_errors(node) and node.document is None:
         error_msgs = [s.description for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
-        return _render_error_note(error_msgs)
+        return render_error_note(error_msgs)
 
     result = plugin.transform(node, parent_document, file_cache, plugin_registry)
     if file_cache.max_embed_size > 0 and len(result) > file_cache.max_embed_size:
-        return _render_error_note([str_resources.err_embed_size_exceeded.format(limit=file_cache.max_embed_size)])
+        return render_error_note([str_resources.err_embed_size_exceeded.format(limit=file_cache.max_embed_size)])
     return result
 
 
@@ -116,14 +116,6 @@ def _find_or_create_node(directive: Directive, child_lookup: dict[int, PlanNode]
             children=None,
         )
     return PlanNode(directive=directive, status=[], document=None, children=None)
-
-
-def _render_error_note(messages: list[str]) -> str:
-    """Render error messages as a GitHub-flavored markdown caution block."""
-    lines = ["> [!CAUTION]"]
-    for msg in messages:
-        lines.append(f"> **embedm:** {msg}")
-    return "\n".join(lines) + "\n"
 
 
 def _node_has_errors(node: PlanNode) -> bool:

@@ -26,8 +26,10 @@ TABLE_OPTION_KEY_TYPES = {
     LIMIT_KEY: int,
     OFFSET_KEY: int,
     MAX_CELL_LENGTH_KEY: int,
+    # Review: where are the rest of the keys, filter, null_str and so on ?
 }
 
+# Review: TODO We'll need to implement plugin configurations, discuss
 SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({"csv", "tsv", "json"})
 
 DEFAULT_NULL_STRING = ""
@@ -73,6 +75,9 @@ class TableTransformer(TransformerBase[TableParams]):
     params_type = TableParams
 
     def execute(self, params: TableParams) -> str:
+        # Review: Plugin should validate, any errors at this point are programming
+        # errors. The question then is, is this possible for something like this transformer
+        # as content errors may be ligitimate user errors. TODO discuss
         rows, error = _parse_content(params.content, params.file_ext)
         if error:
             return error
@@ -92,6 +97,8 @@ class TableTransformer(TransformerBase[TableParams]):
 
 def _parse_content(content: str, ext: str) -> tuple[list[Row], str | None]:
     """Parse file content into rows. Returns (rows, error_string)."""
+
+    # Review: avoid hardcoded strings
     if ext == "csv":
         return _parse_delimited(content, ","), None
     if ext == "tsv":
@@ -102,11 +109,14 @@ def _parse_content(content: str, ext: str) -> tuple[list[Row], str | None]:
 
 
 def _parse_delimited(content: str, delimiter: str) -> list[Row]:
+    # Review: Could have used a comments to capture intention.
+    # Guess it's hard to determine when it's needed and not. TODO Discuss
     reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
     return [{str(k): (str(v) if v is not None else "") for k, v in row.items()} for row in reader]
 
 
 def _parse_json(content: str) -> tuple[list[Row], str | None]:
+    # Review: Again error handling in operational part.
     try:
         data: Any = json.loads(content)
     except json.JSONDecodeError as exc:
@@ -281,4 +291,6 @@ def _format_cell(value: str, date_format: str, null_string: str, max_cell_length
 
 
 def _render_error(message: str) -> str:
+    # Review: strings should be in plugin_resources, probably need per plugin resources
+    # TODO discuss
     return f"> [!CAUTION]\n> **embedm:** {message}\n"
