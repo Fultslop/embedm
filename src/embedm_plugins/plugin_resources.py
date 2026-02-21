@@ -3,6 +3,11 @@ from types import SimpleNamespace
 # TODO move all user facing strings here
 str_resources = SimpleNamespace(
     note_no_toc_content="> [!NOTE]\n> No headings found in document.",
+    note_no_synopsis_content="> [!NOTE]\n> No summary could be generated.",
+    err_synopsis_invalid_algorithm="invalid algorithm '{value}'. Supported: {valid}.",
+    err_synopsis_invalid_language="invalid language '{value}'. Supported: {valid}.",
+    err_synopsis_max_sentences_min="'max_sentences' must be >= 1, got {value}.",
+    err_synopsis_sections_min="'sections' must be >= 0, got {value}.",
     note_no_results="> [!NOTE]\n> No results.",
     err_table_empty_content="file contains no data rows.",
     err_table_unsupported_format="unsupported file format '{ext}'. Supported: csv, tsv, json.",

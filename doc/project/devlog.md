@@ -4,6 +4,12 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [FEAT] feat_synopsis_plugin — block model: split text on blank lines into blocks, apply positional decay weight 1/(1+block_idx) to sentence scores, add `sections` option (0=all) to cap input to first N blocks. Renamed _split_sentences → _block_to_sentences, added _split_into_blocks. Quality: table_plugin and moby_dick outputs dramatically improved; man_ls improved but nroff header (block 0) still contaminates due to block 0 weight advantage.
+
+* 21/02/26 [TASK] feat_synopsis_plugin — implement synopsis plugin: stopword-based sentence scoring (Frequency + Luhn algorithms), EN/NL language support, blockquote output, reads parent_document string fragments (post-embed pass), runs before toc in plugin_sequence.
+
+* 21/02/26 [REVIEW] feat_synopsis_plugin — synopsis runs as a DFS pass between file and toc in plugin_sequence. Text extraction from parent_document string fragments naturally skips Directive objects (embedm blocks already parsed). Fenced code blocks and table rows stripped before scoring. Determinism guaranteed by tie-breaking on original sentence index. Source option: use file_cache.get_file() when directive.source is set, no planner changes needed.
+
 * 21/02/26 [TASK] tech_fix_compilation_to_multi_pass_dfs — `FileTransformer._resolve_directives` now runs one pass per directive type following `plugin_sequence` order. `PluginConfiguration` gets a `plugin_sequence: tuple[str, ...]` field. `orchestration._build_directive_sequence` maps module names to directive types and threads the ordered tuple into `PluginConfiguration`. Recursive (DFS) calls inherit the same sequence. Single-pass fallback when `plugin_sequence` is empty (unit tests). Regression snapshot for `toc_example` requires user update.
 
 * 21/02/26 [REVIEW] tech_fix_compilation_to_multi_pass_dfs — The existing single-pass DFS produced correct output only by accident: all current regression documents have `{{ toc }}` placed after `{{ file }}` embeds. The `plugin_sequence` field was used only to filter module loading, never to order compilation. The fix is minimal: add a `directive_type` filter param to `_resolve_directives`, wrap in a `_compile_passes` loop, thread the ordered type list via `PluginConfiguration`.

@@ -2,5 +2,6 @@ max_file_size: 4194304
 max_memory: 209715200
 plugin_sequence:
   - embedm_plugins.file_plugin
-  - embedm_plugins.toc_plugin
   - embedm_plugins.table_plugin
+  - embedm_plugins.synopsis_plugin
+  - embedm_plugins.toc_plugin
