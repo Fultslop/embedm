@@ -3,6 +3,7 @@ DOCUMENTATION: `<TITLE>`
 `<Optional Draft>`
 Created: `<date>`
 Closed: `<date>`
+Created by: `<Author>`
 
 ## Description
 
