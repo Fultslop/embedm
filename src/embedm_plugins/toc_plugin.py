@@ -45,6 +45,7 @@ class ToCPlugin(PluginBase):
         parent_document: Sequence[Fragment],
         _file_cache: FileCache | None = None,
         _plugin_registry: PluginRegistry | None = None,
+        _plugin_config: PluginConfiguration | None = None,
     ) -> str:
         if not parent_document:
             return ""

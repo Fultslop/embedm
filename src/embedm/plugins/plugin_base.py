@@ -34,5 +34,6 @@ class PluginBase(ABC):
         parent_document: Sequence[Fragment],
         file_cache: FileCache | None = None,
         plugin_registry: PluginRegistry | None = None,
+        plugin_config: PluginConfiguration | None = None,
     ) -> str:
         pass

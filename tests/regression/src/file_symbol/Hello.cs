@@ -16,6 +16,13 @@ namespace test
             InnerValue2 = 1
         }
 
+        /* this should be ignored as it's in a comment
+            public void doSomething() 
+            {
+                // you found a comment
+            }    
+        */
+
         public class Example
         {
             public void doSomething() 

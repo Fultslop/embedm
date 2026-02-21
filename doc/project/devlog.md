@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [Fix] Bug: compiled file link does not resolve — `link: true` in the file plugin now emits a path relative to the compiled output directory instead of the source md directory. `compiled_dir` added to `PluginConfiguration` and threaded from orchestration through `_compile_plan_node` → `plugin.transform()` → `FilePlugin` → `_build_header`. `FileParams` carries `plugin_config`. Falls back to filename when `compiled_dir` is unset (stdin/stdout mode).
+
+* 20/02/26 [Feat] File plugin header decorators — `title` (bold label), `link: true` (filename as link), `line_numbers_range: true` (shows `lines` value when present). Rendered in order title → line_numbers_range → link as a single line above the code block. Uses `Directive.get_option` for bool casting.
+
 * 20/02/26 [Fix] Symbol parser: qualified lookup (e.g. `Example.doSomething()`) now restricts to direct members of the narrowed scope using brace-depth tracking, fixing inner-class name collision bug.
 
 * 20/02/26 [Feat] File extraction — region (md.start/end markers), line range (..), symbol (C/C++, C#, Java: namespace/class/struct/enum/interface/function/method). Pipeline: FileTransformer compiles, extraction transformers post-process. Non-markdown sources wrapped in fenced code block.

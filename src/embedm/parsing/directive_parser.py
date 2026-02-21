@@ -49,7 +49,7 @@ def parse_yaml_embed_block(content: str, base_dir: str = "") -> tuple[Directive 
         str(k): _to_option_str(v) for k, v in parsed.items() if k not in (DIRECTIVE_TYPE_KEY, DIRECTIVE_SOURCE_KEY)
     }
 
-    return Directive(type=directive_type, source=source, options=options), []
+    return Directive(type=directive_type, source=source, options=options, base_dir=base_dir), []
 
 
 def _to_option_str(value: Any) -> str:

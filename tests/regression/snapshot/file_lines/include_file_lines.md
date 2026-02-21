@@ -48,9 +48,19 @@ namespace test
 ```
 Include `c#`, lines 4 until 7
 
+> **"Hello c#"** (lines 4..7) [link Hello.cs](../../src/file_lines/Hello.cs)
 ```cs
     public void doSomething() 
     {
         // ...
     }
+```
+> **"Hello python"** (lines 5..) [link hello.py](../../src/file_region/hello.py)
+```py
+# md.start: print_hello
+def print_hello():
+    print('hello')
+# md.end: print_hello
+
+print_hello()
 ```

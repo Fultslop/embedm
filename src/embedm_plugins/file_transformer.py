@@ -10,6 +10,7 @@ from embedm.domain.plan_node import PlanNode
 from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.transformer_base import TransformerBase
 from embedm_plugins.plugin_resources import render_error_note, str_resources
 
@@ -23,6 +24,7 @@ class FileParams:
     parent_document: Sequence[Fragment]
     file_cache: FileCache
     plugin_registry: PluginRegistry
+    plugin_config: PluginConfiguration | None = None
 
 
 class FileTransformer(TransformerBase[FileParams]):
@@ -42,7 +44,9 @@ class FileTransformer(TransformerBase[FileParams]):
         # step 3: resolve directives via their plugins (DFS — children compiled on demand)
         # keyed by directive identity so multiple directives sharing a source are each matched to their own child
         child_lookup = {id(child.directive): child for child in (params.plan_node.children or [])}
-        resolved = _resolve_directives(resolved, child_lookup, params.file_cache, params.plugin_registry)
+        resolved = _resolve_directives(
+            resolved, child_lookup, params.file_cache, params.plugin_registry, params.plugin_config
+        )
 
         return "".join(s for s in resolved if isinstance(s, str))
 
@@ -63,6 +67,7 @@ def _resolve_directives(
     child_lookup: dict[int, PlanNode],
     file_cache: FileCache,
     plugin_registry: PluginRegistry,
+    plugin_config: PluginConfiguration | None = None,
 ) -> list[str | Directive]:
 
     result: list[str | Directive] = []
@@ -72,7 +77,7 @@ def _resolve_directives(
             result.append(item)
             continue
 
-        transformed = _transform_directive(item, child_lookup, resolved, file_cache, plugin_registry)
+        transformed = _transform_directive(item, child_lookup, resolved, file_cache, plugin_registry, plugin_config)
         if transformed is not None:
             result.append(transformed)
 
@@ -85,6 +90,7 @@ def _transform_directive(
     parent_document: list[str | Directive],
     file_cache: FileCache,
     plugin_registry: PluginRegistry,
+    plugin_config: PluginConfiguration | None = None,
 ) -> str | None:
     """Find the plugin for a directive and execute its transform."""
     plugin = plugin_registry.find_plugin_by_directive_type(directive.type)
@@ -97,7 +103,7 @@ def _transform_directive(
         error_msgs = [s.description for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
         return render_error_note(error_msgs)
 
-    result = plugin.transform(node, parent_document, file_cache, plugin_registry)
+    result = plugin.transform(node, parent_document, file_cache, plugin_registry, plugin_config)
     if file_cache.max_embed_size > 0 and len(result) > file_cache.max_embed_size:
         return render_error_note([str_resources.err_embed_size_exceeded.format(limit=file_cache.max_embed_size)])
     return result

@@ -17,6 +17,8 @@ class Directive:
     # eg ToC
     source: str = ""
     options: dict[str, str] = field(default_factory=dict)
+    # directory of the file that contains this directive (for relative link computation)
+    base_dir: str = ""
 
     def validate_option(self, name: str, cast: Callable[[str], Any]) -> Status | None:
         """Check if the option can be cast to the requested type. Returns Status on failure, None if valid or absent."""
