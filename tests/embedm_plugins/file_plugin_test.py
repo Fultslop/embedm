@@ -12,6 +12,7 @@ from embedm.domain.span import Span
 from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
+from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_registry import PluginRegistry
 from embedm_plugins.file_plugin import FilePlugin
 
@@ -514,7 +515,7 @@ def test_title_option_prepends_bold_label(tmp_path: Path):
     assert result.index('**"My Utility"**') < result.index("```cs")
 
 
-def test_link_option_prepends_filename_link(tmp_path: Path):
+def test_link_option_falls_back_to_filename_without_compiled_dir(tmp_path: Path):
     code_file = tmp_path / "util.cs"
     code_file.write_text("public class Util { }\n")
 
@@ -527,6 +528,26 @@ def test_link_option_prepends_filename_link(tmp_path: Path):
 
     assert "[link util.cs](util.cs)" in result
     assert result.index("[link util.cs]") < result.index("```cs")
+
+
+def test_link_option_uses_compiled_dir_for_path(tmp_path: Path):
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    code_file = src_dir / "util.cs"
+    code_file.write_text("public class Util { }\n")
+
+    source = src_dir / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nlink: true\n```\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    plugin_config = PluginConfiguration(max_embed_size=0, max_recursion=10, compiled_dir=str(out_dir))
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry, plugin_config)
+
+    assert "[link util.cs](../src/util.cs)" in result
 
 
 def test_line_numbers_range_with_lines_option(tmp_path: Path):

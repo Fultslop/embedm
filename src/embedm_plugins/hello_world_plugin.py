@@ -40,6 +40,7 @@ class HelloWorldPlugin(PluginBase):
         _parent_document: Sequence[Fragment],
         _file_cache: FileCache | None = None,
         _plugin_registry: PluginRegistry | None = None,
+        _plugin_config: PluginConfiguration | None = None,
     ) -> str:
         transform = HelloWorldTransformer()
         return transform.execute(NoParams())

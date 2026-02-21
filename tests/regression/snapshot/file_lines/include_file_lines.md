@@ -48,17 +48,14 @@ namespace test
 ```
 Include `c#`, lines 4 until 7
 
-> **Hello c#** (lines 4..7) [link Hello.cs](Hello.cs)
->
-> ```cs
->     public void doSomething()
->     {
->         // ...
->     }
+> **"Hello c#"** (lines 4..7) [link Hello.cs](../../src/file_lines/Hello.cs)
+```cs
+    public void doSomething() 
+    {
+        // ...
+    }
 ```
-
-::: code-block
-> **"Hello python"** (lines 5..) [link hello.py](../file_region/hello.py)
+> **"Hello python"** (lines 5..) [link hello.py](../../src/file_region/hello.py)
 ```py
 # md.start: print_hello
 def print_hello():
@@ -67,4 +64,3 @@ def print_hello():
 
 print_hello()
 ```
-:::

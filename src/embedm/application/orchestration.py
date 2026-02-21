@@ -6,6 +6,7 @@ from pathlib import Path
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .cli import parse_command_line_arguments
@@ -45,7 +46,8 @@ def main() -> None:
         _process_directory(config, context)
     elif config.input_mode == InputMode.STDIN:
         plan_root = plan_content(config.input, context)
-        result = _compile_plan(plan_root, context)
+        compiled_dir = _output_file_compiled_dir(config.output_file)
+        result = _compile_plan(plan_root, context, compiled_dir)
         _write_output(result, config)
 
 
@@ -106,7 +108,8 @@ def _process_directory(config: Configuration, context: EmbedmContext) -> None:
         # track all sources this file embeds so we skip them as standalone roots
         _collect_embedded_sources(plan_root, embedded)
 
-        result = _compile_plan(plan_root, context)
+        compiled_dir = _dir_mode_compiled_dir(file_path, base_dir, config)
+        result = _compile_plan(plan_root, context, compiled_dir)
         if result:
             _write_directory_output(file_path, base_dir, config, result)
 
@@ -128,7 +131,7 @@ def _collect_embedded_sources(node: PlanNode, sources: set[str]) -> None:
         _collect_embedded_sources(child, sources)
 
 
-def _compile_plan(plan_root: PlanNode, context: EmbedmContext) -> str:
+def _compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
     """Compile a plan tree into output with interactive error prompting."""
     if plan_root.document is None:
         present_errors(plan_root.status)
@@ -147,15 +150,20 @@ def _compile_plan(plan_root: PlanNode, context: EmbedmContext) -> str:
             if choice == ContinueChoice.ALWAYS:
                 context.accept_all = True
 
-    return _compile_plan_node(plan_root, context)
+    return _compile_plan_node(plan_root, context, compiled_dir)
 
 
-def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext) -> str:
+def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
     """Compile a validated plan node via its plugin."""
     plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
     if plugin is None:
         return ""
-    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
+    plugin_config = PluginConfiguration(
+        max_embed_size=context.config.max_embed_size,
+        max_recursion=context.config.max_recursion,
+        compiled_dir=compiled_dir,
+    )
+    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
 
 
 def _glob_base(pattern: str) -> Path:
@@ -201,7 +209,24 @@ def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
 def _process_file(file_name: str, context: EmbedmContext) -> str:
     """Plan and compile a single input file."""
     plan_root = plan_file(file_name, context)
-    return _compile_plan(plan_root, context)
+    compiled_dir = _output_file_compiled_dir(context.config.output_file)
+    return _compile_plan(plan_root, context, compiled_dir)
+
+
+def _output_file_compiled_dir(output_file: str | None) -> str:
+    """Return the directory of the output file, or empty string if writing to stdout."""
+    return str(Path(output_file).resolve().parent) if output_file else ""
+
+
+def _dir_mode_compiled_dir(file_path: str, base_dir: Path, config: Configuration) -> str:
+    """Return the compiled output directory for a file in directory mode."""
+    if not config.output_directory:
+        return ""
+    try:
+        relative = Path(file_path).resolve().relative_to(base_dir)
+        return str((Path(config.output_directory) / relative).parent.resolve())
+    except ValueError:
+        return ""
 
 
 def _collect_tree_errors(node: PlanNode) -> list[Status]:

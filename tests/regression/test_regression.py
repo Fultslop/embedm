@@ -18,6 +18,7 @@ from embedm.application.embedm_context import EmbedmContext
 from embedm.application.planner import plan_file
 from embedm.domain.plan_node import PlanNode
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_registry import PluginRegistry
 
 _PROJECT_ROOT = Path(__file__).parents[2]
@@ -56,14 +57,19 @@ def _normalize(text: str, src_dir: Path) -> str:
     return text.replace(str(src_dir.resolve()), "<src>")
 
 
-def _compile(plan_root: PlanNode, context: EmbedmContext) -> str:
+def _compile(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
     """Compile a plan node to string without interactive prompting."""
     if plan_root.document is None:
         return ""
     plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
     if plugin is None:
         return ""
-    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry)
+    plugin_config = PluginConfiguration(
+        max_embed_size=context.config.max_embed_size,
+        max_recursion=context.config.max_recursion,
+        compiled_dir=compiled_dir,
+    )
+    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
 
 
 def _snapshot_files(snapshot_dir: Path) -> list[Path]:
@@ -79,7 +85,7 @@ def test_regression(snapshot_file: Path, context: EmbedmContext) -> None:
     assert source_file.exists(), f"Source file not found: '{source_file}'. Snapshot may be stale."
 
     plan_root = plan_file(str(source_file), context)
-    actual = _compile(plan_root, context)
+    actual = _compile(plan_root, context, str(snapshot_file.parent.resolve()))
     expected = snapshot_file.read_text(encoding="utf-8")
 
     assert _normalize(actual, _SRC_DIR) == _normalize(expected, _SRC_DIR), (
@@ -99,7 +105,7 @@ def test_manual_regression(snapshot_file: Path, manual_context: EmbedmContext) -
     assert source_file.exists(), f"Source file not found: '{source_file}'. Snapshot may be stale."
 
     plan_root = plan_file(str(source_file), manual_context)
-    actual = _compile(plan_root, manual_context)
+    actual = _compile(plan_root, manual_context, str(snapshot_file.parent.resolve()))
     expected = snapshot_file.read_text(encoding="utf-8")
 
     assert _normalize(actual, _MANUAL_SRC_DIR) == _normalize(expected, _MANUAL_SRC_DIR), (

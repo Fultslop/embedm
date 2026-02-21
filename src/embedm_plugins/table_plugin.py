@@ -105,6 +105,7 @@ class TablePlugin(PluginBase):
         _parent_document: Sequence[Fragment],
         file_cache: FileCache | None = None,
         _plugin_registry: PluginRegistry | None = None,
+        _plugin_config: PluginConfiguration | None = None,
     ) -> str:
         assert file_cache is not None, "file_cache is required — orchestration must provide it"
 

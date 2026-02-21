@@ -72,6 +72,7 @@ class FilePlugin(PluginBase):
         parent_document: Sequence[Fragment],
         file_cache: FileCache | None = None,
         plugin_registry: PluginRegistry | None = None,
+        plugin_config: PluginConfiguration | None = None,
     ) -> str:
         assert file_cache is not None, "file_cache is required — orchestration must provide it"
         assert plugin_registry is not None, "plugin_registry is required — orchestration must provide it"
@@ -85,6 +86,7 @@ class FilePlugin(PluginBase):
                 parent_document=parent_document,
                 file_cache=file_cache,
                 plugin_registry=plugin_registry,
+                plugin_config=plugin_config,
             )
         )
 
@@ -100,7 +102,8 @@ class FilePlugin(PluginBase):
         title = plan_node.directive.options.get("title")
         show_link = plan_node.directive.get_option("link", bool, False)
         show_line_range = plan_node.directive.get_option("line_numbers_range", bool, False)
-        header = _build_header(source_path, plan_node.directive.base_dir, title, show_line_range, show_link, line_range)
+        compiled_dir = plugin_config.compiled_dir if plugin_config else ""
+        header = _build_header(source_path, compiled_dir, title, show_line_range, show_link, line_range)
 
         is_markdown = Path(source_path).suffix.lower() in _MARKDOWN_EXTENSIONS
         if not is_markdown:
@@ -139,7 +142,7 @@ def _apply_symbol(compiled: str, symbol: str, source_path: str) -> str | Status:
 
 def _build_header(
     source_path: str,
-    base_dir: str,
+    compiled_dir: str,
     title: str | None,
     show_line_range: bool,
     show_link: bool,
@@ -157,20 +160,20 @@ def _build_header(
         parts.append(f"(lines {line_range})")
     if show_link:
         filename = Path(source_path).name
-        link_target = _relative_link_path(source_path, base_dir)
+        link_target = _relative_link_path(source_path, compiled_dir)
         parts.append(f"[link {filename}]({link_target})")
     return "> " + " ".join(parts) + "\n" if parts else ""
 
 
-def _relative_link_path(source_path: str, base_dir: str) -> str:
-    """Return the path from base_dir to source_path using POSIX separators.
+def _relative_link_path(source_path: str, compiled_dir: str) -> str:
+    """Return the path from compiled_dir to source_path using POSIX separators.
 
-    Falls back to the filename if base_dir is unset or on a different drive.
+    Falls back to the filename if compiled_dir is unset or on a different drive.
     """
-    if not base_dir:
+    if not compiled_dir:
         return Path(source_path).name
     try:
-        return Path(os.path.relpath(source_path, base_dir)).as_posix()
+        return Path(os.path.relpath(source_path, compiled_dir)).as_posix()
     except ValueError:
         return Path(source_path).name
 
