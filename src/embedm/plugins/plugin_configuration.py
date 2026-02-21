@@ -8,3 +8,4 @@ class PluginConfiguration:
     max_embed_size: int
     max_recursion: int
     compiled_dir: str = ""
+    plugin_sequence: tuple[str, ...] = ()

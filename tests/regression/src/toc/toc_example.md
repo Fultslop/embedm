@@ -15,3 +15,8 @@ Describe how to protect whales
 ## Chapter 2
 
 Elaborate on the topics in chapter 2
+
+```yaml embedm
+type: file
+source: ./chapter_3.md
+```

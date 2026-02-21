@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [TASK] tech_fix_compilation_to_multi_pass_dfs — `FileTransformer._resolve_directives` now runs one pass per directive type following `plugin_sequence` order. `PluginConfiguration` gets a `plugin_sequence: tuple[str, ...]` field. `orchestration._build_directive_sequence` maps module names to directive types and threads the ordered tuple into `PluginConfiguration`. Recursive (DFS) calls inherit the same sequence. Single-pass fallback when `plugin_sequence` is empty (unit tests). Regression snapshot for `toc_example` requires user update.
+
+* 21/02/26 [REVIEW] tech_fix_compilation_to_multi_pass_dfs — The existing single-pass DFS produced correct output only by accident: all current regression documents have `{{ toc }}` placed after `{{ file }}` embeds. The `plugin_sequence` field was used only to filter module loading, never to order compilation. The fix is minimal: add a `directive_type` filter param to `_resolve_directives`, wrap in a `_compile_passes` loop, thread the ordered type list via `PluginConfiguration`.
+
 * 21/02/26 [TASK] tech_config_value_range_validation — add per-field range checks in `_parse_config()` after type validation: `max_file_size >= 1`, `max_recursion >= 1`, `max_embed_size >= 0`. Each yields ERROR and returns default `Configuration()`. Consolidated alongside the existing `max_memory > max_file_size` cross-field check. Error messages added to `application_resources.py`.
 
 * 21/02/26 [TASK] tech_fix_path_boundary_check_in_file_cache — replace bare `startswith` in `_is_path_allowed()` with `Path.relative_to()`. Adjacent directories (e.g. `project_evil` when `project` is allowed) are now correctly rejected. Adds three acceptance-criteria tests.

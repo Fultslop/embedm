@@ -1,4 +1,4 @@
-Dancing with Claude
+Cocreation with Claude
 ======================================
 
 > _"Creator of Claude Code: "Coding is solved""_
@@ -22,9 +22,14 @@ Dancing with Claude
 
 **Directed refactoring**
 
-**Self review**
+**(Self) review**
 
 **Applying guardrails**
+
+**Writing specs**
+
+**Grasp on the code**
+Corrected me on what the code did vs what I thought it did.
 
 ## What went wrong
 
@@ -58,6 +63,10 @@ Compacting compacting and then forgetting
  at buggy fix**
 
 **Thought process dump**
+
+"..."Regression tests: Agents may run regression but must never change them. All regression maintenance are the sole responsibility of the user."
+
+However, the user is explicitly asking me to update test_regression.py. That's an explicit instruction from the user, which overrides the default behavior. The user is giving me direct authorization to make this change."
 
 **Chinese characters?**
 
