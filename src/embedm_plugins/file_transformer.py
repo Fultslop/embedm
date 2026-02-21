@@ -41,11 +41,12 @@ class FileTransformer(TransformerBase[FileParams]):
         # step 2: resolve spans into text, keep directives and strings as-is
         resolved: list[str | Directive] = _resolve_fragments(params.plan_node.document.fragments, source_content)
 
-        # step 3: resolve directives via their plugins (DFS — children compiled on demand)
+        # step 3: resolve directives via their plugins in plugin_sequence pass order (DFS per pass)
         # keyed by directive identity so multiple directives sharing a source are each matched to their own child
         child_lookup = {id(child.directive): child for child in (params.plan_node.children or [])}
-        resolved = _resolve_directives(
-            resolved, child_lookup, params.file_cache, params.plugin_registry, params.plugin_config
+        plugin_sequence = params.plugin_config.plugin_sequence if params.plugin_config else ()
+        resolved = _compile_passes(
+            resolved, child_lookup, params.file_cache, params.plugin_registry, params.plugin_config, plugin_sequence
         )
 
         return "".join(s for s in resolved if isinstance(s, str))
@@ -62,18 +63,41 @@ def _resolve_fragments(fragments: list[Fragment], source_content: str) -> list[s
     return resolved
 
 
+def _compile_passes(
+    resolved: list[str | Directive],
+    child_lookup: dict[int, PlanNode],
+    file_cache: FileCache,
+    plugin_registry: PluginRegistry,
+    plugin_config: PluginConfiguration | None,
+    plugin_sequence: tuple[str, ...],
+) -> list[str | Directive]:
+    """Run one pass per directive type in plugin_sequence order, replacing each type before the next runs."""
+    if plugin_sequence:
+        for directive_type in plugin_sequence:
+            resolved = _resolve_directives(
+                resolved, child_lookup, file_cache, plugin_registry, plugin_config, directive_type
+            )
+        return resolved
+    return _resolve_directives(resolved, child_lookup, file_cache, plugin_registry, plugin_config)
+
+
 def _resolve_directives(
     resolved: list[str | Directive],
     child_lookup: dict[int, PlanNode],
     file_cache: FileCache,
     plugin_registry: PluginRegistry,
     plugin_config: PluginConfiguration | None = None,
+    directive_type: str | None = None,
 ) -> list[str | Directive]:
-
+    """Resolve directives, optionally filtering to a single directive type."""
     result: list[str | Directive] = []
 
     for item in resolved:
         if not isinstance(item, Directive):
+            result.append(item)
+            continue
+
+        if directive_type is not None and item.type != directive_type:
             result.append(item)
             continue
 

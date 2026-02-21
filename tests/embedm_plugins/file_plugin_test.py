@@ -247,6 +247,51 @@ def test_source_not_in_children_renders_error_note(tmp_path: Path):
     assert "missing.md" in result
 
 
+# --- multi-pass compilation ---
+
+
+def test_toc_above_file_embed_sees_embedded_headings(tmp_path: Path):
+    """With multi-pass compilation, a toc directive placed before a file embed sees the embedded headings."""
+    from embedm_plugins.toc_plugin import ToCPlugin
+
+    child = tmp_path / "chapter.md"
+    child.write_text("## Chapter from file\n\nContent here.\n")
+
+    source = tmp_path / "root.md"
+    source.write_text(
+        "# Root\n"
+        "```yaml embedm\ntype: toc\n```\n"
+        f"```yaml embedm\ntype: file\nsource: {child}\n```\n"
+    )
+
+    context = _make_context(tmp_path)
+    context.plugin_registry.lookup[ToCPlugin().name] = ToCPlugin()
+    plan = plan_file(str(source), context)
+    plugin_config = PluginConfiguration(max_embed_size=0, max_recursion=10, plugin_sequence=("file", "toc"))
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry, plugin_config)
+
+    assert "Chapter from file" in result
+    assert result.index("- Chapter from file") < result.index("## Chapter from file")
+
+
+def test_single_pass_fallback_without_plugin_sequence(tmp_path: Path):
+    """Without a plugin_sequence, compilation falls back to single-pass (backward compat)."""
+    child = tmp_path / "child.md"
+    child.write_text("Child content\n")
+
+    source = tmp_path / "input.md"
+    source.write_text(f"Before\n```yaml embedm\ntype: file\nsource: {child}\n```\nAfter\n")
+
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+
+    assert "Before\n" in result
+    assert "Child content\n" in result
+    assert "After\n" in result
+
+
 # --- validate_directive ---
 
 

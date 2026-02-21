@@ -162,8 +162,29 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
         compiled_dir=compiled_dir,
+        plugin_sequence=_build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
     )
     return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
+
+
+def _build_directive_sequence(plugin_sequence: list[str], registry: PluginRegistry) -> tuple[str, ...]:
+    """Return directive types ordered by plugin_sequence module order.
+
+    Any loaded plugins whose module is not in plugin_sequence are appended at the end.
+    """
+    result: list[str] = []
+    covered: set[str] = set()
+    for module in plugin_sequence:
+        for plugin in registry.lookup.values():
+            if plugin.__class__.__module__ == module and plugin.directive_type not in covered:
+                result.append(plugin.directive_type)
+                covered.add(plugin.directive_type)
+                break
+    for plugin in registry.lookup.values():
+        if plugin.directive_type not in covered:
+            result.append(plugin.directive_type)
+            covered.add(plugin.directive_type)
+    return tuple(result)
 
 
 def _glob_base(pattern: str) -> Path:
