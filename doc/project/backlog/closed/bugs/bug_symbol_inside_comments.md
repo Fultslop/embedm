@@ -1,8 +1,7 @@
 BUG: Symbols inside comments are parsed
 =======================================
-Draft  
 Created: 20/02/2026  
-Closed:  
+Closed: 21/02/2026   
 
 ## Description
 
