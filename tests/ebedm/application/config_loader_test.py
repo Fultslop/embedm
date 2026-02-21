@@ -168,6 +168,62 @@ def test_load_non_mapping_returns_error(tmp_path: Path) -> None:
     assert "mapping" in errors[0].description
 
 
+# --- range validation ---
+
+
+def test_load_max_recursion_zero_returns_error(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_recursion: 0\n", encoding="utf-8")
+
+    _, errors = load_config_file(str(config_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "max_recursion" in errors[0].description
+
+
+def test_load_max_file_size_zero_returns_error(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_file_size: 0\n", encoding="utf-8")
+
+    _, errors = load_config_file(str(config_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "max_file_size" in errors[0].description
+
+
+def test_load_max_embed_size_negative_returns_error(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_embed_size: -1\n", encoding="utf-8")
+
+    _, errors = load_config_file(str(config_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "max_embed_size" in errors[0].description
+
+
+def test_load_max_embed_size_zero_is_accepted(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_embed_size: 0\n", encoding="utf-8")
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.max_embed_size == 0
+
+
+def test_load_max_recursion_one_is_accepted(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_recursion: 1\n", encoding="utf-8")
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.max_recursion == 1
+
+
 # --- discover_config ---
 
 
