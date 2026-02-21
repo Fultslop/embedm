@@ -185,14 +185,17 @@ class FileCache:
 
 def _is_path_allowed(path: str, allowed_paths: list[str]) -> bool:
     """Check if a path matches any of the allowed path patterns."""
-    resolved = str(Path(path).resolve())
+    resolved = Path(path).resolve()
     for allowed in allowed_paths:
-        allowed_resolved = str(Path(allowed).resolve())
-        # direct prefix match (path is under allowed directory)
-        if resolved.startswith(allowed_resolved):
+        allowed_resolved = Path(allowed).resolve()
+        # directory boundary match (exact match or subdirectory)
+        try:
+            resolved.relative_to(allowed_resolved)
             return True
+        except ValueError:
+            pass
         # wildcard match
-        if fnmatch(resolved, allowed_resolved):
+        if fnmatch(str(resolved), str(allowed_resolved)):
             return True
     return False
 

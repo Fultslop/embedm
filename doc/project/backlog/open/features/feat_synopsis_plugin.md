@@ -4,10 +4,17 @@ DRAFT
 Release v1.0  
 Created: 20/02/2026  
 Closed: `<date>`  
+Created by: FS
 
 ## Description
 
-Create a plugin the generates a deterministic synopsis of the current document.
+Create a plugin that generates a deterministic synopsis of the current document or the document referred to in the `source` option of corresponding `Directive`. 
+
+Directive definition:
+
+```yaml embedm
+
+
 
 ## Acceptance criteria
 

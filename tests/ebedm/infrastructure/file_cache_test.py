@@ -451,3 +451,57 @@ def test_get_files_no_matches(tmp_path: Path):
 
     assert errors == []
     assert files == []
+
+
+# --- _is_path_allowed: boundary check ---
+
+
+def test_adjacent_directory_is_rejected(tmp_path: Path):
+    """A sibling directory whose name starts with the allowed directory name must be rejected."""
+    allowed = tmp_path / "project"
+    allowed.mkdir()
+    evil = tmp_path / "project_evil"
+    evil.mkdir()
+    evil_file = evil / "secret.txt"
+    evil_file.write_text("secret")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(allowed)],
+    )
+    errors = cache.validate(str(evil_file))
+
+    assert any(s.level.name == "FATAL" for s in errors)
+
+
+def test_allowed_path_itself_is_accepted(tmp_path: Path):
+    """A file directly matching the allowed path (exact match) must be accepted."""
+    allowed_file = tmp_path / "readme.md"
+    allowed_file.write_text("hello")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+    )
+    errors = cache.validate(str(allowed_file))
+
+    assert errors == []
+
+
+def test_file_inside_allowed_directory_is_accepted(tmp_path: Path):
+    """A file one level inside the allowed directory must be accepted."""
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    sub_file = sub / "data.csv"
+    sub_file.write_text("a,b")
+
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+    )
+    errors = cache.validate(str(sub_file))
+
+    assert errors == []

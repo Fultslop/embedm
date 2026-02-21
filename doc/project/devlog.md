@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [TASK] tech_fix_path_boundary_check_in_file_cache — replace bare `startswith` in `_is_path_allowed()` with `Path.relative_to()`. Adjacent directories (e.g. `project_evil` when `project` is allowed) are now correctly rejected. Adds three acceptance-criteria tests.
+
+* 21/02/26 [REVIEW] tech_fix_path_boundary_check_in_file_cache — `startswith` is a string prefix check, not a directory boundary check. `Path.relative_to()` is the correct stdlib idiom: it raises `ValueError` for adjacent siblings and succeeds for exact matches and subdirectories. The spec proposes a manual separator check; `relative_to` is simpler and more idiomatic.
+
 * 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input. validate_input will run _parse_content + validate select columns + validate order_by expressions, returning rows as artifact. The transformer becomes error-free: asserts for programming violations, note_no_results for empty-after-filtering.
 
 * 21/02/26 [TASK] tech_move_validation_from_table_transformer_execute — ValidationResult[TArtifact] wrapper in validation_base.py; PlanNode.artifact: Any = None; PluginBase.validate_input() no-op default; planner calls validate_input after file is cached, stores artifact on child node; CsvTsvTableValidation and JsonTableValidation in table_validation.py; TableParams.rows replaces content/file_ext; TableTransformer.execute() is pure; table_plugin.py overrides validate_input and reads artifact in transform.
