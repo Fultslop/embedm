@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [TASK] tech_config_value_range_validation — add per-field range checks in `_parse_config()` after type validation: `max_file_size >= 1`, `max_recursion >= 1`, `max_embed_size >= 0`. Each yields ERROR and returns default `Configuration()`. Consolidated alongside the existing `max_memory > max_file_size` cross-field check. Error messages added to `application_resources.py`.
+
 * 21/02/26 [TASK] tech_fix_path_boundary_check_in_file_cache — replace bare `startswith` in `_is_path_allowed()` with `Path.relative_to()`. Adjacent directories (e.g. `project_evil` when `project` is allowed) are now correctly rejected. Adds three acceptance-criteria tests.
 
 * 21/02/26 [REVIEW] tech_fix_path_boundary_check_in_file_cache — `startswith` is a string prefix check, not a directory boundary check. `Path.relative_to()` is the correct stdlib idiom: it raises `ValueError` for adjacent siblings and succeeds for exact matches and subdirectories. The spec proposes a manual separator check; `relative_to` is simpler and more idiomatic.

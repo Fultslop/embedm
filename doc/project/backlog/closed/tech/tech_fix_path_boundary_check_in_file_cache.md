@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: Fix path boundary check in FileCache
 ========================================
 Created: 21/02/26
-Closed: `<date>`
+Closed: 21/02/26
 Created by: Claude
 
 ## Description

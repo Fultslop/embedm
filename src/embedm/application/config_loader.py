@@ -127,6 +127,18 @@ def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
 
     config = Configuration(**overrides)
 
+    if config.max_file_size < 1:
+        msg = str_resources.err_config_max_file_size_min.format(max_file_size=config.max_file_size)
+        return Configuration(), [Status(StatusLevel.ERROR, msg)]
+
+    if config.max_recursion < 1:
+        msg = str_resources.err_config_max_recursion_min.format(max_recursion=config.max_recursion)
+        return Configuration(), [Status(StatusLevel.ERROR, msg)]
+
+    if config.max_embed_size < 0:
+        msg = str_resources.err_config_max_embed_size_min.format(max_embed_size=config.max_embed_size)
+        return Configuration(), [Status(StatusLevel.ERROR, msg)]
+
     if config.max_memory <= config.max_file_size:
         msg = str_resources.err_config_memory_must_exceed_file_size.format(
             max_memory=config.max_memory, max_file_size=config.max_file_size

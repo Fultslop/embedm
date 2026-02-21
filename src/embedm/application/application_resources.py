@@ -9,6 +9,9 @@ str_resources = SimpleNamespace(
     err_config_no_dir="directory '{directory}' does not exist",
     err_config_dir_exist="'{config_path}' already exists",
     err_config_no_file="config file '{path}' not found",
+    err_config_max_file_size_min="'max_file_size' must be >= 1, got {max_file_size}",
+    err_config_max_recursion_min="'max_recursion' must be >= 1, got {max_recursion}",
+    err_config_max_embed_size_min="'max_embed_size' must be >= 0, got {max_embed_size}",
     err_config_memory_must_exceed_file_size=(
         "'max_memory' ({max_memory}) must be greater than 'max_file_size' ({max_file_size})"
     ),

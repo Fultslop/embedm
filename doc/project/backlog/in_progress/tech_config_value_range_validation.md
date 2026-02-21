@@ -2,6 +2,7 @@ TECHNICAL IMPROVEMENT: Add value range validation to config loader
 ========================================
 Created: 21/02/26
 Closed: `<date>`
+Created by: Claude
 
 ## Description
 
