@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input. validate_input will run _parse_content + validate select columns + validate order_by expressions, returning rows as artifact. The transformer becomes error-free: asserts for programming violations, note_no_results for empty-after-filtering.
+
+* 21/02/26 [TASK] tech_move_validation_from_table_transformer_execute — ValidationResult[TArtifact] wrapper in validation_base.py; PlanNode.artifact: Any = None; PluginBase.validate_input() no-op default; planner calls validate_input after file is cached, stores artifact on child node; CsvTsvTableValidation and JsonTableValidation in table_validation.py; TableParams.rows replaces content/file_ext; TableTransformer.execute() is pure; table_plugin.py overrides validate_input and reads artifact in transform.
+
 * 21/02/26 [Fix] Bug: symbols inside comments are parsed — `_find_symbol_in_range` now always calls `_scan_line` to strip comments, and `_try_match_at_line` matches against the comment-stripped line instead of the raw line. Covers both `/* */` block comments and `//` line comments for all supported languages (C/C++, C#, Java).
 
 * 21/02/26 [Fix] Bug: compiled file link does not resolve — `link: true` in the file plugin now emits a path relative to the compiled output directory instead of the source md directory. `compiled_dir` added to `PluginConfiguration` and threaded from orchestration through `_compile_plan_node` → `plugin.transform()` → `FilePlugin` → `_build_header`. `FileParams` carries `plugin_config`. Falls back to filename when `compiled_dir` is unset (stdin/stdout mode).

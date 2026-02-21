@@ -3,7 +3,8 @@ from types import SimpleNamespace
 # TODO move all user facing strings here
 str_resources = SimpleNamespace(
     note_no_toc_content="> [!NOTE]\n> No headings found in document.",
-    note_no_table_content="> [!NOTE]\n> No data found.",
+    note_no_results="> [!NOTE]\n> No results.",
+    err_table_empty_content="file contains no data rows.",
     err_table_unsupported_format="unsupported file format '{ext}'. Supported: csv, tsv, json.",
     err_table_invalid_json="invalid JSON: {exc}",
     err_table_json_not_array="JSON must be an array of objects, got '{type_name}'.",
