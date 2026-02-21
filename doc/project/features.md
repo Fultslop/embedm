@@ -1,5 +1,5 @@
-EmbedM Features
-===============
+EmbedM Scope & Features
+=======================
 
 In this document we capture the individual features that make Ebedm and have been implemented. It is a reflection of what is, and what is NOT Ebedm. This document does NOT capture future features, improvements or otherwise.
 
@@ -8,6 +8,8 @@ In this document we capture the individual features that make Ebedm and have bee
 * Embedm takes a markdown input file or set of input files and deterministically _compiles_ them into one or more output files. 
 
 * Embedm ONLY _reads_ from local files. It does NOT get data from other sources like URLs or database connections. 
+
+* Embedm ONLY _writes_ to local files in the MD format. 
 
 * Embedm can ONLY _read_ and _write_ from and to paths that the user has explicitely defined. The only exception to reading is the current working directory of Embedm, everthing under said directory can be read by Embedm.
 
