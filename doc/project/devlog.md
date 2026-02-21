@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 21/02/26 [Fix] Bug: symbols inside comments are parsed — `_find_symbol_in_range` now always calls `_scan_line` to strip comments, and `_try_match_at_line` matches against the comment-stripped line instead of the raw line. Covers both `/* */` block comments and `//` line comments for all supported languages (C/C++, C#, Java).
+
 * 21/02/26 [Fix] Bug: compiled file link does not resolve — `link: true` in the file plugin now emits a path relative to the compiled output directory instead of the source md directory. `compiled_dir` added to `PluginConfiguration` and threaded from orchestration through `_compile_plan_node` → `plugin.transform()` → `FilePlugin` → `_build_header`. `FileParams` carries `plugin_config`. Falls back to filename when `compiled_dir` is unset (stdin/stdout mode).
 
 * 20/02/26 [Feat] File plugin header decorators — `title` (bold label), `link: true` (filename as link), `line_numbers_range: true` (shows `lines` value when present). Rendered in order title → line_numbers_range → link as a single line above the code block. Uses `Directive.get_option` for bool casting.

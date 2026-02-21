@@ -1,8 +1,7 @@
 BUG: Compiled file link does not resolve
 ========================================
-Draft  
 Created: 20/02/2026  
-Closed:  
+Closed: 21/02/2026   
 
 ## Description
 

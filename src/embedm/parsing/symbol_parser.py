@@ -545,12 +545,13 @@ def _count_braces(real: str) -> int:
 def _try_match_at_line(
     lines: list[str],
     line_idx: int,
+    real_line: str,
     pattern: SymbolPattern,
     regex: re.Pattern[str],
     requested_params: list[str] | None,
     config: LanguageConfig,
 ) -> int | None:
-    if not regex.search(lines[line_idx]):
+    if not regex.search(real_line):
         return None
     if requested_params is not None:
         declared = _extract_param_types(lines, line_idx)
@@ -586,14 +587,11 @@ def _find_symbol_in_range(
         depth = 0
 
         for line_idx in range(range_start, range_end + 1):
-            if restrict_depth:
-                real, scan_state = _scan_line(lines[line_idx], scan_state, config.comment_style)
-                at_depth = depth == 0
-            else:
-                at_depth = True
+            real, scan_state = _scan_line(lines[line_idx], scan_state, config.comment_style)
+            at_depth = depth == 0 if restrict_depth else True
 
             if at_depth:
-                end_idx = _try_match_at_line(lines, line_idx, pattern, regex, requested_params, config)
+                end_idx = _try_match_at_line(lines, line_idx, real, pattern, regex, requested_params, config)
                 if end_idx is not None:
                     return (line_idx, end_idx, pattern.block_style)
 

@@ -412,3 +412,54 @@ def test_cs_another_class_method_resolved():
     lines = extract_symbol(_CS_INNER_CLASS, "AnotherExample.doSomething()", CSHARP_CONFIG)
     assert lines is not None
     assert any("another example" in l for l in lines)
+
+
+# ---------------------------------------------------------------------------
+# Comment handling
+# ---------------------------------------------------------------------------
+
+_CS_BLOCK_COMMENT = """\
+namespace foo {
+    class Bar {
+        /*
+          public void doSomething()
+          {
+              // inside block comment
+          }
+        */
+
+        public void doSomething()
+        {
+            // real
+        }
+    }
+}
+"""
+
+_CS_LINE_COMMENT = """\
+namespace foo {
+    class Bar {
+        // public void doSomething() { }
+
+        public void doSomething()
+        {
+            // real
+        }
+    }
+}
+"""
+
+
+def test_cs_symbol_inside_block_comment_is_skipped():
+    """Symbol declared inside /* */ must be ignored; the real declaration is used."""
+    lines = extract_symbol(_CS_BLOCK_COMMENT, "doSomething()", CSHARP_CONFIG)
+    assert lines is not None
+    assert any("// real" in l for l in lines)
+    assert not any("inside block comment" in l for l in lines)
+
+
+def test_cs_symbol_inside_line_comment_is_skipped():
+    """Symbol declared after // must be ignored; the real declaration is used."""
+    lines = extract_symbol(_CS_LINE_COMMENT, "doSomething()", CSHARP_CONFIG)
+    assert lines is not None
+    assert any("// real" in l for l in lines)
