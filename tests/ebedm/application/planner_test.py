@@ -8,6 +8,7 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_registry import PluginRegistry
+from embedm.plugins.validation_base import ValidationResult
 
 
 def _make_context(
@@ -31,11 +32,13 @@ def _register_plugin(
     context: EmbedmContext,
     directive_type: str,
     validate_errors: list[Status] | None = None,
+    validate_input_result: ValidationResult | None = None,
 ) -> MagicMock:
     plugin = MagicMock(spec=PluginBase)
     plugin.name = directive_type
     plugin.directive_type = directive_type
     plugin.validate_directive.return_value = validate_errors or []
+    plugin.validate_input.return_value = validate_input_result or ValidationResult(artifact=None)
     context.plugin_registry.lookup[directive_type] = plugin
     return plugin
 
@@ -356,3 +359,62 @@ def test_create_plan_two_directives_same_source_produce_two_children(tmp_path: P
     assert len(plan.children) == 2
     assert plan.children[0].directive.source == str(shared)
     assert plan.children[1].directive.source == str(shared)
+
+
+# --- validate_input ---
+
+
+def test_validate_input_errors_produce_error_child(tmp_path: Path):
+    """validate_input errors create an error child node; the child document is None."""
+    source_file = tmp_path / "data.csv"
+    source_file.write_text("name,age\nAlice,30\n")
+
+    context = _make_context(tmp_path)
+    error = Status(StatusLevel.ERROR, "file contains no data rows.")
+    _register_plugin(context, "table", validate_input_result=ValidationResult(artifact=None, errors=[error]))
+    directive = Directive(type="root")
+    content = f"```yaml embedm\ntype: table\nsource: {source_file}\n```\n"
+
+    plan = create_plan(directive, content, depth=0, context=context)
+
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    child = plan.children[0]
+    assert child.document is None
+    assert any("data rows" in s.description for s in child.status)
+
+
+def test_validate_input_artifact_stored_on_child(tmp_path: Path):
+    """validate_input artifact is attached to the child PlanNode."""
+    source_file = tmp_path / "data.csv"
+    source_file.write_text("name,age\nAlice,30\n")
+
+    artifact = [{"name": "Alice", "age": "30"}]
+    context = _make_context(tmp_path)
+    _register_plugin(context, "table", validate_input_result=ValidationResult(artifact=artifact))
+    directive = Directive(type="root")
+    content = f"```yaml embedm\ntype: table\nsource: {source_file}\n```\n"
+
+    plan = create_plan(directive, content, depth=0, context=context)
+
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].artifact == artifact
+
+
+def test_validate_input_no_op_does_not_block_child(tmp_path: Path):
+    """Default no-op validate_input (no errors, no artifact) still builds the child."""
+    source_file = tmp_path / "include.md"
+    source_file.write_text("content\n")
+
+    context = _make_context(tmp_path)
+    _register_plugin(context, "file_embed")
+    directive = Directive(type="root")
+    content = f"```yaml embedm\ntype: file_embed\nsource: {source_file}\n```\n"
+
+    plan = create_plan(directive, content, depth=0, context=context)
+
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].document is not None
+    assert plan.children[0].artifact is None

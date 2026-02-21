@@ -1,6 +1,7 @@
 from __future__ import annotations  # to deal with the children property
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 from embedm.domain.status_level import Status
 
@@ -14,3 +15,4 @@ class PlanNode:
     status: list[Status]
     document: Document | None = None
     children: list[PlanNode] | None = None
+    artifact: Any = field(default=None, compare=False)

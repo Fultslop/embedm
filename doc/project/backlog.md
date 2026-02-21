@@ -2,8 +2,6 @@
 
 ## High level overview 
 
-* Find symbol returns wrong result if symbol is inside a comment block - see regression test
-* File properties, region, line, symbol
 * Review, check if we can/need to move functionality from table transformer to other file. 
   * Opportunity to have transformer chaining ?
   * Note that table_transformer contains hard coded strings again.

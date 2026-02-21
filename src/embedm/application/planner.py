@@ -65,7 +65,7 @@ def create_plan(
     all_errors.extend(validation_errors)
 
     # step 4: recurse into buildable source directives, include error children
-    children = _build_children(buildable, depth, ancestors, context) + error_children
+    children = _build_children(buildable, depth, ancestors, context, plugin_config) + error_children
 
     if not all_errors:
         all_errors.append(Status(StatusLevel.OK, "plan created successfully"))
@@ -131,22 +131,34 @@ def _build_children(
     depth: int,
     ancestors: frozenset[str],
     context: EmbedmContext,
+    plugin_config: PluginConfiguration,
 ) -> list[PlanNode]:
     """Recursively build child plan nodes for directives with sources."""
-    children: list[PlanNode] = []
+    return [_build_child(d, depth, ancestors, context, plugin_config) for d in directives if d.source]
 
-    valid_directives = (d for d in directives if d.source)
 
-    for d in valid_directives:
-        source_content, load_errors = context.file_cache.get_file(d.source)
-        if load_errors or source_content is None:
-            errors = load_errors or [Status(StatusLevel.ERROR, f"failed to load '{d.source}'")]
-            children.append(_error_node(d, errors))
-        else:
-            child = create_plan(d, source_content, depth + 1, context, ancestors | {d.source})
-            children.append(child)
+def _build_child(
+    directive: Directive,
+    depth: int,
+    ancestors: frozenset[str],
+    context: EmbedmContext,
+    plugin_config: PluginConfiguration,
+) -> PlanNode:
+    """Build a single child plan node, running validate_input if a plugin is registered."""
+    source_content, load_errors = context.file_cache.get_file(directive.source)
+    if load_errors or source_content is None:
+        errors = load_errors or [Status(StatusLevel.ERROR, f"failed to load '{directive.source}'")]
+        return _error_node(directive, errors)
 
-    return children
+    plugin = context.plugin_registry.find_plugin_by_directive_type(directive.type)
+    validate_result = plugin.validate_input(directive, source_content, plugin_config) if plugin is not None else None
+    if validate_result is not None and validate_result.errors:
+        return _error_node(directive, validate_result.errors)
+
+    child = create_plan(directive, source_content, depth + 1, context, ancestors | {directive.source})
+    if validate_result is not None and validate_result.artifact is not None:
+        child.artifact = validate_result.artifact
+    return child
 
 
 def _error_node(directive: Directive, errors: list[Status]) -> PlanNode:
