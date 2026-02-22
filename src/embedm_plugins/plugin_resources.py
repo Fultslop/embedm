@@ -24,6 +24,12 @@ str_resources = SimpleNamespace(
     err_file_symbol_unsupported_ext="symbol extraction is not supported for '{ext}' files.",
     err_file_region_not_found="region '{region}' not found in '{source}'.",
     err_file_symbol_not_found="symbol '{symbol}' not found in '{source}'.",
+    err_query_path_missing_source="'query-path' directive requires a source.",
+    err_query_path_unsupported_format="unsupported source format '{ext}'. Supported: json, yaml, yml, xml.",
+    err_query_path_invalid_json="invalid JSON: {exc}",
+    err_query_path_invalid_yaml="invalid YAML: {exc}",
+    err_query_path_invalid_xml="invalid XML: {exc}",
+    err_query_path_not_found="path '{path}' not found in '{source}'.",
 )
 
 

@@ -93,7 +93,12 @@ def _validate_directives(
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
-            errors.append(Status(StatusLevel.ERROR, str_resources.err_plan_no_plugin.format(directive_type=d.type)))
+            if context.config.is_verbose:
+                available = ", ".join(sorted(p.directive_type for p in context.plugin_registry.lookup.values()))
+                msg = str_resources.err_plan_no_plugin_verbose.format(directive_type=d.type, available=available)
+            else:
+                msg = str_resources.err_plan_no_plugin.format(directive_type=d.type)
+            errors.append(Status(StatusLevel.ERROR, msg))
         else:
             errors.extend(plugin.validate_directive(d, plugin_config))
 

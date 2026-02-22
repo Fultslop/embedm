@@ -12,7 +12,22 @@ from embedm.plugins.plugin_registry import PluginRegistry
 from .cli import parse_command_line_arguments
 from .config_loader import discover_config, generate_default_config, load_config_file
 from .configuration import Configuration, InputMode
-from .console import ContinueChoice, present_errors, present_result, present_title, prompt_continue
+from .console import (
+    ContinueChoice,
+    RunSummary,
+    make_cache_event_handler,
+    present_errors,
+    present_result,
+    present_run_hint,
+    present_title,
+    prompt_continue,
+    verbose_config,
+    verbose_output_path,
+    verbose_plan_tree,
+    verbose_plugins,
+    verbose_section,
+    verbose_summary,
+)
 from .embedm_context import EmbedmContext
 from .planner import plan_content, plan_file
 
@@ -39,16 +54,19 @@ def main() -> None:
     if load_errors:
         present_errors(load_errors)
 
+    _emit_verbose_start(config, context)
+    summary = RunSummary(output_target=_output_target(config))
+
     if config.input_mode == InputMode.FILE:
-        result = _process_file(config.input, context)
-        _write_output(result, config)
+        plan_root = plan_file(config.input, context)
+        _process_single_input(plan_root, config.input, config, context, summary)
     elif config.input_mode == InputMode.DIRECTORY:
-        _process_directory(config, context)
+        _process_directory(config, context, summary)
     elif config.input_mode == InputMode.STDIN:
         plan_root = plan_content(config.input, context)
-        compiled_dir = _output_file_compiled_dir(config.output_file)
-        result = _compile_plan(plan_root, context, compiled_dir)
-        _write_output(result, config)
+        _process_single_input(plan_root, "<stdin>", config, context, summary)
+
+    _emit_verbose_end(config, summary)
 
 
 def _handle_init(directory: str) -> None:
@@ -84,11 +102,12 @@ def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]
         plugin_sequence=file_config.plugin_sequence,
         is_accept_all=config.is_accept_all,
         is_dry_run=config.is_dry_run,
+        is_verbose=config.is_verbose,
         config_file=config_path,
     ), errors
 
 
-def _process_directory(config: Configuration, context: EmbedmContext) -> None:
+def _process_directory(config: Configuration, context: EmbedmContext, summary: RunSummary) -> None:
     """Expand directory input to .md files, process each, skipping embedded dependencies."""
     files = _expand_directory_input(config.input)
     if not files:
@@ -105,13 +124,20 @@ def _process_directory(config: Configuration, context: EmbedmContext) -> None:
 
         plan_root = plan_file(file_path, context)
 
+        if config.is_verbose:
+            verbose_section(f"planning: {file_path}")
+            verbose_plan_tree(plan_root)
+
         # track all sources this file embeds so we skip them as standalone roots
         _collect_embedded_sources(plan_root, embedded)
 
         compiled_dir = _dir_mode_compiled_dir(file_path, base_dir, config)
         result = _compile_plan(plan_root, context, compiled_dir)
         if result:
-            _write_directory_output(file_path, base_dir, config, result)
+            output_path = _write_directory_output(file_path, base_dir, config, result)
+            if output_path and config.is_verbose:
+                verbose_output_path(output_path)
+        _update_summary(summary, plan_root, wrote=bool(result))
 
 
 def _expand_directory_input(input_path: str) -> list[str]:
@@ -207,31 +233,69 @@ def _write_directory_output(
     base_dir: Path,
     config: Configuration,
     result: str,
-) -> None:
-    """Write a compiled file's output to the output directory (mirroring structure) or stdout."""
+) -> str | None:
+    """Write a compiled file's output to the output directory (mirroring structure) or stdout.
+
+    Returns the path written to, or None if written to stdout.
+    """
     if config.is_dry_run or not config.output_directory:
         present_result(result)
-        return
+        return None
 
     relative = Path(file_path).resolve().relative_to(base_dir)
     output_path = Path(config.output_directory) / relative
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(result, encoding="utf-8")
+    return str(output_path.resolve())
+
+
+def _emit_verbose_start(config: Configuration, context: EmbedmContext) -> None:
+    """Emit the configuration and plugin discovery sections when verbose is on."""
+    if config.is_verbose:
+        verbose_section("configuration")
+        verbose_config(config)
+        verbose_section("plugins")
+        verbose_plugins(context.plugin_registry, config)
+
+
+def _emit_verbose_end(config: Configuration, summary: RunSummary) -> None:
+    """Emit the summary section (verbose) or the error hint (non-verbose with errors)."""
+    if config.is_verbose:
+        verbose_section("summary")
+        verbose_summary(summary)
+    elif summary.error_count > 0:
+        present_run_hint(summary)
+
+
+def _process_single_input(
+    plan_root: PlanNode,
+    source_label: str,
+    config: Configuration,
+    context: EmbedmContext,
+    summary: RunSummary,
+) -> None:
+    """Compile and write a single plan (FILE or STDIN mode), updating the summary."""
+    if config.is_verbose:
+        verbose_section(f"planning: {source_label}")
+        verbose_plan_tree(plan_root)
+    compiled_dir = _output_file_compiled_dir(config.output_file)
+    result = _compile_plan(plan_root, context, compiled_dir)
+    output_path = _write_output(result, config)
+    if output_path and config.is_verbose:
+        verbose_section("output")
+        verbose_output_path(output_path)
+    _update_summary(summary, plan_root, wrote=bool(result))
 
 
 def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
-    file_cache = FileCache(config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size)
+    on_event = make_cache_event_handler() if config.is_verbose else None
+    file_cache = FileCache(
+        config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size, on_event=on_event
+    )
     plugin_registry = PluginRegistry()
     errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
     return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors
-
-
-def _process_file(file_name: str, context: EmbedmContext) -> str:
-    """Plan and compile a single input file."""
-    plan_root = plan_file(file_name, context)
-    compiled_dir = _output_file_compiled_dir(context.config.output_file)
-    return _compile_plan(plan_root, context, compiled_dir)
 
 
 def _output_file_compiled_dir(output_file: str | None) -> str:
@@ -258,17 +322,54 @@ def _collect_tree_errors(node: PlanNode) -> list[Status]:
     return errors
 
 
-def _write_output(result: str, config: Configuration) -> None:
-    """Write compilation result to the configured destination."""
+def _write_output(result: str, config: Configuration) -> str | None:
+    """Write compilation result to the configured destination.
+
+    Returns the path written to, or None if written to stdout or result was empty.
+    """
     if not result:
-        return
+        return None
 
     if config.is_dry_run:
         present_result(result)
-        return
+        return None
 
     if config.output_file:
         with open(config.output_file, "w", encoding="utf-8") as f:
             f.write(result)
+        return str(Path(config.output_file).resolve())
+
+    present_result(result)
+    return None
+
+
+def _output_target(config: Configuration) -> str:
+    """Return a human-readable output target label for the summary line."""
+    if config.output_file:
+        return str(Path(config.output_file).resolve())
+    if config.output_directory:
+        return str(Path(config.output_directory).resolve())
+    return "stdout"
+
+
+def _update_summary(summary: RunSummary, plan_root: PlanNode, wrote: bool) -> None:
+    """Update the run summary from a completed plan."""
+    has_error = _tree_has_level(plan_root, (StatusLevel.ERROR, StatusLevel.FATAL))
+    has_warning = _tree_has_level(plan_root, (StatusLevel.WARNING,))
+
+    if wrote:
+        summary.files_written += 1
+
+    if has_error:
+        summary.error_count += 1
+    elif has_warning:
+        summary.warning_count += 1
     else:
-        present_result(result)
+        summary.ok_count += 1
+
+
+def _tree_has_level(node: PlanNode, levels: tuple[StatusLevel, ...]) -> bool:
+    """Return True if the plan tree contains any status at one of the given levels."""
+    if any(s.level in levels for s in node.status):
+        return True
+    return any(_tree_has_level(child, levels) for child in node.children or [])

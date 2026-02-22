@@ -1,9 +1,13 @@
 FEATURE: Directory Plugin
 ========================================
-Draft  
+Rejected
 Release v1.0  
 Created: 20/02/26  
-Closed: `<date>`  
+Closed: 22/02/26  
+
+## Rejected
+
+The new query-path should in v2.0 be able to implement all the features described in this spec.
 
 ## Description
 

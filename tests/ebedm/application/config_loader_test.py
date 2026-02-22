@@ -28,6 +28,7 @@ def test_generate_creates_yaml_file(tmp_path: Path) -> None:
     assert (tmp_path / CONFIG_FILE_NAME).is_file()
 
     content = (tmp_path / CONFIG_FILE_NAME).read_text(encoding="utf-8")
+    # review: use of magic values
     assert "max_file_size" in content
     assert "max_recursion" in content
     assert "plugin_sequence" in content

@@ -34,6 +34,7 @@ def parse_command_line_arguments(
         output_directory=parsed.output_dir,
         config_file=parsed.config,
         is_accept_all=parsed.accept_all,
+        is_verbose=parsed.verbose,
     ), []
 
 
@@ -47,6 +48,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-A", "--accept-all", action="store_true", default=False, help="continue on errors without prompting"
     )
+    parser.add_argument("-v", "--verbose", action="store_true", default=False, help="write diagnostic output to stderr")
     parser.add_argument("--init", nargs="?", const="", default=None, help="generate embedm-config.yaml in directory")
     return parser
 

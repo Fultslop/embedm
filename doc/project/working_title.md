@@ -87,10 +87,16 @@ However, the user is explicitly asking me to update test_regression.py. That's a
 
 ## Conclusion and next steps
 
+**We may need more deterministic guardrails**
+
+* Is a test relevant
+* Does an implementation introduce new abstractions
+    - verbose feature implemented an event callback. Wasn't discussed. 
+
 ## References
 
-[0] https://www.lennysnewsletter.com/p/head-of-claude-code-what-happens
-[1] https://www.reddit.com/r/programming/comments/1rakdst/creator_of_claude_code_coding_is_solved
+[0]https://www.lennysnewsletter.com/p/head-of-claude-code-what-happens  
+[1]https://www.reddit.com/r/programming/comments/1rakdst/creator_of_claude_code_coding_is_solved  
 
 ## Appendix 
 

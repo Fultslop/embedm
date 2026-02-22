@@ -8,14 +8,16 @@ from .plugin_resources import str_resources
 
 class PluginRegistry:
     def __init__(self) -> None:
-        # Initialize the actual dictionary here
         self.lookup: dict[str, PluginBase] = {}
+        # Populated by load_plugins; each entry is (entry_point_name, module_path).
+        self.discovered: list[tuple[str, str]] = []
+        self.skipped: list[tuple[str, str]] = []
 
     @property
     def count(self) -> int:
         return len(self.lookup)
 
-    def load_plugins(self, enabled_modules: set[str] | None = None, verbose: bool = False) -> list[Status]:
+    def load_plugins(self, enabled_modules: set[str] | None = None) -> list[Status]:
         """Load all registered plugins. Returns errors for any that fail to load.
 
         enabled_modules: set of module paths (e.g. 'embedm_plugins.file_plugin') to load.
@@ -23,14 +25,15 @@ class PluginRegistry:
         """
         plugins = entry_points(group="embedm.plugins")
         errors: list[Status] = []
-
-        if verbose:
-            print(str_resources.registry_show_len_plugins.format(len_plugins=len(plugins)))
+        self.discovered = []
+        self.skipped = []
 
         for entry in plugins:
-            if enabled_modules is not None and entry.value.split(":")[0] not in enabled_modules:
-                if verbose:
-                    print(f"    skipping plugin '{entry.name}'.")
+            module_path = entry.value.split(":")[0]
+            self.discovered.append((entry.name, module_path))
+
+            if enabled_modules is not None and module_path not in enabled_modules:
+                self.skipped.append((entry.name, module_path))
                 continue
 
             try:
@@ -42,8 +45,6 @@ class PluginRegistry:
                 )
                 continue
 
-            if verbose:
-                print(f"    adding plugin '{instance.name}'.")
             self.lookup[instance.name] = instance
 
         return errors
