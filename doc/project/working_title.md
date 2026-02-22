@@ -46,13 +46,13 @@ Plan:
 
 ## What went wrong
 
+**Token Anxiety**
+
 **Maintaining Design**
 
 **Ignoring directives** Esp no magic values
 
 **Overthinks without asking for feedback**
-
-**Token Anxiety**
 
 **Fixing tests to match the output**
 

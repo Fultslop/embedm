@@ -1,7 +1,7 @@
 FEATURE: Plugin configurability
 ========================================
 Draft  
-Release v2.0  ?
+Release v1.0
 Created: 20/02/2026  
 Closed: `<date>`  
 

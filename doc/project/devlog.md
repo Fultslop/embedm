@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 22/02/26 [TASK] Moved feat_recall_plugin to ready_for_implementation (not yet in active sprint). Created ready_for_implementation/ directory.
+
+* 22/02/26 [SUGGESTION] feat_stats_loc (v2.0): LoC metric deferred from stats plugin — language detection reuses symbol extraction infrastructure; not worth bloating v1.0 stats plugin for a code-specific use case.
+
 * 21/02/26 [FEAT] feat_synopsis_plugin — block model: split text on blank lines into blocks, apply positional decay weight 1/(1+block_idx) to sentence scores, add `sections` option (0=all) to cap input to first N blocks. Renamed _split_sentences → _block_to_sentences, added _split_into_blocks. Quality: table_plugin and moby_dick outputs dramatically improved; man_ls improved but nroff header (block 0) still contaminates due to block 0 weight advantage.
 
 * 21/02/26 [TASK] feat_synopsis_plugin — implement synopsis plugin: stopword-based sentence scoring (Frequency + Luhn algorithms), EN/NL language support, blockquote output, reads parent_document string fragments (post-embed pass), runs before toc in plugin_sequence.
