@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 from embedm.domain.directive import Directive
@@ -8,6 +9,7 @@ from embedm.parsing.directive_parser import parse_yaml_embed_blocks
 from embedm.plugins.plugin_configuration import PluginConfiguration
 
 from .application_resources import str_resources
+from .console import verbose_timing
 from .embedm_context import EmbedmContext
 
 
@@ -100,7 +102,10 @@ def _validate_directives(
                 msg = str_resources.err_plan_no_plugin.format(directive_type=d.type)
             errors.append(Status(StatusLevel.ERROR, msg))
         else:
+            t0 = time.perf_counter()
             errors.extend(plugin.validate_directive(d, plugin_config))
+            if context.config.is_verbose:
+                verbose_timing("validate_directive", d.type, d.source, time.perf_counter() - t0)
 
     valid_directives = (d for d in directives if d.source)
 
@@ -156,7 +161,13 @@ def _build_child(
         return _error_node(directive, errors)
 
     plugin = context.plugin_registry.find_plugin_by_directive_type(directive.type)
-    validate_result = plugin.validate_input(directive, source_content, plugin_config) if plugin is not None else None
+    if plugin is not None:
+        t0 = time.perf_counter()
+        validate_result = plugin.validate_input(directive, source_content, plugin_config)
+        if context.config.is_verbose:
+            verbose_timing("validate_input", directive.type, directive.source, time.perf_counter() - t0)
+    else:
+        validate_result = None
     if validate_result is not None and validate_result.errors:
         return _error_node(directive, validate_result.errors)
 

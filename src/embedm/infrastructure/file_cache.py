@@ -1,5 +1,6 @@
 import glob
 import os
+import time
 from collections import OrderedDict
 from collections.abc import Callable
 from enum import Enum
@@ -36,7 +37,7 @@ class FileCache:
         allowed_paths: list[str],
         write_mode: WriteMode = WriteMode.CREATE_NEW,
         max_embed_size: int = 0,
-        on_event: Callable[[str, str], None] | None = None,
+        on_event: Callable[[str, str, float], None] | None = None,
     ):
         assert memory_limit > max_file_size, (
             f"memory_limit ({memory_limit}) must be greater than max_file_size ({max_file_size})"
@@ -94,7 +95,7 @@ class FileCache:
         if path in self._cache and self._cache[path] is not None:
             self._cache.move_to_end(path, last=False)
             if self._on_event:
-                self._on_event(path, "hit")
+                self._on_event(path, "hit", 0.0)
             return self._cache[path], []
 
         # validate if not yet in cache
@@ -104,13 +105,15 @@ class FileCache:
                 return None, errors
 
         # load from disk
+        t0 = time.perf_counter()
         content = Path(path).read_text(encoding="utf-8")
+        elapsed_s = time.perf_counter() - t0
         self._make_room(len(content))
         self._cache[path] = content
         self._cache.move_to_end(path, last=False)
         self._memory_in_use += len(content)
         if self._on_event:
-            self._on_event(path, "miss")
+            self._on_event(path, "miss", elapsed_s)
 
         return content, []
 
@@ -187,7 +190,7 @@ class FileCache:
                 self._memory_in_use -= len(content)
                 self._cache[path] = None
                 if self._on_event:
-                    self._on_event(path, "eviction")
+                    self._on_event(path, "eviction", 0.0)
                 return True
         return False
 

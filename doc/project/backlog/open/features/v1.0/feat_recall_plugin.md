@@ -4,7 +4,7 @@ Draft
 Release v1.0  
 Created: 22/02/2026  
 Closed: `<date>`  
-Created by: FS  
+Created by: Claude  
 
 ## Description
 

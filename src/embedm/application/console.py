@@ -29,6 +29,7 @@ class RunSummary:
     ok_count: int = 0
     warning_count: int = 0
     error_count: int = 0
+    elapsed_s: float = 0.0
 
 
 def present_title() -> None:
@@ -150,13 +151,21 @@ def present_run_hint(summary: RunSummary) -> None:
     print(f"{_format_summary(summary)}. {str_resources.verbose_hint}", file=sys.stderr)
 
 
-def make_cache_event_handler() -> Callable[[str, str], None]:
+def make_cache_event_handler() -> Callable[[str, str, float], None]:
     """Return a callable that prints cache events to stderr."""
 
-    def handler(path: str, event: str) -> None:
-        print(f"  cache {event}: {path}", file=sys.stderr)
+    def handler(path: str, event: str, elapsed_s: float) -> None:
+        if event == "miss":
+            _vprint(f"[cache miss] {elapsed_s:.3f}s — {path}")
+        else:
+            _vprint(f"[cache {event}] {path}")
 
     return handler
+
+
+def verbose_timing(method: str, directive_type: str, source: str, elapsed_s: float) -> None:
+    """Print a plugin method timing line to stderr."""
+    _vprint(f"[{method}] {elapsed_s:.3f}s — {directive_type}: {source}")
 
 
 # --- helpers ---
@@ -181,5 +190,6 @@ def _format_summary(summary: RunSummary) -> str:
     target = f"to {summary.output_target}" if summary.output_target != "stdout" else "to stdout"
     return (
         f"embedm process complete, {summary.files_written} {noun} written {target}, "
-        f"{summary.ok_count} ok, {summary.warning_count} warnings, {summary.error_count} errors"
+        f"{summary.ok_count} ok, {summary.warning_count} warnings, {summary.error_count} errors, "
+        f"completed in {summary.elapsed_s:.3f}s"
     )
