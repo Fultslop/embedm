@@ -1,7 +1,7 @@
 FEATURE: Stats plugin
 ========================================
 Draft
-Release v1.0
+Release v2.0
 Created: 22/02/2026
 Closed: `<date>`
 Created by: FS

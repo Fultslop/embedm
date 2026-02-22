@@ -5,7 +5,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.synopsis_resources import str_resources
 from embedm_plugins.synopsis_stopwords import STOPWORDS
 
 _LUHN_WINDOW = 5

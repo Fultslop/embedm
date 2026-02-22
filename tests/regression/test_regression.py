@@ -50,7 +50,10 @@ def context() -> EmbedmContext:
 def manual_context() -> EmbedmContext:
     """Shared EmbedmContext for manual regression tests, loaded from the manual config."""
     config, _ = load_config_file(str(_MANUAL_SRC_DIR / "embedm-config.yaml"))
-    return _build_context(_MANUAL_SRC_DIR, config)
+    file_cache = FileCache(config.max_file_size, config.max_memory, [str(_MANUAL_SRC_DIR), str(_PROJECT_ROOT)])
+    plugin_registry = PluginRegistry()
+    plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
+    return EmbedmContext(config, file_cache, plugin_registry, accept_all=True)
 
 
 def _normalize(text: str, src_dir: Path) -> str:

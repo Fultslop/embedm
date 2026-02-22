@@ -2,7 +2,7 @@ import tomllib
 
 import pytest
 
-from embedm_plugins.normalize_toml import normalize
+from embedm_plugins.query_path_normalize_toml import normalize
 
 
 def test_simple_mapping():

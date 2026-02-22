@@ -3,21 +3,27 @@
 JSON scalar:
 
 1.2.3
+
 JSON nested path:
 
 ^18.0.0
+
 YAML scalar:
 
 embedm
+
 YAML nested path:
 
 0.6.0
+
 XML attribute:
 
 localhost
+
 XML nested attribute:
 
 mydb
+
 Invalid path:
 
 > [!CAUTION]

@@ -7,7 +7,9 @@ Closed: `<date>`
 
 ## Description
 
-Add an option cli '--dry-run'. Prints a verbose version of the planning step and errors but does not compile.
+Add an option cli '--dry-run'. Only runs the planner, does not compile / execute. Allows the user to catch / collect errors before executing
+
+(other benefits ?)
 
 ## Acceptance criteria
 

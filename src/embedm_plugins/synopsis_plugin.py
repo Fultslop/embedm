@@ -10,7 +10,7 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.synopsis_resources import str_resources
 from embedm_plugins.synopsis_transformer import SynopsisParams, SynopsisTransformer
 
 if TYPE_CHECKING:

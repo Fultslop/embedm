@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_* to make ownership explicit. Updated all source and test imports. Widened manual regression test allowed_paths to include project root so cross-directory references (e.g. pyproject.toml) resolve correctly.
+
+* 22/02/26 [Fix] query-path trailing newline — scalar and format-string output from QueryPathTransformer now always appends \n so the blank-line separator after a directive fence is preserved in the rendered document.
+
 * 22/02/26 [TASK] feat_add_toml_to_query_path — add TOML source support to query-path plugin via stdlib tomllib; new normalize_toml module; wired into _parse/_parse_error_message/_SUPPORTED_EXTENSIONS/_EXT_TO_LANG_TAG.
 
 * 22/02/26 [TASK] feat_add_format_option_to_query_path — add optional `format: "{value}"` option to query-path directive; validates placeholder presence, path requirement, and scalar constraint; wired through artifact → transformer params → execute.
