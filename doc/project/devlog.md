@@ -4,6 +4,12 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 22/02/26 [TASK] feat_add_toml_to_query_path — add TOML source support to query-path plugin via stdlib tomllib; new normalize_toml module; wired into _parse/_parse_error_message/_SUPPORTED_EXTENSIONS/_EXT_TO_LANG_TAG.
+
+* 22/02/26 [TASK] feat_add_format_option_to_query_path — add optional `format: "{value}"` option to query-path directive; validates placeholder presence, path requirement, and scalar constraint; wired through artifact → transformer params → execute.
+
+* 22/02/26 [TASK] feat_add_toml_to_query_path, feat_add_format_option_to_query_path — captured backlog specs for TOML source support and a `format: "{value}"` option on the query-path directive.
+
 * 22/02/26 [TASK] feat_verbose_cli_option — update spec (stderr, all config fields, two-stage plugin discovery, planning tree node definition, lookup failure shows available types, NO_COLOR convention noted), then implement -v/--verbose flag.
 
 * 22/02/26 [TASK] feat_query_path_plugin — implement QueryPathPlugin: normalize_json/yaml/xml normalizers, shared dot-notation query engine with backtick literal-key escaping, shared presenter (scalar → inline, dict/list → fenced yaml block, full-doc → fenced source block). Plugin registered after file in plugin_sequence. Tests: unit per module + regression example.

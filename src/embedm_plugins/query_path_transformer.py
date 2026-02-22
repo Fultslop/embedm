@@ -16,6 +16,7 @@ class QueryPathTransformerParams:
     raw_content: str
     lang_tag: str
     is_full_document: bool
+    format_str: str | None = None
 
 
 class QueryPathTransformer(TransformerBase[QueryPathTransformerParams]):
@@ -28,9 +29,12 @@ class QueryPathTransformer(TransformerBase[QueryPathTransformerParams]):
         assert params is not None, "params must not be None"
 
         if params.is_full_document:
-            return f"```{params.lang_tag}\n{params.raw_content.rstrip()}\n```"
+            return f"```{params.lang_tag}\n{params.raw_content.rstrip()}\n```\n"
 
-        return _render_value(params.value)
+        rendered = _render_value(params.value)
+        if params.format_str:
+            return params.format_str.format_map({"value": rendered}) + "\n"
+        return rendered + "\n"
 
 
 def _render_value(value: Any) -> str:

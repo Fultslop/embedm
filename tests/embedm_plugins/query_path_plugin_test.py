@@ -27,8 +27,13 @@ def test_validate_missing_source():
 
 def test_validate_unsupported_extension():
     plugin = QueryPathPlugin()
-    errors = plugin.validate_directive(Directive(type="query-path", source="data.toml"))
-    assert any("toml" in e.description for e in errors)
+    errors = plugin.validate_directive(Directive(type="query-path", source="data.csv"))
+    assert any("csv" in e.description for e in errors)
+
+
+def test_validate_supported_toml():
+    plugin = QueryPathPlugin()
+    assert plugin.validate_directive(Directive(type="query-path", source="data.toml")) == []
 
 
 def test_validate_supported_json():
@@ -49,6 +54,30 @@ def test_validate_supported_yml():
 def test_validate_supported_xml():
     plugin = QueryPathPlugin()
     assert plugin.validate_directive(Directive(type="query-path", source="data.xml")) == []
+
+
+def test_validate_format_without_path_is_error():
+    plugin = QueryPathPlugin()
+    errors = plugin.validate_directive(Directive(type="query-path", source="data.json", options={"format": "v: {value}"}))
+    assert len(errors) == 1
+    assert "path" in errors[0].description
+
+
+def test_validate_format_missing_placeholder_is_error():
+    plugin = QueryPathPlugin()
+    errors = plugin.validate_directive(
+        Directive(type="query-path", source="data.json", options={"path": "version", "format": "no placeholder"})
+    )
+    assert len(errors) == 1
+    assert "{value}" in errors[0].description
+
+
+def test_validate_format_with_path_and_placeholder_is_valid():
+    plugin = QueryPathPlugin()
+    errors = plugin.validate_directive(
+        Directive(type="query-path", source="data.json", options={"path": "version", "format": "v: {value}"})
+    )
+    assert errors == []
 
 
 # --- validate_input: JSON ---
@@ -179,6 +208,62 @@ def test_validate_input_invalid_xml():
     assert result.artifact is None
 
 
+# --- validate_input: TOML ---
+
+
+def test_validate_input_toml_scalar():
+    plugin = QueryPathPlugin()
+    directive = Directive(type="query-path", source="pyproject.toml", options={"path": "project.version"})
+    result = plugin.validate_input(directive, '[project]\nversion = "0.6.0"')
+    assert result.errors == []
+    assert result.artifact is not None
+    assert result.artifact.value == "0.6.0"
+
+
+def test_validate_input_toml_no_path_is_full_document():
+    plugin = QueryPathPlugin()
+    directive = Directive(type="query-path", source="cfg.toml")
+    raw = '[project]\nversion = "1.0"'
+    result = plugin.validate_input(directive, raw)
+    assert result.errors == []
+    assert result.artifact is not None
+    assert result.artifact.is_full_document
+    assert result.artifact.lang_tag == "toml"
+
+
+def test_validate_input_invalid_toml():
+    plugin = QueryPathPlugin()
+    directive = Directive(type="query-path", source="cfg.toml", options={"path": "key"})
+    result = plugin.validate_input(directive, "not = [valid toml")
+    assert len(result.errors) == 1
+    assert result.artifact is None
+
+
+def test_validate_input_format_scalar_stores_format_str():
+    plugin = QueryPathPlugin()
+    directive = Directive(type="query-path", source="pkg.json", options={"path": "version", "format": "v: {value}"})
+    result = plugin.validate_input(directive, '{"version": "1.2.3"}')
+    assert result.errors == []
+    assert result.artifact is not None
+    assert result.artifact.format_str == "v: {value}"
+
+
+def test_validate_input_format_non_scalar_dict_is_error():
+    plugin = QueryPathPlugin()
+    directive = Directive(type="query-path", source="pkg.json", options={"path": "meta", "format": "x: {value}"})
+    result = plugin.validate_input(directive, '{"meta": {"key": "val"}}')
+    assert len(result.errors) == 1
+    assert result.artifact is None
+
+
+def test_validate_input_format_non_scalar_list_is_error():
+    plugin = QueryPathPlugin()
+    directive = Directive(type="query-path", source="pkg.json", options={"path": "items", "format": "x: {value}"})
+    result = plugin.validate_input(directive, '{"items": [1, 2, 3]}')
+    assert len(result.errors) == 1
+    assert result.artifact is None
+
+
 # --- transform ---
 
 
@@ -198,7 +283,7 @@ def test_transform_scalar_artifact():
     plugin = QueryPathPlugin()
     artifact = _QueryPathArtifact(value="1.2.3", raw_content="", lang_tag="json", is_full_document=False)
     node = _make_plan_node("pkg.json", artifact=artifact)
-    assert plugin.transform(node, []) == "1.2.3"
+    assert plugin.transform(node, []) == "1.2.3\n"
 
 
 def test_transform_full_document_artifact():
@@ -209,3 +294,10 @@ def test_transform_full_document_artifact():
     result = plugin.transform(node, [])
     assert result.startswith("```json")
     assert raw in result
+
+
+def test_transform_with_format_str():
+    plugin = QueryPathPlugin()
+    artifact = _QueryPathArtifact(value="0.6.0", raw_content="", lang_tag="json", is_full_document=False, format_str="version: {value}")
+    node = _make_plan_node("pkg.json", artifact=artifact)
+    assert plugin.transform(node, []) == "version: 0.6.0\n"

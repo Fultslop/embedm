@@ -13,7 +13,7 @@ from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.validation_base import ValidationResult
-from embedm_plugins import normalize_json, normalize_xml, normalize_yaml
+from embedm_plugins import normalize_json, normalize_toml, normalize_xml, normalize_yaml
 from embedm_plugins import query_path_engine as engine
 from embedm_plugins.plugin_resources import str_resources
 from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
@@ -21,8 +21,8 @@ from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPat
 if TYPE_CHECKING:
     from embedm.plugins.plugin_registry import PluginRegistry
 
-_SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({"json", "yaml", "yml", "xml"})
-_EXT_TO_LANG_TAG: dict[str, str] = {"json": "json", "yaml": "yaml", "yml": "yaml", "xml": "xml"}
+_SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({"json", "yaml", "yml", "xml", "toml"})
+_EXT_TO_LANG_TAG: dict[str, str] = {"json": "json", "yaml": "yaml", "yml": "yaml", "xml": "xml", "toml": "toml"}
 
 
 @dataclass
@@ -31,6 +31,7 @@ class _QueryPathArtifact:
     raw_content: str
     lang_tag: str
     is_full_document: bool
+    format_str: str | None = None
 
 
 def _get_ext(source: str) -> str:
@@ -42,6 +43,8 @@ def _parse(content: str, ext: str) -> Any:
         return normalize_json.normalize(content)
     if ext in ("yaml", "yml"):
         return normalize_yaml.normalize(content)
+    if ext == "toml":
+        return normalize_toml.normalize(content)
     return normalize_xml.normalize(content)
 
 
@@ -50,6 +53,8 @@ def _parse_error_message(ext: str, exc: Exception) -> str:
         return str(str_resources.err_query_path_invalid_json.format(exc=exc))
     if ext in ("yaml", "yml"):
         return str(str_resources.err_query_path_invalid_yaml.format(exc=exc))
+    if ext == "toml":
+        return str(str_resources.err_query_path_invalid_toml.format(exc=exc))
     return str(str_resources.err_query_path_invalid_xml.format(exc=exc))
 
 
@@ -73,6 +78,12 @@ class QueryPathPlugin(PluginBase):
         if ext not in _SUPPORTED_EXTENSIONS:
             return [Status(StatusLevel.ERROR, str_resources.err_query_path_unsupported_format.format(ext=ext))]
 
+        format_str = directive.options.get("format", "")
+        if format_str and not directive.options.get("path", ""):
+            return [Status(StatusLevel.ERROR, str_resources.err_query_path_format_requires_path)]
+        if format_str and "{value}" not in format_str:
+            return [Status(StatusLevel.ERROR, str_resources.err_query_path_format_missing_placeholder)]
+
         return []
 
     def validate_input(
@@ -88,6 +99,7 @@ class QueryPathPlugin(PluginBase):
         ext = _get_ext(directive.source)
         lang_tag = _EXT_TO_LANG_TAG.get(ext, ext)
         path_str = directive.options.get("path", "")
+        format_str: str | None = directive.options.get("format") or None
 
         try:
             tree = _parse(content, ext)
@@ -109,8 +121,14 @@ class QueryPathPlugin(PluginBase):
             )
             return ValidationResult(artifact=None, errors=[error])
 
+        if format_str and isinstance(value, (dict, list)):
+            error = Status(StatusLevel.ERROR, str_resources.err_query_path_format_non_scalar)
+            return ValidationResult(artifact=None, errors=[error])
+
         return ValidationResult(
-            artifact=_QueryPathArtifact(value=value, raw_content=content, lang_tag=lang_tag, is_full_document=False)
+            artifact=_QueryPathArtifact(
+                value=value, raw_content=content, lang_tag=lang_tag, is_full_document=False, format_str=format_str
+            )
         )
 
     def transform(
@@ -135,5 +153,6 @@ class QueryPathPlugin(PluginBase):
                 raw_content=artifact.raw_content,
                 lang_tag=artifact.lang_tag,
                 is_full_document=artifact.is_full_document,
+                format_str=artifact.format_str,
             )
         )
