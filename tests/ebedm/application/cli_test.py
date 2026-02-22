@@ -233,6 +233,30 @@ def test_output_file_with_directory_input_returns_error() -> None:
     assert "output-dir" in errors[0].description.lower()
 
 
+# --- dry run ---
+
+
+def test_dry_run_short_flag() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "-n"])
+
+    assert not errors
+    assert config.is_dry_run is True
+
+
+def test_dry_run_long_flag() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "--dry-run"])
+
+    assert not errors
+    assert config.is_dry_run is True
+
+
+def test_dry_run_defaults_to_false() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md"])
+
+    assert not errors
+    assert config.is_dry_run is False
+
+
 # --- verbose ---
 
 
