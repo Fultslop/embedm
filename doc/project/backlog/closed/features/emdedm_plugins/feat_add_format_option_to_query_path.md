@@ -2,7 +2,7 @@ FEATURE: `format` option for query-path directive
 ========================================
 Release v1.0
 Created: 22/02/26
-Closed: `<date>`
+Closed: 22/02/26
 Created by: Claude/FS
 
 ## Description

@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: Fix compilation to multi-pass DFS ordered by plugin_sequence
 ========================================
 Created: 21/02/26
-Closed: `<date>`
+Closed: 22/02/26
 Created by: Claude
 
 ## Description

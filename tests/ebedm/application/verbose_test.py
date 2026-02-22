@@ -17,6 +17,7 @@ from embedm.application.console import (
     present_run_hint,
     verbose_plan_tree,
     verbose_summary,
+    verbose_timing,
 )
 from embedm.application.embedm_context import EmbedmContext
 from embedm.application.planner import create_plan
@@ -143,12 +144,21 @@ def test_verbose_plan_tree_child_shows_directive_type(capsys: pytest.CaptureFixt
 # --- make_cache_event_handler ---
 
 
-def test_cache_event_handler_writes_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
+def test_cache_event_handler_miss_includes_timing(capsys: pytest.CaptureFixture[str]) -> None:
     handler = make_cache_event_handler()
-    handler("/some/file.md", "miss")
+    handler("/some/file.md", "miss", 0.042)
     captured = capsys.readouterr()
-    assert "miss" in captured.err
+    assert "cache miss" in captured.err
+    assert "0.042s" in captured.err
     assert "/some/file.md" in captured.err
+
+
+def test_cache_event_handler_hit_no_timing(capsys: pytest.CaptureFixture[str]) -> None:
+    handler = make_cache_event_handler()
+    handler("/some/file.md", "hit", 0.0)
+    captured = capsys.readouterr()
+    assert "cache hit" in captured.err
+    assert "0.000s" not in captured.err
 
 
 # --- PluginRegistry discovered/skipped ---
@@ -251,3 +261,21 @@ def test_planner_non_verbose_unknown_type_no_available(tmp_path: Path) -> None:
     error_msgs = [s.description for s in plan.status if s.level == StatusLevel.ERROR]
     assert any("no plugin registered" in msg for msg in error_msgs)
     assert not any("Available:" in msg for msg in error_msgs)
+
+
+# --- timing ---
+
+
+def test_format_summary_includes_elapsed() -> None:
+    summary = RunSummary(files_written=1, output_target="out.md", ok_count=1, elapsed_s=0.312)
+    result = _format_summary(summary)
+    assert "completed in 0.312s" in result
+
+
+def test_verbose_timing_emits_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
+    verbose_timing("validate_input", "table", "/data/file.csv", 0.043)
+    captured = capsys.readouterr()
+    assert "[validate_input]" in captured.err
+    assert "0.043s" in captured.err
+    assert "table" in captured.err
+    assert "/data/file.csv" in captured.err

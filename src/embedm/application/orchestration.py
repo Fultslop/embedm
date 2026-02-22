@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 from embedm.domain.plan_node import PlanNode
@@ -27,6 +28,7 @@ from .console import (
     verbose_plugins,
     verbose_section,
     verbose_summary,
+    verbose_timing,
 )
 from .embedm_context import EmbedmContext
 from .planner import plan_content, plan_file
@@ -34,6 +36,7 @@ from .planner import plan_content, plan_file
 
 def main() -> None:
     """Entry point for the embedm CLI."""
+    start_time = time.perf_counter()
     present_title()
 
     config, errors = parse_command_line_arguments()
@@ -66,6 +69,7 @@ def main() -> None:
         plan_root = plan_content(config.input, context)
         _process_single_input(plan_root, "<stdin>", config, context, summary)
 
+    summary.elapsed_s = time.perf_counter() - start_time
     _emit_verbose_end(config, summary)
 
 
@@ -192,7 +196,12 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
         plugin_sequence=_build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
         plugin_settings=context.config.plugin_configuration,
     )
-    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
+    t0 = time.perf_counter()
+    result = plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
+    elapsed_s = time.perf_counter() - t0
+    if context.config.is_verbose:
+        verbose_timing("transform", plan_root.directive.type, plan_root.directive.source, elapsed_s)
+    return result
 
 
 def _build_directive_sequence(plugin_sequence: list[str], registry: PluginRegistry) -> tuple[str, ...]:

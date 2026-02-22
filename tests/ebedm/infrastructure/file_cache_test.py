@@ -505,3 +505,44 @@ def test_file_inside_allowed_directory_is_accepted(tmp_path: Path):
     errors = cache.validate(str(sub_file))
 
     assert errors == []
+
+
+# --- on_event timing ---
+
+
+def test_on_event_miss_receives_positive_elapsed(tmp_path: Path) -> None:
+    test_file = tmp_path / "data.md"
+    test_file.write_text("hello world")
+
+    events: list[tuple[str, str, float]] = []
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+        on_event=lambda path, event, elapsed_s: events.append((path, event, elapsed_s)),
+    )
+    cache.get_file(str(test_file))
+
+    assert len(events) == 1
+    _, event, elapsed_s = events[0]
+    assert event == "miss"
+    assert elapsed_s > 0
+
+
+def test_on_event_hit_receives_zero_elapsed(tmp_path: Path) -> None:
+    test_file = tmp_path / "data.md"
+    test_file.write_text("hello world")
+
+    events: list[tuple[str, str, float]] = []
+    cache = FileCache(
+        max_file_size=1024,
+        memory_limit=4096,
+        allowed_paths=[str(tmp_path)],
+        on_event=lambda path, event, elapsed_s: events.append((path, event, elapsed_s)),
+    )
+    cache.get_file(str(test_file))  # miss
+    cache.get_file(str(test_file))  # hit
+
+    hit_events = [(p, e, s) for p, e, s in events if e == "hit"]
+    assert len(hit_events) == 1
+    assert hit_events[0][2] == 0.0

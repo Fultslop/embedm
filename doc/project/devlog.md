@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 22/02/26 [TASK] feat_add_time_to_verbose — add per-node timing to verbose output: FileCache.on_event callback gains elapsed_s float; cache misses log "[cache miss] X.XXXs — path"; validate_directive and validate_input timed in planner; transform timed in orchestration; RunSummary.elapsed_s always appended to summary line as "completed in X.XXXs". New verbose_timing() helper in console.py. 6 new tests.
+
 * 22/02/26 [TASK] feat_plugin_configurability — implement plugin_configuration section in embedm-config.yaml: Configuration.plugin_configuration field; config_loader parses and validates inner dicts; PluginBase gets get_plugin_config_schema() and validate_plugin_config() with no-op defaults; PluginConfiguration carries plugin_settings; orchestration._validate_plugin_configs() runs two-phase validation (schema type-check + plugin semantic); extraction.py gains DEFAULT_REGION_START/END constants and _compile_region_pattern() factory; RegionParams accepts template overrides; FilePlugin publishes schema and validates {tag} presence; region templates threaded end-to-end. 14 new tests; 557 pass.
 
 * 22/02/26 [ARCH] feat_plugin_configurability — settled design: `plugin_configuration` section in `embedm-config.yaml` (no separate file); two-phase validation: framework validates structure via `get_plugin_config_schema()`, plugin validates semantics via `validate_plugin_config()`; unknown keys silently ignored (logged with --verbose); missing keys fall back to hardcoded defaults. Captured in spec acceptance criteria and features.md design decisions.
