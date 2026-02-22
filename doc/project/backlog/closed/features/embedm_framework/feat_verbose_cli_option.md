@@ -3,7 +3,7 @@ FEATURE: Add "verbose" CLI Option
 Draft
 Release: v1.0
 Created: 22/02/2026
-Closed: `<date>`
+Closed: 22/02/2026
 Created by: FS
 
 ## Description
