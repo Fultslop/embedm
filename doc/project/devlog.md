@@ -4,6 +4,12 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 22/02/26 [TASK] feat_dry_run_cli_option — wire --dry-run / -n flag in cli.py; is_dry_run already existed on Configuration and orchestration already respected it. 3 new tests; 565 pass.
+
+* 22/02/26 [REVIEW] feat_dry_run_cli_option — original spec said "only runs the planner, does not compile" but orchestration code already compiles fully and redirects to stdout. CLI flag also not yet wired up in cli.py. Spec updated to reflect actual intent: compile + print to stdout, no file write. is_dry_run field and orchestration logic already exist; only cli.py wiring remains.
+
+* 22/02/26 [REVIEW] feat_verify_cli_option — original draft conflated two features: (1) CI staleness gate (`--verify`) and (2) incremental compilation with manifest. Settled on compile-compare-no-write approach: full compile runs, result compared byte-for-byte against existing output file, exit 1 if stale or missing. Timestamp/manifest approach rejected (unreliable in CI). Incremental compilation deferred to v2.0. Spec updated with AC1-AC8.
+
 * 22/02/26 [TASK] feat_add_time_to_verbose — add per-node timing to verbose output: FileCache.on_event callback gains elapsed_s float; cache misses log "[cache miss] X.XXXs — path"; validate_directive and validate_input timed in planner; transform timed in orchestration; RunSummary.elapsed_s always appended to summary line as "completed in X.XXXs". New verbose_timing() helper in console.py. 6 new tests.
 
 * 22/02/26 [TASK] feat_plugin_configurability — implement plugin_configuration section in embedm-config.yaml: Configuration.plugin_configuration field; config_loader parses and validates inner dicts; PluginBase gets get_plugin_config_schema() and validate_plugin_config() with no-op defaults; PluginConfiguration carries plugin_settings; orchestration._validate_plugin_configs() runs two-phase validation (schema type-check + plugin semantic); extraction.py gains DEFAULT_REGION_START/END constants and _compile_region_pattern() factory; RegionParams accepts template overrides; FilePlugin publishes schema and validates {tag} presence; region templates threaded end-to-end. 14 new tests; 557 pass.
