@@ -16,4 +16,6 @@ str_resources = SimpleNamespace(
         "'max_memory' ({max_memory}) must be greater than 'max_file_size' ({max_file_size})"
     ),
     err_plan_no_plugin="no plugin registered for directive type '{directive_type}'",
+    err_plan_no_plugin_verbose=("no plugin registered for directive type '{directive_type}'. Available: {available}"),
+    verbose_hint="Use -v or --verbose for more information.",
 )

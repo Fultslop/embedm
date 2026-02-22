@@ -2,7 +2,7 @@ FEATURE: Synopsis plugin
 ========================================
 Release v1.0
 Created: 20/02/2026
-Closed: `<date>`
+Closed: 21/02/2026
 Created by: FS
 
 ## Description

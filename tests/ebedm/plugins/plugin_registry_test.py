@@ -17,6 +17,7 @@ def test_plugin_discovery():
 
     mock_ep = MagicMock(spec=EntryPoint)
     mock_ep.name = "hello_world"
+    mock_ep.value = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
     mock_ep.load.return_value = mock_class
 
     with patch("embedm.plugins.plugin_registry.entry_points") as mock_entry_points:
@@ -24,7 +25,7 @@ def test_plugin_discovery():
 
         registry = PluginRegistry()
 
-        registry.load_plugins(verbose=True)
+        registry.load_plugins()
 
         assert registry.count == 1
         assert registry.get_plugin(plugin_name) is not None
@@ -51,7 +52,7 @@ def test_reject_plugin():
         registry = PluginRegistry()
 
         # only allow a different module — hello_world_plugin should be skipped
-        registry.load_plugins(enabled_modules={"embedm_plugins.other_plugin"}, verbose=True)
+        registry.load_plugins(enabled_modules={"embedm_plugins.other_plugin"})
 
         assert registry.count == 0
         assert registry.get_plugin(plugin_name) is None
@@ -60,6 +61,7 @@ def test_reject_plugin():
 def test_load_plugins_returns_error_on_failure():
     mock_ep = MagicMock(spec=EntryPoint)
     mock_ep.name = "broken_plugin"
+    mock_ep.value = "embedm_plugins.broken_plugin:BrokenPlugin"
     mock_ep.load.side_effect = ImportError("missing dependency")
 
     with patch("embedm.plugins.plugin_registry.entry_points") as mock_entry_points:
@@ -78,6 +80,7 @@ def test_load_plugins_returns_error_on_failure():
 def test_load_plugins_skips_failed_and_loads_rest():
     broken_ep = MagicMock(spec=EntryPoint)
     broken_ep.name = "broken_plugin"
+    broken_ep.value = "embedm_plugins.broken_plugin:BrokenPlugin"
     broken_ep.load.side_effect = RuntimeError("bad plugin")
 
     working_plugin = MagicMock(spec=PluginBase)
@@ -86,6 +89,7 @@ def test_load_plugins_skips_failed_and_loads_rest():
     working_class = MagicMock(return_value=working_plugin)
     working_ep = MagicMock(spec=EntryPoint)
     working_ep.name = "working_plugin"
+    working_ep.value = "embedm_plugins.working_plugin:WorkingPlugin"
     working_ep.load.return_value = working_class
 
     with patch("embedm.plugins.plugin_registry.entry_points") as mock_entry_points:

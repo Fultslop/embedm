@@ -7,11 +7,7 @@
 
 Iteration 2 
 
-```yaml embedm
-type: query-path
-source: ./pyproject.toml
-path: project.version
-```
+version 0.6.0
 
 Safely embed files, code, and content directly into Markdown — and keep them in sync.
 

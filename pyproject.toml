@@ -49,6 +49,7 @@ table_of_contents = "embedm_plugins.toc_plugin:ToCPlugin"
 hello_world = "embedm_plugins.hello_world_plugin:HelloWorldPlugin"
 table = "embedm_plugins.table_plugin:TablePlugin"
 synopsis = "embedm_plugins.synopsis_plugin:SynopsisPlugin"
+query_path = "embedm_plugins.query_path_plugin:QueryPathPlugin"
 # md.end:entry_points
 
 [build-system]

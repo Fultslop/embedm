@@ -19,9 +19,13 @@ CONFIG_FILE_NAME = "embedm-config.yaml"
 
 # include standard embedm plugins
 DEFAULT_PLUGIN_SEQUENCE = [
+    # plugins using source
     "embedm_plugins.file_plugin",
+    "embedm_plugins.query_path_plugin",
     "embedm_plugins.table_plugin",
+    # plugins having no dependencies
     "embedm_plugins.hello_world_plugin",
+    # plugins requiring the document to be complete(ish)
     "embedm_plugins.synopsis_plugin",
     "embedm_plugins.toc_plugin",
 ]
@@ -71,3 +75,6 @@ class Configuration:
 
     # path for --init output (generate config file and exit)
     init_path: str | None = None
+
+    # if set, verbose diagnostic output is written to stderr
+    is_verbose: bool = False

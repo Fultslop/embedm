@@ -231,3 +231,27 @@ def test_output_file_with_directory_input_returns_error() -> None:
     assert len(errors) == 1
     assert errors[0].level == StatusLevel.ERROR
     assert "output-dir" in errors[0].description.lower()
+
+
+# --- verbose ---
+
+
+def test_verbose_short_flag() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "-v"])
+
+    assert not errors
+    assert config.is_verbose is True
+
+
+def test_verbose_long_flag() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "--verbose"])
+
+    assert not errors
+    assert config.is_verbose is True
+
+
+def test_verbose_defaults_to_false() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md"])
+
+    assert not errors
+    assert config.is_verbose is False
