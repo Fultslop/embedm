@@ -658,3 +658,68 @@ def test_symbol_not_found_renders_error(tmp_path: Path):
 
     assert "> [!CAUTION]" in result
     assert "Missing" in result
+
+
+# --- plugin config schema and semantic validation ---
+
+
+def test_get_plugin_config_schema_returns_region_keys():
+    schema = FilePlugin().get_plugin_config_schema()
+    assert schema is not None
+    assert "region_start" in schema
+    assert "region_end" in schema
+    assert schema["region_start"] is str
+    assert schema["region_end"] is str
+
+
+def test_validate_plugin_config_valid_templates_no_errors():
+    errors = FilePlugin().validate_plugin_config(
+        {"region_start": "region:{tag}", "region_end": "endregion:{tag}"}
+    )
+    assert errors == []
+
+
+def test_validate_plugin_config_missing_tag_in_region_start_is_error():
+    errors = FilePlugin().validate_plugin_config({"region_start": "region_start"})
+    assert len(errors) == 1
+    assert "region_start" in errors[0].description
+    assert "{tag}" in errors[0].description
+
+
+def test_validate_plugin_config_missing_tag_in_region_end_is_error():
+    errors = FilePlugin().validate_plugin_config({"region_end": "region_end"})
+    assert len(errors) == 1
+    assert "region_end" in errors[0].description
+
+
+def test_validate_plugin_config_absent_keys_no_error():
+    # Missing keys use hardcoded defaults — not an error.
+    errors = FilePlugin().validate_plugin_config({})
+    assert errors == []
+
+
+def test_region_extraction_with_custom_marker(tmp_path: Path):
+    code_file = tmp_path / "hello.py"
+    code_file.write_text(
+        "# region:greet\ndef greet(): pass\n# endregion:greet\n"
+    )
+
+    source = tmp_path / "input.md"
+    source.write_text(f"```yaml embedm\ntype: file\nsource: {code_file}\nregion: greet\n```\n")
+
+    plugin_config = PluginConfiguration(
+        max_embed_size=0,
+        max_recursion=10,
+        plugin_settings={
+            "embedm_plugins.file_plugin": {
+                "region_start": "region:{tag}",
+                "region_end": "endregion:{tag}",
+            }
+        },
+    )
+    context = _make_context(tmp_path)
+    plan = plan_file(str(source), context)
+    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry, plugin_config)
+
+    assert "def greet(): pass" in result
+    assert "> [!CAUTION]" not in result

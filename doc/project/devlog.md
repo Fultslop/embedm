@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 22/02/26 [ARCH] feat_plugin_configurability — settled design: `plugin_configuration` section in `embedm-config.yaml` (no separate file); two-phase validation: framework validates structure via `get_plugin_config_schema()`, plugin validates semantics via `validate_plugin_config()`; unknown keys silently ignored (logged with --verbose); missing keys fall back to hardcoded defaults. Captured in spec acceptance criteria and features.md design decisions.
+
 * 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_* to make ownership explicit. Updated all source and test imports. Widened manual regression test allowed_paths to include project root so cross-directory references (e.g. pyproject.toml) resolve correctly.
 
 * 22/02/26 [Fix] query-path trailing newline — scalar and format-string output from QueryPathTransformer now always appends \n so the blank-line separator after a directive fence is preserved in the rendered document.

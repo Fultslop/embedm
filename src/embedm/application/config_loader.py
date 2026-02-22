@@ -27,6 +27,7 @@ _CONFIG_FIELDS: dict[str, type] = {
     "max_embed_size": int,
     "root_directive_type": str,
     "plugin_sequence": list,
+    "plugin_configuration": dict,
 }
 
 _DEFAULT_CONFIG_TEMPLATE = f"""\
@@ -103,6 +104,39 @@ def discover_config(input_path: str) -> str | None:
     return None
 
 
+def _validate_plugin_configuration(plugin_cfg: dict[str, Any]) -> list[Status]:
+    """Validate that every value in plugin_configuration is a dict."""
+    errors: list[Status] = []
+    for module, settings in plugin_cfg.items():
+        if not isinstance(settings, dict):
+            errors.append(
+                Status(
+                    StatusLevel.ERROR,
+                    f"plugin_configuration['{module}'] must be a mapping, got {type(settings).__name__}",
+                )
+            )
+    return errors
+
+
+def _validate_config_ranges(config: Configuration) -> Status | None:
+    """Validate that numeric config values are within allowed ranges."""
+    if config.max_file_size < 1:
+        msg = str_resources.err_config_max_file_size_min.format(max_file_size=config.max_file_size)
+        return Status(StatusLevel.ERROR, msg)
+    if config.max_recursion < 1:
+        msg = str_resources.err_config_max_recursion_min.format(max_recursion=config.max_recursion)
+        return Status(StatusLevel.ERROR, msg)
+    if config.max_embed_size < 0:
+        msg = str_resources.err_config_max_embed_size_min.format(max_embed_size=config.max_embed_size)
+        return Status(StatusLevel.ERROR, msg)
+    if config.max_memory <= config.max_file_size:
+        msg = str_resources.err_config_memory_must_exceed_file_size.format(
+            max_memory=config.max_memory, max_file_size=config.max_file_size
+        )
+        return Status(StatusLevel.ERROR, msg)
+    return None
+
+
 def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
     """Validate and parse a raw YAML dict into a Configuration."""
     errors: list[Status] = []
@@ -121,28 +155,18 @@ def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
 
         overrides[key] = value
 
-    has_errors = any(s.level == StatusLevel.ERROR for s in errors)
-    if has_errors:
+    if "plugin_configuration" in overrides:
+        plugin_cfg_errors = _validate_plugin_configuration(overrides["plugin_configuration"])
+        errors.extend(plugin_cfg_errors)
+        if plugin_cfg_errors:
+            del overrides["plugin_configuration"]
+
+    if any(s.level == StatusLevel.ERROR for s in errors):
         return Configuration(), errors
 
     config = Configuration(**overrides)
-
-    if config.max_file_size < 1:
-        msg = str_resources.err_config_max_file_size_min.format(max_file_size=config.max_file_size)
-        return Configuration(), [Status(StatusLevel.ERROR, msg)]
-
-    if config.max_recursion < 1:
-        msg = str_resources.err_config_max_recursion_min.format(max_recursion=config.max_recursion)
-        return Configuration(), [Status(StatusLevel.ERROR, msg)]
-
-    if config.max_embed_size < 0:
-        msg = str_resources.err_config_max_embed_size_min.format(max_embed_size=config.max_embed_size)
-        return Configuration(), [Status(StatusLevel.ERROR, msg)]
-
-    if config.max_memory <= config.max_file_size:
-        msg = str_resources.err_config_memory_must_exceed_file_size.format(
-            max_memory=config.max_memory, max_file_size=config.max_file_size
-        )
-        return Configuration(), [Status(StatusLevel.ERROR, msg)]
+    range_error = _validate_config_ranges(config)
+    if range_error:
+        return Configuration(), [range_error]
 
     return config, errors

@@ -21,3 +21,22 @@ def test_empty_region_body():
 
 def test_missing_end_marker_returns_none():
     assert _run("// md.start: open\ncontent\n", "open") is None
+
+
+def test_custom_template_matches_custom_marker():
+    source = "// region:myblock\nline1\n// endregion:myblock\n"
+    result = RegionTransformer().execute(
+        RegionParams(
+            content=source,
+            region_name="myblock",
+            region_start_template="region:{tag}",
+            region_end_template="endregion:{tag}",
+        )
+    )
+    assert result == "line1"
+
+
+def test_default_template_unchanged():
+    source = "# md.start: py\ndef foo(): pass\n# md.end: py\n"
+    result = RegionTransformer().execute(RegionParams(content=source, region_name="py"))
+    assert result == "def foo(): pass"

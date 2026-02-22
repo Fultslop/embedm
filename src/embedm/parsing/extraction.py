@@ -4,15 +4,27 @@ from __future__ import annotations
 
 import re
 
+DEFAULT_REGION_START = "md.start:{tag}"
+DEFAULT_REGION_END = "md.end:{tag}"
+
 _REGION_COMMENT_PREFIX = r"(?:#|//|<!--|/\*)"
-_REGION_START = re.compile(
-    r"^\s*" + _REGION_COMMENT_PREFIX + r"\s*md\.start\s*:\s*(?P<name>\S+)",
-    re.IGNORECASE,
-)
-_REGION_END = re.compile(
-    r"^\s*" + _REGION_COMMENT_PREFIX + r"\s*md\.end\s*:\s*(?P<name>\S+)",
-    re.IGNORECASE,
-)
+
+
+def _compile_region_pattern(template: str) -> re.Pattern[str]:
+    """Build a region marker regex from a template containing {tag}.
+
+    The text before {tag} is treated as a literal prefix (after the comment character).
+    Example: "md.start:{tag}" → matches lines like "# md.start: myregion".
+    """
+    prefix = template.split("{tag}")[0]
+    return re.compile(
+        r"^\s*" + _REGION_COMMENT_PREFIX + r"\s*" + re.escape(prefix) + r"\s*(?P<name>\S+)",
+        re.IGNORECASE,
+    )
+
+
+_REGION_START = _compile_region_pattern(DEFAULT_REGION_START)
+_REGION_END = _compile_region_pattern(DEFAULT_REGION_END)
 
 _SINGLE_LINE = re.compile(r"^\d+$")
 _LINE_RANGE = re.compile(r"^(\d*)\.\.(\d*)$")
@@ -23,23 +35,33 @@ def _matches_region(line: str, name: str, pattern: re.Pattern[str]) -> bool:
     return bool(m and m.group("name") == name)
 
 
-def extract_region(content: str, region_name: str) -> list[str] | None:
-    """Extract lines between md.start and md.end markers.
+def extract_region(
+    content: str,
+    region_name: str,
+    start_template: str = DEFAULT_REGION_START,
+    end_template: str = DEFAULT_REGION_END,
+) -> list[str] | None:
+    """Extract lines between region start and end markers.
 
     Markers must appear inside a comment (lines starting with #, //, <!--, or /*).
+    The marker format is controlled by start_template and end_template, which must
+    contain {tag} as a placeholder for the region name.
     Returns the lines between the markers (exclusive of marker lines), or None if
     the region is not found or is not properly terminated.
     """
+    start_pat = _REGION_START if start_template == DEFAULT_REGION_START else _compile_region_pattern(start_template)
+    end_pat = _REGION_END if end_template == DEFAULT_REGION_END else _compile_region_pattern(end_template)
+
     lines = content.replace("\r\n", "\n").split("\n")
     name = region_name.strip()
     start_idx: int = -1
 
     for i, line in enumerate(lines):
         if start_idx == -1:
-            if _matches_region(line, name, _REGION_START):
+            if _matches_region(line, name, start_pat):
                 start_idx = i + 1
         else:
-            if _matches_region(line, name, _REGION_END):
+            if _matches_region(line, name, end_pat):
                 return lines[start_idx:i]
 
     return None

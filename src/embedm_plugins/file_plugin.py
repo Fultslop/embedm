@@ -3,14 +3,14 @@ from __future__ import annotations
 import os
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
-from embedm.parsing.extraction import is_valid_line_range
+from embedm.parsing.extraction import DEFAULT_REGION_END, DEFAULT_REGION_START, is_valid_line_range
 from embedm.parsing.symbol_parser import get_language_config
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
@@ -44,6 +44,19 @@ class FilePlugin(PluginBase):
     name = "file plugin"
     api_version = 1
     directive_type = "file"
+
+    def get_plugin_config_schema(self) -> dict[str, type]:
+        """Return the config keys accepted by the file plugin."""
+        return {"region_start": str, "region_end": str}
+
+    def validate_plugin_config(self, settings: dict[str, Any]) -> list[Status]:
+        """Validate that region marker templates contain {tag}."""
+        errors: list[Status] = []
+        for key in ("region_start", "region_end"):
+            value = settings.get(key)
+            if value is not None and "{tag}" not in value:
+                errors.append(Status(StatusLevel.ERROR, f"file_plugin config '{key}' must contain '{{tag}}'"))
+        return errors
 
     def validate_directive(
         self, directive: Directive, _configuration: PluginConfiguration | None = None
@@ -95,7 +108,11 @@ class FilePlugin(PluginBase):
         line_range = plan_node.directive.options.get("lines")
         symbol = plan_node.directive.options.get("symbol")
 
-        content = _apply_extraction(compiled, source_path, region, line_range, symbol)
+        settings = plugin_config.plugin_settings.get(self.__class__.__module__, {}) if plugin_config else {}
+        region_start = settings.get("region_start", DEFAULT_REGION_START)
+        region_end = settings.get("region_end", DEFAULT_REGION_END)
+
+        content = _apply_extraction(compiled, source_path, region, line_range, symbol, region_start, region_end)
         if isinstance(content, Status):
             return render_error_note([content.description])
 
@@ -113,8 +130,21 @@ class FilePlugin(PluginBase):
         return f"{header}{content}"
 
 
-def _apply_region(compiled: str, region: str, source_path: str) -> str | Status:
-    result = RegionTransformer().execute(RegionParams(content=compiled, region_name=region))
+def _apply_region(
+    compiled: str,
+    region: str,
+    source_path: str,
+    region_start_template: str = DEFAULT_REGION_START,
+    region_end_template: str = DEFAULT_REGION_END,
+) -> str | Status:
+    result = RegionTransformer().execute(
+        RegionParams(
+            content=compiled,
+            region_name=region,
+            region_start_template=region_start_template,
+            region_end_template=region_end_template,
+        )
+    )
     if result is None:
         msg = str_resources.err_file_region_not_found.format(region=region, source=source_path)
         return Status(StatusLevel.ERROR, msg)
@@ -184,10 +214,12 @@ def _apply_extraction(
     region: str | None,
     line_range: str | None,
     symbol: str | None,
+    region_start_template: str = DEFAULT_REGION_START,
+    region_end_template: str = DEFAULT_REGION_END,
 ) -> str | Status:
     """Apply the appropriate extraction step and return the result or an error Status."""
     if region:
-        return _apply_region(compiled, region, source_path)
+        return _apply_region(compiled, region, source_path, region_start_template, region_end_template)
     if line_range:
         return _apply_lines(compiled, line_range)
     if symbol:

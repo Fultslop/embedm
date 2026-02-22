@@ -88,6 +88,25 @@ def test_extract_region_empty_body():
     assert lines == []
 
 
+def test_extract_region_custom_templates():
+    source = "// region:myblock\ncontent line\n// endregion:myblock\n"
+    lines = extract_region(source, "myblock", start_template="region:{tag}", end_template="endregion:{tag}")
+    assert lines == ["content line"]
+
+
+def test_extract_region_default_templates_still_work():
+    lines = extract_region(_CS_SOURCE, "doSomething")
+    assert lines is not None
+    assert any("doSomething" in l for l in lines)
+
+
+def test_extract_region_custom_template_not_found_with_default_marker():
+    # Custom template should not match the default md.start marker
+    source = "// md.start: foo\ncontent\n// md.end: foo\n"
+    lines = extract_region(source, "foo", start_template="region:{tag}", end_template="endregion:{tag}")
+    assert lines is None
+
+
 # ---------------------------------------------------------------------------
 # extract_line_range
 # ---------------------------------------------------------------------------
