@@ -225,6 +225,51 @@ def test_load_max_recursion_one_is_accepted(tmp_path: Path) -> None:
     assert config.max_recursion == 1
 
 
+# --- plugin_configuration ---
+
+
+def test_load_plugin_configuration_parsed(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text(
+        "max_recursion: 3\n"
+        "plugin_configuration:\n"
+        "  embedm_plugins.file_plugin:\n"
+        "    region_start: 'region:{tag}'\n"
+        "    region_end: 'endregion:{tag}'\n",
+        encoding="utf-8",
+    )
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.plugin_configuration == {
+        "embedm_plugins.file_plugin": {"region_start": "region:{tag}", "region_end": "endregion:{tag}"}
+    }
+
+
+def test_load_plugin_configuration_absent_gives_empty_dict(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_recursion: 3\n", encoding="utf-8")
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.plugin_configuration == {}
+
+
+def test_load_plugin_configuration_inner_not_dict_returns_error(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text(
+        "plugin_configuration:\n  embedm_plugins.file_plugin: not_a_mapping\n",
+        encoding="utf-8",
+    )
+
+    _, errors = load_config_file(str(config_file))
+
+    assert any(e.level == StatusLevel.ERROR for e in errors)
+    assert any("embedm_plugins.file_plugin" in e.description for e in errors)
+
+
 # --- discover_config ---
 
 

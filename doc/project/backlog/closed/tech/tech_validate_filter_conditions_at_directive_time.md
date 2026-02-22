@@ -1,7 +1,12 @@
 TECHNICAL IMPROVEMENT: Validate filter conditions at directive-validate time
 ========================================
 Created: 21/02/26
-Closed: `<date>`
+Closed: 22/02/26
+
+## Outcome 
+
+No code changes — the current _validate_filter() behavior is correct per the acceptance criteria. Both >= abc and ~~30 are legitimately accepted.
+4 new tests added to table_plugin_test.py covering the valid filter cases, with inline comments documenting the intended behavior for the two edge cases (>= abc → runtime string fallback; ~~30 → exact-match by design).
 
 ## Description
 

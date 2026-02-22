@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 
 class InputMode(Enum):
@@ -78,3 +79,6 @@ class Configuration:
 
     # if set, verbose diagnostic output is written to stderr
     is_verbose: bool = False
+
+    # per-plugin configuration keyed by plugin module name
+    plugin_configuration: dict[str, dict[str, Any]] = field(default_factory=dict)

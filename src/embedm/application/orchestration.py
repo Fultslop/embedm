@@ -100,6 +100,7 @@ def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]
         max_embed_size=file_config.max_embed_size,
         root_directive_type=file_config.root_directive_type,
         plugin_sequence=file_config.plugin_sequence,
+        plugin_configuration=file_config.plugin_configuration,
         is_accept_all=config.is_accept_all,
         is_dry_run=config.is_dry_run,
         is_verbose=config.is_verbose,
@@ -189,6 +190,7 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
         max_recursion=context.config.max_recursion,
         compiled_dir=compiled_dir,
         plugin_sequence=_build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
+        plugin_settings=context.config.plugin_configuration,
     )
     return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
 
@@ -287,6 +289,35 @@ def _process_single_input(
     _update_summary(summary, plan_root, wrote=bool(result))
 
 
+def _validate_plugin_configs(config: Configuration, registry: PluginRegistry) -> list[Status]:
+    """Validate per-plugin config sections against each plugin's declared schema."""
+    errors: list[Status] = []
+    for module, settings in config.plugin_configuration.items():
+        plugin = next((p for p in registry.lookup.values() if p.__class__.__module__ == module), None)
+        if plugin is None:
+            errors.append(Status(StatusLevel.WARNING, f"plugin_configuration: unknown plugin module '{module}'"))
+            continue
+
+        schema = plugin.get_plugin_config_schema()
+        for key, value in settings.items():
+            if schema is None or key not in schema:
+                if config.is_verbose:
+                    errors.append(Status(StatusLevel.WARNING, f"plugin_configuration['{module}']: unknown key '{key}'"))
+                continue
+            if not isinstance(value, schema[key]):
+                errors.append(
+                    Status(
+                        StatusLevel.ERROR,
+                        f"plugin_configuration['{module}']['{key}'] must be {schema[key].__name__},"
+                        f" got {type(value).__name__}",
+                    )
+                )
+
+        errors.extend(plugin.validate_plugin_config(settings))
+
+    return errors
+
+
 def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
     on_event = make_cache_event_handler() if config.is_verbose else None
@@ -295,6 +326,7 @@ def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     )
     plugin_registry = PluginRegistry()
     errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
+    errors.extend(_validate_plugin_configs(config, plugin_registry))
     return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors
 
 

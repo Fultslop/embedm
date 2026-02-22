@@ -23,6 +23,20 @@ In this document we capture the individual features that make Ebedm and have bee
 
 * Errors caused by coding errors will cause Ebedm to crash at the point of this coding error without the option to recover.
 
+## Design Decisions
+
+Decisions recorded here are intentional, settled, and should not be revisited without a concrete
+reason. Proposals to change a decision must be captured as a backlog item.
+
+**Plugin configurability** (v1.0)
+Per-plugin settings live in `embedm-config.yaml` under `plugin_configuration`, keyed by module name.
+Separate config files are explicitly out of scope. Plugins publish accepted keys and types via
+`get_plugin_config_schema() -> dict[str, type] | None`; the framework validates types at startup and
+silently ignores unknown keys (logged under `--verbose`). Semantic validation beyond type correctness
+is the plugin's responsibility via `validate_plugin_config(settings) -> list[Status]`, which has a
+no-op default on `PluginBase`. Missing keys are not errors; plugins fall back to their hardcoded
+defaults.
+
 ## Functionalities
 
-... this should just list the items in the backlog/closed folder with a one line description. 
+... this should just list the items in the backlog/closed folder with a one line description.

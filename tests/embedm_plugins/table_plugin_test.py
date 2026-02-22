@@ -64,6 +64,40 @@ def test_validate_invalid_filter_bad_json():
     assert any("filter" in e.description for e in errors)
 
 
+def test_validate_filter_bare_string_is_valid():
+    plugin = TablePlugin()
+    errors = plugin.validate_directive(
+        Directive(type="table", source="data.csv", options={FILTER_KEY: json.dumps({"name": "Alice"})})
+    )
+    assert errors == []
+
+
+def test_validate_filter_operator_condition_is_valid():
+    plugin = TablePlugin()
+    errors = plugin.validate_directive(
+        Directive(type="table", source="data.csv", options={FILTER_KEY: json.dumps({"age": ">= 30"})})
+    )
+    assert errors == []
+
+
+def test_validate_filter_non_numeric_operand_is_valid():
+    # Operator present but non-numeric operand: falls back to string comparison at runtime.
+    plugin = TablePlugin()
+    errors = plugin.validate_directive(
+        Directive(type="table", source="data.csv", options={FILTER_KEY: json.dumps({"age": ">= abc"})})
+    )
+    assert errors == []
+
+
+def test_validate_filter_unknown_prefix_is_valid():
+    # Unrecognised prefix does not match _FILTER_OP_PATTERN; treated as exact-match string by design.
+    plugin = TablePlugin()
+    errors = plugin.validate_directive(
+        Directive(type="table", source="data.csv", options={FILTER_KEY: json.dumps({"age": "~~30"})})
+    )
+    assert errors == []
+
+
 def test_validate_valid_csv():
     plugin = TablePlugin()
     errors = plugin.validate_directive(Directive(type="table", source="/some/path/data.csv"))

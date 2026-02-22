@@ -22,6 +22,14 @@ class PluginBase(ABC):
     api_version: ClassVar[int]
     directive_type: ClassVar[str]
 
+    def get_plugin_config_schema(self) -> dict[str, type] | None:
+        """Return accepted config keys and their expected types, or None if plugin takes no config."""
+        return None
+
+    def validate_plugin_config(self, _settings: dict[str, Any]) -> list[Status]:
+        """Validate semantic constraints on plugin-level config. Override as needed."""
+        return []
+
     @abstractmethod
     def validate_directive(
         self, directive: Directive, configuration: PluginConfiguration | None = None
