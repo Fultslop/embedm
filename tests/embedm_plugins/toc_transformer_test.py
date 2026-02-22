@@ -1,5 +1,5 @@
 from embedm.domain.directive import Directive
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.toc_resources import str_resources
 from embedm_plugins.toc_transformer import ToCParams, ToCTransformer
 
 

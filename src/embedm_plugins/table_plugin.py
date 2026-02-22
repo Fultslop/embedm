@@ -13,7 +13,7 @@ from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.validation_base import ValidationResult
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.table_resources import str_resources
 from embedm_plugins.table_transformer import (
     DATE_FORMAT_KEY,
     DEFAULT_LIMIT,

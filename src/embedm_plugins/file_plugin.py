@@ -14,9 +14,9 @@ from embedm.parsing.extraction import is_valid_line_range
 from embedm.parsing.symbol_parser import get_language_config
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm_plugins.file_resources import render_error_note, str_resources
 from embedm_plugins.file_transformer import FileParams, FileTransformer
 from embedm_plugins.line_transformer import LineParams, LineTransformer
-from embedm_plugins.plugin_resources import render_error_note, str_resources
 from embedm_plugins.region_transformer import RegionParams, RegionTransformer
 from embedm_plugins.symbol_transformer import SymbolParams, SymbolTransformer
 

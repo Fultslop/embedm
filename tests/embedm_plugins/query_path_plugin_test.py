@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import StatusLevel
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.query_path_resources import str_resources
 from embedm_plugins.query_path_plugin import QueryPathPlugin, _QueryPathArtifact
 
 

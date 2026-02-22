@@ -15,10 +15,6 @@ We have a configuration to control the main process but we don't have a way to c
 
 Config controls all embedms configurable behavior for all plugins in an operation. This way the user doesn't have to repeat the same settings for every plugin.
 
-**Priority**
-
-Nice to have (?) - v2.0
-
 ## Example
 
 ```yaml
@@ -31,7 +27,7 @@ plugin_sequence:
   - embedm_plugins.toc_plugin
   - embedm_plugins.table_plugin
 
-plugin_configuration:
+plugin_configuration (move to its own config file?):
     - name: embedm_plugins.file_plugin
         - region_start: "embedm.start:{tag}"
         - region_end: "embedm.end:{tag}"

@@ -9,7 +9,7 @@ from typing import Any
 
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.plugins.validation_base import ValidationBase, ValidationResult
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.table_resources import str_resources
 
 Row = dict[str, str]
 

@@ -12,7 +12,7 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.plugin_resources import render_error_note, str_resources
+from embedm_plugins.file_resources import render_error_note, str_resources
 
 if TYPE_CHECKING:
     from embedm.plugins.plugin_registry import PluginRegistry

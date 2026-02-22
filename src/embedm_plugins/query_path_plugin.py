@@ -13,9 +13,12 @@ from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.validation_base import ValidationResult
-from embedm_plugins import normalize_json, normalize_toml, normalize_xml, normalize_yaml
 from embedm_plugins import query_path_engine as engine
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins import query_path_normalize_json as normalize_json
+from embedm_plugins import query_path_normalize_toml as normalize_toml
+from embedm_plugins import query_path_normalize_xml as normalize_xml
+from embedm_plugins import query_path_normalize_yaml as normalize_yaml
+from embedm_plugins.query_path_resources import str_resources
 from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
 
 if TYPE_CHECKING:

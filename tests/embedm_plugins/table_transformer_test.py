@@ -1,4 +1,4 @@
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.table_resources import str_resources
 from embedm_plugins.table_transformer import TableParams, TableTransformer
 
 Row = dict[str, str]

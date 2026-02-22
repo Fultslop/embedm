@@ -6,7 +6,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
-from embedm_plugins.plugin_resources import str_resources
+from embedm_plugins.table_resources import str_resources
 from embedm_plugins.table_plugin import TablePlugin
 from embedm_plugins.table_transformer import FILTER_KEY, LIMIT_KEY, MAX_CELL_LENGTH_KEY
 
