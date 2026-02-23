@@ -1,6 +1,6 @@
 # EmbedM
 
-version 0.6.1
+version 0.8.0
 
 A Markdown compiler driven by source files.
 
@@ -115,7 +115,7 @@ format: "Default pool size: **{value}**"
 **Install**
 
 ```
-pip install embedm
+(coming soon) pip install embedm
 ```
 
 Or from source:

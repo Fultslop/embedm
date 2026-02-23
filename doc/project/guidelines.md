@@ -1,11 +1,3 @@
-# Agent Context
-
-This document is compiled from project sources to give Claude focused context at session start.
-Read this before beginning any task. It does not replace the files it draws from — go to the source
-for full detail.
-
-## Project guidelines
-
 # Development Guidelines
 
 ## Plugin Architecture
@@ -91,27 +83,3 @@ Before archiving, run the promotion gate: create a temporary source document wit
 directive over the devlog querying `"convention rule architectural decision established"`,
 compile it, and promote any surfaced decisions not already in guidelines.md. Then manually move
 old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
-
-## Plugin conventions
-
-Key decisions about plugin structure, registration, and naming extracted from the decision log.
-
-> Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis. 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_ to make ownership explicit. 22/02/26 [TASK] feat_verbose_cli_option — update spec (stderr, all config fields, two-stage plugin discovery, planning tree node definition, lookup failure shows available types, NO_COLOR convention noted), then implement -v/--verbose flag. 19/02/26 [Arch] Plugin load failures treated as user errors — `load_plugins` now returns `list[Status]` and catches per-entry exceptions gracefully. Plugin system already provides IoC via entry points.
-
-## Architectural rules
-
-Core rules about the validation/transform boundary, error handling, and code quality.
-
-> 23/02/26 [ARCH] feat_verify_cli_option — three design decisions added: (1) compilation errors exit 1 in all modes (not just verify), correcting prior soft-fail behaviour; (2) line_endings config option (lf|crlf, default lf) applied before write and before verify comparison — project-level not directive-level; (3) verify-mode summary reports files_checked/up-to-date/stale instead of files_written. 23/02/26 [TASK] bug_clean_text_mangles_snake_case — fix: add word-boundary guards (?<!\w) / (?!\w) to the {1,3}(.?){1,3} italic-removal regex in text_processing._clean_text; regression tests in text_processing_test.py. 23/02/26 [ARCH] split CLAUDE.md — extracted full coding guidelines to doc/project/guidelines.md; CLAUDE.md slimmed to hard constraints + platform + session-start pointer (~20 lines). 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input. 16/02/26 [Standards] Error handling guidelines — coding errors crash via assert, input errors collect Status and recover.
-
-## Patterns — avoid these misses
-
-Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
-
-> Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md. 22/02/26 [Fix] query-path trailing newline — scalar and format-string output from QueryPathTransformer now always appends \n so the blank-line separator after a directive fence is preserved in the rendered document.
-
-## Active feature spec
-
-implement `doc_document_query_path_plugin.md` in `doc\project\backlog`.
-
-If you can't find this because the active spec may be moved or renamed, ask the user.

@@ -143,7 +143,7 @@ def _process_directory_file(
         verbose_plan_tree(plan_root)
 
     # track all sources this file embeds so we skip them as standalone roots
-    embedded.update(collect_embedded_sources(plan_root))
+    embedded.update(collect_embedded_sources(plan_root, embed_type=config.root_directive_type))
 
     compiled_dir = _dir_mode_compiled_dir(file_path, base_dir, config)
     result = _compile_plan(plan_root, context, compiled_dir)

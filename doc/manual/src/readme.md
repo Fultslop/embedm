@@ -110,7 +110,7 @@ format: "Default pool size: **{value}**"
 **Install**
 
 ```
-pip install embedm
+(coming soon) pip install embedm
 ```
 
 Or from source:

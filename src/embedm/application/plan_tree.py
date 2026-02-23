@@ -24,11 +24,16 @@ def tree_has_level(root: PlanNode, levels: tuple[StatusLevel, ...]) -> bool:
     return any(s.level in levels for node in walk_nodes(root) for s in node.status)
 
 
-def collect_embedded_sources(root: PlanNode) -> set[str]:
-    """Return the resolved source paths of all directives embedded anywhere in the plan tree."""
+def collect_embedded_sources(root: PlanNode, embed_type: str = "file") -> set[str]:
+    """Return the resolved source paths of directives that merge content inline.
+
+    Only sources from directives of `embed_type` are collected. Other directive types
+    (recall, synopsis, query-path, table) read their source but do not merge it into
+    the compiled output, so they must not be excluded from standalone compilation.
+    """
     sources: set[str] = set()
     for node in walk_nodes(root):
         for child in node.children or []:
-            if child.directive.source:
+            if child.directive.source and child.directive.type == embed_type:
                 sources.add(str(Path(child.directive.source).resolve()))
     return sources
