@@ -1,4 +1,4 @@
-Cocreation with Claude
+Cocreating Embedm with Claude
 ======================================
 
 > _"Creator of Claude Code: "Coding is solved""_
@@ -18,7 +18,9 @@ With this in mind, I started working on something that has been bugging me in my
 
 I had a general approach in mind, but never got around building it because while trivial on paper, there are a surprising number of implementation details, seemingly unassuming features and other considerations that go into making "automatic document maintenance" work. 
 
-Using various Google and free versions of the chatbot cadre, I _briefly_ verified if no obvious solution existed. The research came up with some similar tools but nothing concrete. Based on the principle that everything already exists and no idea is new, I assume there is a tool that covers Embedm's functionality (maybe some clever grep / regex could even do it), but I am happy to stay ignorant in this respect pretending I've created something original.  
+Using various Google and free versions of the chatbot cadre, I _briefly_ verified if no obvious solution existed. The research came up with some similar tools but nothing concrete. Based on the principle that everything already exists and no idea is new, I assume there is a tool that covers Embedm's functionality (maybe some clever grep / regex could even do it), but I am happy to stay ignorant in this respect pretending we've created something original.  
+
+That something, hopefully but probably not very, original thing is `Embedm`.
 
 **My background**
 
@@ -31,6 +33,8 @@ One of the projects we ran was based on the [Alice](https://en.wikipedia.org/wik
 It wasn't until a random afternoon, where being stuck in a somewhat boring company townhall, I prompted the free Claude-version to build a JS based, bare-bones 2D physics engine and it did so, with graphics and all, in under a couple of seconds. It wasn't perfect but with one or two fixes, it performed admirally well. I was impressed and decided to buy a Claude pro-version to see and explore what it could do.
 
 A couple of weeks later, here we are...
+
+**Current state**
 
 ## What went wrong
 
@@ -50,19 +54,52 @@ Another of these instances is where Claude's context window gets too full and a 
 
 Both cases (and others) lead to a sub optimal user experience where you as a user feel penalized for Claude's reflections and memory refreshes while being only marginally in control over these.  
 
-I understand Antropic needs to earn a living but right now it 'feels' there is a more than reasonable margin on the product they are selling (tokens) at the expense of the user's interest. Hopefully things like the context window size, more effective reasoning, improve in the future  
+I understand Antropic needs to earn a living but right now it 'feels' there is a more than reasonable margin on the product they are selling (tokens) at the expense of the user's interest. 
+
+Claude Improvements:
+ - Better user control over Claude's spending 
+ - Preventing Claude from too deep reasoning and requesting user direction earlier
+ - Improved context window size 
+ - More (cost-)effective reasoning 
+
+User Improvements:
+ - Lean towards smaller, well defined, items with clear outcomes. Iterate over planning until these are in place.
+ - Set/ask for limits, early feedback.
 
 **Maintaining Design/Architecture**
 
-**Ignoring directives** Esp no magic values
+Maintaining a coherent, clear and scope-deliniated architecture is complicated with this entity that materializes the requested features at light speed. On Friday, during the initial feature discovery phase of the project I set out some architecture guidelines and concept in an md file and ignited the engine. At the end of the weekend we had working features but a complete broken architecture which would make further expansions costly at best. 
 
-**Overthinks without asking for feedback**
+The next weekend we started over. I put in the effort to set up a document outlining topics such as goals, scope and workflow. Furthermore, I setup an skelton implementation defining all the interfaces. From there on we started implementation with regular review sessions.
+
+While the second iteration worked _much_ better, I still feel Claude isn't too interested 'architecuture'. I rarely see it looking for generalizations in the code that would improve and simplify the overall code base. Moreover they are happy to apply whatever pattern leads to what they think will achieve the current goal, wether that pattern fits or not. *TODO* Investigate logging.
+
+As developer you will have to make navigate between two stances:
+
+- Stay on top of the evolving architecture, correct Claude whenever it veers off course.
+
+- Impose testable boundries and "act on exception". The latter is a paraphrased term from the field of logistics, where customers cannot track the state of each of their individual containers because the volume is too large and only get involved is something wrong, seriously wrong or catastrophically borked. For the rest they 'assume' things will generally work out.
+
+My experience with this project is that for me on this project with low stakes, I started out with the first but as volume of code grew, leaned more and more on tests, linters static-analysis to find those 'exception triggers' for me, with an occasional check-in to see if anything started to smell fishy.
+
+Claude Improvements:
+  - Claude should take a pro-active stance and an interest in maintaining, defining and enforcing a coherent architecture without excessive directives in its claude.md file.
+
+User activities to avoid architectural drift:
+  - Maintain an architecture doc
+  - Implement interfaces yourself
+  - Utilize on determinstic analysis tools (mypy, xenon, radon, vulture)
+  - Utilize unit -, integration test and user controlled regression tests
+
+**Ignoring directives** 
+
+Esp no magic values
+
+**Metric - and outcome oriented code**
 
 **Fixing tests to match the output**
 
 **Commenting balance is hard**
-
-**Metric oriented code**
 
 **Context window fills up too fast**
 Compacting compacting and then forgetting

@@ -6,9 +6,26 @@ from .plugin_base import PluginBase
 from .plugin_resources import str_resources
 
 
+class _PluginLookup(dict):  # type: ignore[type-arg]
+    """dict subclass that maintains a secondary directive_type → plugin index."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._by_directive_type: dict[str, PluginBase] = {}
+
+    def __setitem__(self, key: str, value: PluginBase) -> None:
+        super().__setitem__(key, value)
+        self._by_directive_type[value.directive_type] = value
+
+    def __delitem__(self, key: str) -> None:
+        plugin = self[key]
+        self._by_directive_type.pop(plugin.directive_type, None)
+        super().__delitem__(key)
+
+
 class PluginRegistry:
     def __init__(self) -> None:
-        self.lookup: dict[str, PluginBase] = {}
+        self.lookup: _PluginLookup = _PluginLookup()
         # Populated by load_plugins; each entry is (entry_point_name, module_path).
         self.discovered: list[tuple[str, str]] = []
         self.skipped: list[tuple[str, str]] = []
@@ -54,7 +71,4 @@ class PluginRegistry:
 
     def find_plugin_by_directive_type(self, directive_type: str) -> PluginBase | None:
         """Find a plugin that handles the given directive type."""
-        for plugin in self.lookup.values():
-            if plugin.directive_type == directive_type:
-                return plugin
-        return None
+        return self.lookup._by_directive_type.get(directive_type)

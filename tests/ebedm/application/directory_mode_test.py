@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from embedm.application.orchestration import (
-    _collect_embedded_sources,
     _expand_directory_input,
     _glob_base,
 )
+from embedm.application.plan_tree import collect_embedded_sources
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
@@ -112,8 +112,7 @@ def test_collect_embedded_sources_from_children() -> None:
         children=[child],
     )
 
-    sources: set[str] = set()
-    _collect_embedded_sources(root, sources)
+    sources = collect_embedded_sources(root)
 
     assert len(sources) == 1
     assert str(Path("/tmp/child.md").resolve()) in sources
@@ -139,8 +138,7 @@ def test_collect_embedded_sources_nested() -> None:
         children=[child],
     )
 
-    sources: set[str] = set()
-    _collect_embedded_sources(root, sources)
+    sources = collect_embedded_sources(root)
 
     assert len(sources) == 2
     assert str(Path("/tmp/child.md").resolve()) in sources
@@ -155,7 +153,6 @@ def test_collect_embedded_sources_no_children() -> None:
         children=None,
     )
 
-    sources: set[str] = set()
-    _collect_embedded_sources(root, sources)
+    sources = collect_embedded_sources(root)
 
     assert len(sources) == 0

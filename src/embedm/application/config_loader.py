@@ -105,7 +105,7 @@ def discover_config(input_path: str) -> str | None:
     return None
 
 
-def _validate_plugin_configuration(plugin_cfg: dict[str, Any]) -> list[Status]:
+def _validate_plugin_config_structure(plugin_cfg: dict[str, Any]) -> list[Status]:
     """Validate that every value in plugin_configuration is a dict."""
     errors: list[Status] = []
     for module, settings in plugin_cfg.items():
@@ -174,7 +174,7 @@ def _validate_special_overrides(overrides: dict[str, Any]) -> list[Status]:
     errors: list[Status] = []
 
     if "plugin_configuration" in overrides:
-        plugin_cfg_errors = _validate_plugin_configuration(overrides["plugin_configuration"])
+        plugin_cfg_errors = _validate_plugin_config_structure(overrides["plugin_configuration"])
         errors.extend(plugin_cfg_errors)
         if plugin_cfg_errors:
             del overrides["plugin_configuration"]

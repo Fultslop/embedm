@@ -8,6 +8,7 @@ from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm_plugins.recall_resources import str_resources
@@ -69,12 +70,12 @@ class RecallPlugin(PluginBase):
     ) -> str:
         """Transform a recall directive into a GFM blockquote of relevant sentences."""
         text = _extract_text(plan_node, parent_document, file_cache)
-        query = plan_node.directive.get_option(QUERY_KEY, cast=str, default_value="")
-        max_sentences = plan_node.directive.get_option(
-            MAX_SENTENCES_KEY, cast=int, default_value=_DEFAULT_MAX_SENTENCES
+        query = get_option(plan_node.directive, QUERY_KEY, cast=str, default_value="")
+        max_sentences = get_option(
+            plan_node.directive, MAX_SENTENCES_KEY, cast=int, default_value=_DEFAULT_MAX_SENTENCES
         )
-        language = plan_node.directive.get_option(LANGUAGE_KEY, cast=str, default_value=_DEFAULT_LANGUAGE)
-        sections = plan_node.directive.get_option(SECTIONS_KEY, cast=int, default_value=_DEFAULT_SECTIONS)
+        language = get_option(plan_node.directive, LANGUAGE_KEY, cast=str, default_value=_DEFAULT_LANGUAGE)
+        sections = get_option(plan_node.directive, SECTIONS_KEY, cast=int, default_value=_DEFAULT_SECTIONS)
         return RecallTransformer().execute(RecallParams(text, query, max_sentences, language, sections))
 
 
@@ -91,9 +92,9 @@ def _validate_int_min(
     directive: Directive, key: str, default: int, min_value: int, error_template: str
 ) -> list[Status]:
     """Validate that an integer directive option meets a minimum value."""
-    if (status := directive.validate_option(key, cast=int)) is not None:
+    if (status := validate_option(directive, key, cast=int)) is not None:
         return [status]
-    value = directive.get_option(key, cast=int, default_value=default)
+    value = get_option(directive, key, cast=int, default_value=default)
     if value < min_value:
         return [Status(StatusLevel.ERROR, error_template.format(value=value))]
     return []

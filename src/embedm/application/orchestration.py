@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import time
-from enum import Enum
 from pathlib import Path
 
 from embedm.domain.plan_node import PlanNode
@@ -33,7 +32,9 @@ from .console import (
     verbose_timing,
 )
 from .embedm_context import EmbedmContext
+from .plan_tree import collect_embedded_sources, collect_tree_errors, tree_has_level
 from .planner import plan_content, plan_file
+from .verification import VerifyStatus, apply_line_endings, verify_file_output
 
 
 def main() -> None:
@@ -90,26 +91,7 @@ def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]
     if any(s.level == StatusLevel.ERROR for s in errors):
         return config, errors
 
-    # merge: config file provides base values, CLI-only fields come from the parsed config
-    return Configuration(
-        input_mode=config.input_mode,
-        input=config.input,
-        output_file=config.output_file,
-        output_directory=config.output_directory,
-        max_file_size=file_config.max_file_size,
-        max_recursion=file_config.max_recursion,
-        max_memory=file_config.max_memory,
-        max_embed_size=file_config.max_embed_size,
-        root_directive_type=file_config.root_directive_type,
-        plugin_sequence=file_config.plugin_sequence,
-        plugin_configuration=file_config.plugin_configuration,
-        line_endings=file_config.line_endings,
-        is_accept_all=config.is_accept_all,
-        is_dry_run=config.is_dry_run,
-        is_verify=config.is_verify,
-        is_verbose=config.is_verbose,
-        config_file=config_path,
-    ), errors
+    return Configuration.merge(config, file_config, config_path), errors
 
 
 def _dispatch_input(config: Configuration, context: EmbedmContext, summary: RunSummary) -> None:
@@ -158,14 +140,14 @@ def _process_directory_file(
         verbose_plan_tree(plan_root)
 
     # track all sources this file embeds so we skip them as standalone roots
-    _collect_embedded_sources(plan_root, embedded)
+    embedded.update(collect_embedded_sources(plan_root))
 
     compiled_dir = _dir_mode_compiled_dir(file_path, base_dir, config)
     result = _compile_plan(plan_root, context, compiled_dir)
     if result and config.is_verify and config.output_directory:
         relative = Path(file_path).resolve().relative_to(base_dir)
         output_path = str((Path(config.output_directory) / relative).resolve())
-        vstatus = _verify_file_output(result, output_path, config)
+        vstatus = verify_file_output(result, output_path, config)
         present_verify_status(vstatus.value, output_path)
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
@@ -184,21 +166,13 @@ def _expand_directory_input(input_path: str) -> list[str]:
     return sorted(str(p) for p in Path(input_path).glob("*.md"))
 
 
-def _collect_embedded_sources(node: PlanNode, sources: set[str]) -> None:
-    """Walk the plan tree and collect all embedded source paths."""
-    for child in node.children or []:
-        if child.directive.source:
-            sources.add(str(Path(child.directive.source).resolve()))
-        _collect_embedded_sources(child, sources)
-
-
 def _compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
     """Compile a plan tree into output with interactive error prompting."""
     if plan_root.document is None:
         present_errors(plan_root.status)
         return ""
 
-    tree_errors = _collect_tree_errors(plan_root)
+    tree_errors = collect_tree_errors(plan_root)
     if tree_errors:
         present_errors(tree_errors)
         has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
@@ -279,7 +253,7 @@ def _write_directory_output(
 
     Returns the path written to, or None if written to stdout.
     """
-    content = _apply_line_endings(result, config.line_endings)
+    content = apply_line_endings(result, config.line_endings)
 
     if config.is_dry_run or not config.output_directory:
         present_result(content)
@@ -326,7 +300,7 @@ def _process_single_input(
 
     if config.is_verify and result and config.output_file:
         output_path = str(Path(config.output_file).resolve())
-        vstatus = _verify_file_output(result, output_path, config)
+        vstatus = verify_file_output(result, output_path, config)
         present_verify_status(vstatus.value, output_path)
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
@@ -337,7 +311,7 @@ def _process_single_input(
         _update_summary(summary, plan_root, wrote=bool(result))
 
 
-def _validate_plugin_configs(config: Configuration, registry: PluginRegistry) -> list[Status]:
+def _validate_plugin_config_schemas(config: Configuration, registry: PluginRegistry) -> list[Status]:
     """Validate per-plugin config sections against each plugin's declared schema."""
     errors: list[Status] = []
     for module, settings in config.plugin_configuration.items():
@@ -374,7 +348,7 @@ def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     )
     plugin_registry = PluginRegistry()
     errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
-    errors.extend(_validate_plugin_configs(config, plugin_registry))
+    errors.extend(_validate_plugin_config_schemas(config, plugin_registry))
     return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors
 
 
@@ -394,36 +368,6 @@ def _dir_mode_compiled_dir(file_path: str, base_dir: Path, config: Configuration
         return ""
 
 
-def _collect_tree_errors(node: PlanNode) -> list[Status]:
-    """Walk the plan tree and collect all error/fatal statuses."""
-    errors = [s for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
-    for child in node.children or []:
-        errors.extend(_collect_tree_errors(child))
-    return errors
-
-
-class _VerifyStatus(Enum):
-    UP_TO_DATE = "up-to-date"
-    STALE = "stale"
-    MISSING = "missing"
-
-
-def _apply_line_endings(text: str, line_endings: str) -> str:
-    """Normalise output line endings. 'crlf' converts LF→CRLF; 'lf' is a no-op."""
-    if line_endings == "crlf":
-        return text.replace("\n", "\r\n")
-    return text
-
-
-def _verify_file_output(result: str, output_path: str, config: Configuration) -> _VerifyStatus:
-    """Compare compiled result against the existing file on disk without writing."""
-    normalised = _apply_line_endings(result, config.line_endings).encode("utf-8")
-    path = Path(output_path)
-    if not path.exists():
-        return _VerifyStatus.MISSING
-    return _VerifyStatus.UP_TO_DATE if path.read_bytes() == normalised else _VerifyStatus.STALE
-
-
 def _write_output(result: str, config: Configuration) -> str | None:
     """Write compilation result to the configured destination.
 
@@ -432,7 +376,7 @@ def _write_output(result: str, config: Configuration) -> str | None:
     if not result:
         return None
 
-    content = _apply_line_endings(result, config.line_endings)
+    content = apply_line_endings(result, config.line_endings)
 
     if config.is_dry_run:
         present_result(content)
@@ -460,15 +404,15 @@ def _update_summary(
     summary: RunSummary,
     plan_root: PlanNode,
     wrote: bool,
-    verify_status: _VerifyStatus | None = None,
+    verify_status: VerifyStatus | None = None,
 ) -> None:
     """Update the run summary from a completed plan."""
-    has_error = _tree_has_level(plan_root, (StatusLevel.ERROR, StatusLevel.FATAL))
-    has_warning = _tree_has_level(plan_root, (StatusLevel.WARNING,))
+    has_error = tree_has_level(plan_root, (StatusLevel.ERROR, StatusLevel.FATAL))
+    has_warning = tree_has_level(plan_root, (StatusLevel.WARNING,))
 
     if verify_status is not None:
         summary.is_verify = True
-        if verify_status == _VerifyStatus.UP_TO_DATE:
+        if verify_status == VerifyStatus.UP_TO_DATE:
             summary.up_to_date_count += 1
         else:
             summary.stale_count += 1
@@ -481,10 +425,3 @@ def _update_summary(
         summary.warning_count += 1
     else:
         summary.ok_count += 1
-
-
-def _tree_has_level(node: PlanNode, levels: tuple[StatusLevel, ...]) -> bool:
-    """Return True if the plan tree contains any status at one of the given levels."""
-    if any(s.level in levels for s in node.status):
-        return True
-    return any(_tree_has_level(child, levels) for child in node.children or [])

@@ -8,6 +8,7 @@ from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm_plugins.toc_transformer import (
@@ -36,7 +37,7 @@ class ToCPlugin(PluginBase):
         return [
             status
             for key, cast_type in TOC_OPTION_KEY_TYPES.items()
-            if (status := directive.validate_option(key, cast=cast_type)) is not None
+            if (status := validate_option(directive, key, cast=cast_type)) is not None
         ]
 
     def transform(
@@ -53,14 +54,14 @@ class ToCPlugin(PluginBase):
         transformer = ToCTransformer()
 
         start_fragment = _get_start_fragment(plan_node, parent_document)
-        max_depth = plan_node.directive.get_option(MAX_DEPTH_KEY, cast=int, default_value=5)
-        add_slugs = plan_node.directive.get_option(ADD_SLUGS_KEY, cast=bool, default_value=False)
+        max_depth = get_option(plan_node.directive, MAX_DEPTH_KEY, cast=int, default_value=5)
+        add_slugs = get_option(plan_node.directive, ADD_SLUGS_KEY, cast=bool, default_value=False)
 
         return transformer.execute(ToCParams(parent_document, start_fragment, max_depth, add_slugs))
 
 
 def _get_start_fragment(plan_node: PlanNode, parent_document: Sequence[Fragment]) -> int:
-    start_fragment = plan_node.directive.get_option(START_FRAGMENT_KEY, cast=int, default_value=-1)
+    start_fragment = get_option(plan_node.directive, START_FRAGMENT_KEY, cast=int, default_value=-1)
 
     if start_fragment == -1:
         start_fragment = next((i for i, x in enumerate(parent_document) if x is plan_node.directive), 0)

@@ -10,6 +10,7 @@ from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.validation_base import ValidationResult
@@ -57,7 +58,7 @@ def _validate_filter(filter_str: str) -> list[Status]:
 def _validate_options(directive: Directive) -> list[Status]:
     errors: list[Status] = []
     for key, cast_type in TABLE_OPTION_KEY_TYPES.items():
-        if (status := directive.validate_option(key, cast=cast_type)) is not None:
+        if (status := validate_option(directive, key, cast=cast_type)) is not None:
             errors.append(status)
     return errors
 
@@ -69,12 +70,12 @@ def _build_params(directive: Directive, rows: list[Row]) -> TableParams:
         rows=rows,
         select=directive.options.get(SELECT_KEY, ""),
         order_by=directive.options.get(ORDER_BY_KEY, ""),
-        limit=directive.get_option(LIMIT_KEY, cast=int, default_value=DEFAULT_LIMIT),
-        offset=directive.get_option(OFFSET_KEY, cast=int, default_value=DEFAULT_OFFSET),
+        limit=get_option(directive, LIMIT_KEY, cast=int, default_value=DEFAULT_LIMIT),
+        offset=get_option(directive, OFFSET_KEY, cast=int, default_value=DEFAULT_OFFSET),
         filter_map=filter_map,
         date_format=directive.options.get(DATE_FORMAT_KEY, ""),
         null_string=directive.options.get(NULL_STRING_KEY, DEFAULT_NULL_STRING),
-        max_cell_length=directive.get_option(MAX_CELL_LENGTH_KEY, cast=int, default_value=DEFAULT_MAX_CELL_LENGTH),
+        max_cell_length=get_option(directive, MAX_CELL_LENGTH_KEY, cast=int, default_value=DEFAULT_MAX_CELL_LENGTH),
     )
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any
 
@@ -90,3 +90,25 @@ class Configuration:
 
     # per-plugin configuration keyed by plugin module name
     plugin_configuration: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    @classmethod
+    def merge(cls, cli_config: Configuration, file_config: Configuration, config_path: str) -> Configuration:
+        """Return a new Configuration combining file config values with CLI-specific overrides.
+
+        file_config provides all user-configurable settings (limits, plugins, line_endings, …).
+        CLI-only fields (input, output targets, run-mode flags) are taken from cli_config.
+        Adding a new file-configurable field only requires updating the dataclass — not this method.
+        """
+        return replace(
+            file_config,
+            input_mode=cli_config.input_mode,
+            input=cli_config.input,
+            output_file=cli_config.output_file,
+            output_directory=cli_config.output_directory,
+            is_accept_all=cli_config.is_accept_all,
+            is_dry_run=cli_config.is_dry_run,
+            is_verify=cli_config.is_verify,
+            is_verbose=cli_config.is_verbose,
+            init_path=cli_config.init_path,
+            config_file=config_path,
+        )

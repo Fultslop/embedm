@@ -46,6 +46,6 @@ max_sentences: 4
 
 ## Active feature spec
 
-`bug_recall_captures_absolute_paths.md` in `doc\project\backlog`.
+discuss `feat_improve_v1_interface.md` in `doc\project\backlog`.
 
 If you can't find this because the active spec may be moved or renamed, ask the user.

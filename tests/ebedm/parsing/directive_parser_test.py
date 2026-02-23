@@ -3,6 +3,7 @@ from pathlib import Path
 from embedm.domain.directive import Directive
 from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
+from embedm.plugins.directive_options import get_option, validate_option
 from embedm.parsing.directive_parser import (
     find_yaml_embed_block,
     parse_yaml_embed_block,
@@ -316,17 +317,17 @@ def test_parse_blocks_resolves_sources_with_base_dir(tmp_path: Path):
 
 def test_directive_get_option_bool_true_string():
     d = Directive(type="toc", options={"flag": "True"})
-    assert d.get_option("flag", cast=bool, default_value=False) is True
+    assert get_option(d, "flag", cast=bool, default_value=False) is True
 
 
 def test_directive_get_option_bool_false_string():
     d = Directive(type="toc", options={"flag": "False"})
-    assert d.get_option("flag", cast=bool, default_value=True) is False
+    assert get_option(d, "flag", cast=bool, default_value=True) is False
 
 
 def test_directive_validate_option_bool_invalid_string_returns_error():
     d = Directive(type="toc", options={"flag": "yes"})
-    result = d.validate_option("flag", cast=bool)
+    result = validate_option(d, "flag", cast=bool)
     assert isinstance(result, Status)
     assert result.level == StatusLevel.ERROR
     assert "flag" in result.description
@@ -334,9 +335,9 @@ def test_directive_validate_option_bool_invalid_string_returns_error():
 
 def test_directive_validate_option_returns_none_when_absent():
     d = Directive(type="toc", options={})
-    assert d.validate_option("flag", cast=bool) is None
+    assert validate_option(d, "flag", cast=bool) is None
 
 
 def test_directive_validate_option_returns_none_when_valid():
     d = Directive(type="toc", options={"flag": "True"})
-    assert d.validate_option("flag", cast=bool) is None
+    assert validate_option(d, "flag", cast=bool) is None
