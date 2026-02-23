@@ -46,6 +46,6 @@ max_sentences: 4
 
 ## Active feature spec
 
-implement `feat_improve_v1_interface.md` in `doc\project\backlog`.
+implement `doc_document_query_path_plugin.md` in `doc\project\backlog`.
 
 If you can't find this because the active spec may be moved or renamed, ask the user.

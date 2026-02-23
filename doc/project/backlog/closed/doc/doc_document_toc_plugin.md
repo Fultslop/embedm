@@ -1,17 +1,18 @@
-DOCUMENTATION: Document File Plugin
+DOCUMENTATION: Document Toc Plugin
 ========================================
-DRAFT  
+
 Release v1.0  
 Created: 20/02/2026  
-Closed: `<date>`  
+Closed: 23/02/2026  
+Created by: FS  
 
 ## Description
 
-The fileplugin and its transformers need to be documented. 
+The toc_plugin (src\embedm_plugins\toc_plugin.py) and its transformers need to be documented. 
 
 Use a similar style as .\doc\manual\src\table_plugin.md, ie examples referenced ```yaml embedms, a embedm toc and query-path at the top. 
 
-Make sure it describes the recursive way it "compiles" the file and how plugin sequence affects execution. Furthermore explain the options and show how symbol resolution works for the different supported languages.
+Explain its options and why this is run as (one of the) last plugins and how it uses the document to create its entries.
 
 ## Target Audience
 
