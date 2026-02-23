@@ -1,5 +1,12 @@
 # Table Plugin
 
+```yaml embedm
+type: query-path
+source: ../../../pyproject.toml
+path: project.version
+format: "version {value}"
+```
+
 The table plugin embeds CSV, TSV, or JSON data as a formatted markdown table. It supports column selection with aliases, row filtering, sorting, pagination, and display formatting — all declared inline in your markdown.
 
 ```yaml embedm

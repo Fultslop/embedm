@@ -28,6 +28,7 @@ DEFAULT_PLUGIN_SEQUENCE = [
     "embedm_plugins.hello_world_plugin",
     # plugins requiring the document to be complete(ish)
     "embedm_plugins.synopsis_plugin",
+    "embedm_plugins.recall_plugin",
     "embedm_plugins.toc_plugin",
 ]
 

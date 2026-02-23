@@ -7,7 +7,7 @@
 
 Iteration 2 
 
-version 0.6.0
+version 0.6.1
 
 Safely embed files, code, and content directly into Markdown — and keep them in sync.
 

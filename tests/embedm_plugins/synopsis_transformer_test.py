@@ -6,10 +6,12 @@ from embedm_plugins.synopsis_transformer import (
     SynopsisParams,
     SynopsisTransformer,
     _best_cluster_score,
+    _score_luhn,
+)
+from embedm_plugins.text_processing import (
     _block_to_sentences,
     _clean_text,
     _score_frequency,
-    _score_luhn,
     _select_top,
     _split_into_blocks,
     _tokenize,

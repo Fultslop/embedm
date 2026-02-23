@@ -1,0 +1,5 @@
+plugin_sequence:
+  - embedm_plugins.file_plugin
+  - embedm_plugins.query_path_plugin
+  - embedm_plugins.recall_plugin
+  - embedm_plugins.toc_plugin
