@@ -84,7 +84,7 @@ def _check_plugins(
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
-            if context.config.is_verbose:
+            if context.config.verbosity >= 3:
                 available = ", ".join(sorted(p.directive_type for p in context.plugin_registry.lookup.values()))
                 msg = str_resources.err_plan_no_plugin_verbose.format(directive_type=d.type, available=available)
             else:
@@ -93,7 +93,7 @@ def _check_plugins(
         else:
             t0 = time.perf_counter()
             errors.extend(plugin.validate_directive(d, plugin_config))
-            if context.config.is_verbose:
+            if context.config.verbosity >= 3:
                 verbose_timing("validate_directive", d.type, d.source, time.perf_counter() - t0)
     return errors
 
@@ -164,7 +164,7 @@ def _build_child(
     if plugin is not None:
         t0 = time.perf_counter()
         validate_result = plugin.validate_input(directive, source_content, plugin_config)
-        if context.config.is_verbose:
+        if context.config.verbosity >= 3:
             verbose_timing("validate_input", directive.type, directive.source, time.perf_counter() - t0)
     else:
         validate_result = None

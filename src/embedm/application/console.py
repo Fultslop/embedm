@@ -60,6 +60,12 @@ def present_verify_status(status: str, path: str) -> None:
     print(f"[{status.upper()}] {path}", file=sys.stderr)
 
 
+def present_file_progress(file_path: str, plan_root: PlanNode) -> None:
+    """Print a per-file progress line to stderr at verbosity level 2."""
+    label = _worst_status_label(plan_root.status)
+    print(f"  {Path(file_path).name}  [{label}]", file=sys.stderr)
+
+
 def prompt_continue() -> ContinueChoice:
     """Prompt the user to continue, abort, or accept all. Returns the user's choice."""
     try:
@@ -99,7 +105,7 @@ def verbose_config(config: Configuration) -> None:
     _vprint(f"is_dry_run:         {config.is_dry_run}")
     _vprint(f"is_verify:          {config.is_verify}")
     _vprint(f"line_endings:       {config.line_endings}")
-    _vprint(f"is_verbose:         {config.is_verbose}")
+    _vprint(f"verbosity:          {config.verbosity}")
     _vprint("plugin_sequence:")
     for module in config.plugin_sequence:
         _vprint(f"  {module}")

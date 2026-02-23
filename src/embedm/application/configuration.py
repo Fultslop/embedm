@@ -85,8 +85,8 @@ class Configuration:
     # path for --init output (generate config file and exit)
     init_path: str | None = None
 
-    # if set, verbose diagnostic output is written to stderr
-    is_verbose: bool = False
+    # verbosity level: 0 silent, 1 minimal, 2 default, 3 verbose
+    verbosity: int = 2
 
     # per-plugin configuration keyed by plugin module name
     plugin_configuration: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -108,7 +108,7 @@ class Configuration:
             is_accept_all=cli_config.is_accept_all,
             is_dry_run=cli_config.is_dry_run,
             is_verify=cli_config.is_verify,
-            is_verbose=cli_config.is_verbose,
+            verbosity=cli_config.verbosity,
             init_path=cli_config.init_path,
             config_file=config_path,
         )

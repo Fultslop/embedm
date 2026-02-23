@@ -18,6 +18,7 @@ from .console import (
     RunSummary,
     make_cache_event_handler,
     present_errors,
+    present_file_progress,
     present_result,
     present_run_hint,
     present_title,
@@ -40,7 +41,6 @@ from .verification import VerifyStatus, apply_line_endings, verify_file_output
 def main() -> None:
     """Entry point for the embedm CLI."""
     start_time = time.perf_counter()
-    present_title()
 
     config, errors = parse_command_line_arguments()
     if errors:
@@ -50,6 +50,9 @@ def main() -> None:
     if config.init_path is not None:
         _handle_init(config.init_path)
         return
+
+    if config.verbosity >= 1:
+        present_title()
 
     config, errors = _resolve_config(config)
     if errors:
@@ -135,7 +138,7 @@ def _process_directory_file(
 
     plan_root = plan_file(file_path, context)
 
-    if config.is_verbose:
+    if config.verbosity >= 3:
         verbose_section(f"planning: {file_path}")
         verbose_plan_tree(plan_root)
 
@@ -152,9 +155,12 @@ def _process_directory_file(
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
         written_path = _write_directory_output(file_path, base_dir, config, result) if result else None
-        if written_path and config.is_verbose:
+        if written_path and config.verbosity >= 3:
             verbose_output_path(written_path)
         _update_summary(summary, plan_root, wrote=bool(result))
+
+    if config.verbosity == 2:
+        present_file_progress(file_path, plan_root)
 
 
 def _expand_directory_input(input_path: str) -> list[str]:
@@ -166,15 +172,21 @@ def _expand_directory_input(input_path: str) -> list[str]:
     return sorted(str(p) for p in Path(input_path).glob("*.md"))
 
 
+def _emit_errors(errors: list[Status], context: EmbedmContext) -> None:
+    """Present errors unless suppressed (accept-all at verbosity < 2)."""
+    if context.config.verbosity >= 2 or not context.accept_all:
+        present_errors(errors)
+
+
 def _compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
     """Compile a plan tree into output with interactive error prompting."""
     if plan_root.document is None:
-        present_errors(plan_root.status)
+        _emit_errors(plan_root.status, context)
         return ""
 
     tree_errors = collect_tree_errors(plan_root)
     if tree_errors:
-        present_errors(tree_errors)
+        _emit_errors(tree_errors, context)
         has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
         if has_fatal:
             return ""
@@ -203,7 +215,7 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
     t0 = time.perf_counter()
     result = plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
     elapsed_s = time.perf_counter() - t0
-    if context.config.is_verbose:
+    if context.config.verbosity >= 3:
         verbose_timing("transform", plan_root.directive.type, plan_root.directive.source, elapsed_s)
     return result
 
@@ -268,7 +280,7 @@ def _write_directory_output(
 
 def _emit_verbose_start(config: Configuration, context: EmbedmContext) -> None:
     """Emit the configuration and plugin discovery sections when verbose is on."""
-    if config.is_verbose:
+    if config.verbosity >= 3:
         verbose_section("configuration")
         verbose_config(config)
         verbose_section("plugins")
@@ -276,12 +288,17 @@ def _emit_verbose_start(config: Configuration, context: EmbedmContext) -> None:
 
 
 def _emit_verbose_end(config: Configuration, summary: RunSummary) -> None:
-    """Emit the summary section (verbose) or the error hint (non-verbose with errors)."""
-    if config.is_verbose:
+    """Emit the summary line (levels 1–2) or the full verbose summary (level 3)."""
+    if config.verbosity == 0:
+        return
+    if config.verbosity >= 3:
         verbose_section("summary")
         verbose_summary(summary)
-    elif summary.error_count > 0:
+    elif summary.error_count > 0 and config.is_accept_all and config.verbosity < 2:
+        # level 1 + accept_all + errors: errors were suppressed; show summary + hint
         present_run_hint(summary)
+    else:
+        verbose_summary(summary)
 
 
 def _process_single_input(
@@ -292,7 +309,7 @@ def _process_single_input(
     summary: RunSummary,
 ) -> None:
     """Compile and write a single plan (FILE or STDIN mode), updating the summary."""
-    if config.is_verbose:
+    if config.verbosity >= 3:
         verbose_section(f"planning: {source_label}")
         verbose_plan_tree(plan_root)
     compiled_dir = _output_file_compiled_dir(config.output_file)
@@ -305,7 +322,7 @@ def _process_single_input(
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
         written_path = _write_output(result, config)
-        if written_path and config.is_verbose:
+        if written_path and config.verbosity >= 3:
             verbose_section("output")
             verbose_output_path(written_path)
         _update_summary(summary, plan_root, wrote=bool(result))
@@ -323,7 +340,7 @@ def _validate_plugin_config_schemas(config: Configuration, registry: PluginRegis
         schema = plugin.get_plugin_config_schema()
         for key, value in settings.items():
             if schema is None or key not in schema:
-                if config.is_verbose:
+                if config.verbosity >= 3:
                     errors.append(Status(StatusLevel.WARNING, f"plugin_configuration['{module}']: unknown key '{key}'"))
                 continue
             if not isinstance(value, schema[key]):
@@ -342,7 +359,7 @@ def _validate_plugin_config_schemas(config: Configuration, registry: PluginRegis
 
 def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     """Build the runtime context from configuration."""
-    on_event = make_cache_event_handler() if config.is_verbose else None
+    on_event = make_cache_event_handler() if config.verbosity >= 3 else None
     file_cache = FileCache(
         config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size, on_event=on_event
     )
