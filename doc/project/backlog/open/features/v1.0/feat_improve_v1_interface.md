@@ -1,6 +1,6 @@
 FEATURE: Improve user interface
 ========================================
-`<Optional Draft>`
+Draft
 `<Optional Planned release>`
 Created: `<date>`
 Closed: `<date>`

@@ -46,6 +46,6 @@ max_sentences: 4
 
 ## Active feature spec
 
-`tech_review_rc1.md` in `doc\project\backlog`.
+discuss `feat_improve_v1_interface.md` in `doc\project\backlog`.
 
 If you can't find this because the active spec may be moved or renamed, ask the user.
