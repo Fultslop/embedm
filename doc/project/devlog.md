@@ -4,6 +4,22 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 23/02/26 [ARCH] split CLAUDE.md — extracted full coding guidelines to doc/project/guidelines.md; CLAUDE.md slimmed to hard constraints + platform + session-start pointer (~20 lines). agent_context.src.md updated to embed guidelines.md instead of CLAUDE.md, eliminating the circular reference. Archiving policy note moved to guidelines.md.
+
+* 23/02/26 [SUGGESTION] bug: _clean_text underscore italic regex mangles snake_case identifiers in recall output (e.g. plugin_resources.py → pluginresources.py). The _{1,3}(.*?)_{1,3} pattern matches across word boundaries when multiple underscores appear on one line. Recall output is semantically correct but identifiers are less readable. Fix: anchor underscore matching to word boundaries or exclude underscores surrounded by word characters.
+
+* 23/02/26 [TASK] feat_agent_context_document — initial implementation: doc/project/agent_context.src.md with recall/file directives (CLAUDE.md whole + devlog recall for plugin conventions / architectural rules / miss patterns + active spec file embed); doc/project/embedm-config.yaml; compiled to doc/project/agent_context.md. CLAUDE.md updated with session-start instruction, recompile command, xenon threshold, devlog archiving policy. Dropped quality-thresholds recall section (xenon already in CLAUDE.md).
+
+* 23/02/26 [TASK] recall_plugin.md — added "Building an AI agent context document" section with step-by-step instructions: identify sources, write directives, compile, point agent to output, recompile on change, track misses, run promotion gate before archiving. Updated feat_agent_context_document.md spec: archiving is user-executed, embedm assists preparation only via recall; execution is manual cut/paste to devlog_archive.md.
+
+* 23/02/26 [ARCH] devlog archiving policy — [TASK]/[FEAT] entries may be archived; [ARCH]/[STANDARDS]/[MISS]/[REVIEW] are permanent and never archived. Before archiving, recall over the batch with "convention rule architectural decision" to surface untagged decisions for promotion to CLAUDE.md. Archive kept as devlog_archive.md for deep-history recall. Captured in feat_agent_context_document.md.
+
+* 23/02/26 [FEAT] feat_agent_context_document — spec added to backlog/open/features/v1.0. Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. Four sections: plugin conventions, embed patterns, architectural decisions, active work. Effectiveness measured via [MISS] frequency in devlog.
+
+* 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md. Root cause: read table_plugin.md and synopsis_plugin.md (neither has a version line) but did not read readme.md despite user citing it. Rule added to CLAUDE.md: read an existing compiled document in the same directory before writing any embed directive.
+
+* 23/02/26 [TASK] recall_plugin manual — write doc/manual/src/recall_plugin.md covering use case, offline-RAG selling point, yaml embed examples, TOC, version, recall-vs-synopsis comparison.
+
 * 23/02/26 [TASK] extract text_processing module — moved shared NLP pipeline (_clean_text, _split_into_blocks, _block_to_sentences, _tokenize, _score_frequency, _select_top, _build_word_freq, _sentence_score) from synopsis_transformer into embedm_plugins.text_processing; synopsis_transformer and recall_transformer now both import from the shared module.
 
 * 23/02/26 [TASK] feat_recall_plugin — new recall plugin: query-based sentence retrieval using sparse token-overlap scoring; shares _clean_text / _split_into_blocks / _tokenize / _score_frequency / _select_top pipeline from synopsis_transformer; falls back to frequency scoring with a note when no sentences match the query. Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis.

@@ -1,5 +1,12 @@
 # Synopsis Plugin
 
+```yaml embedm
+type: query-path
+source: ../../../pyproject.toml
+path: project.version
+format: "version {value}"
+```
+
 The synopsis plugin generates a concise blockquote summary of a document. It scores sentences using statistical algorithms and selects the most representative ones, biased toward introductory content through a block-level positional decay model.
 
 ```yaml embedm
