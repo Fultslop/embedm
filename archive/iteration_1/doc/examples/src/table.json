@@ -1,5 +1,0 @@
-[
-  {"user": "alice", "role": "admin", "active": true},
-  {"user": "bob", "role": "user", "active": true},
-  {"user": "charlie", "role": "user", "active": false}
-]
