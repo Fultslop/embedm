@@ -32,6 +32,7 @@ from .console import (
     verbose_timing,
 )
 from .embedm_context import EmbedmContext
+from .plan_tree import collect_embedded_sources, collect_tree_errors, tree_has_level
 from .planner import plan_content, plan_file
 from .verification import VerifyStatus, apply_line_endings, verify_file_output
 
@@ -158,7 +159,7 @@ def _process_directory_file(
         verbose_plan_tree(plan_root)
 
     # track all sources this file embeds so we skip them as standalone roots
-    _collect_embedded_sources(plan_root, embedded)
+    embedded.update(collect_embedded_sources(plan_root))
 
     compiled_dir = _dir_mode_compiled_dir(file_path, base_dir, config)
     result = _compile_plan(plan_root, context, compiled_dir)
@@ -184,21 +185,13 @@ def _expand_directory_input(input_path: str) -> list[str]:
     return sorted(str(p) for p in Path(input_path).glob("*.md"))
 
 
-def _collect_embedded_sources(node: PlanNode, sources: set[str]) -> None:
-    """Walk the plan tree and collect all embedded source paths."""
-    for child in node.children or []:
-        if child.directive.source:
-            sources.add(str(Path(child.directive.source).resolve()))
-        _collect_embedded_sources(child, sources)
-
-
 def _compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
     """Compile a plan tree into output with interactive error prompting."""
     if plan_root.document is None:
         present_errors(plan_root.status)
         return ""
 
-    tree_errors = _collect_tree_errors(plan_root)
+    tree_errors = collect_tree_errors(plan_root)
     if tree_errors:
         present_errors(tree_errors)
         has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
@@ -394,14 +387,6 @@ def _dir_mode_compiled_dir(file_path: str, base_dir: Path, config: Configuration
         return ""
 
 
-def _collect_tree_errors(node: PlanNode) -> list[Status]:
-    """Walk the plan tree and collect all error/fatal statuses."""
-    errors = [s for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
-    for child in node.children or []:
-        errors.extend(_collect_tree_errors(child))
-    return errors
-
-
 def _write_output(result: str, config: Configuration) -> str | None:
     """Write compilation result to the configured destination.
 
@@ -441,8 +426,8 @@ def _update_summary(
     verify_status: VerifyStatus | None = None,
 ) -> None:
     """Update the run summary from a completed plan."""
-    has_error = _tree_has_level(plan_root, (StatusLevel.ERROR, StatusLevel.FATAL))
-    has_warning = _tree_has_level(plan_root, (StatusLevel.WARNING,))
+    has_error = tree_has_level(plan_root, (StatusLevel.ERROR, StatusLevel.FATAL))
+    has_warning = tree_has_level(plan_root, (StatusLevel.WARNING,))
 
     if verify_status is not None:
         summary.is_verify = True
@@ -459,10 +444,3 @@ def _update_summary(
         summary.warning_count += 1
     else:
         summary.ok_count += 1
-
-
-def _tree_has_level(node: PlanNode, levels: tuple[StatusLevel, ...]) -> bool:
-    """Return True if the plan tree contains any status at one of the given levels."""
-    if any(s.level in levels for s in node.status):
-        return True
-    return any(_tree_has_level(child, levels) for child in node.children or [])

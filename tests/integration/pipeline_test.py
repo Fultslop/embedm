@@ -116,10 +116,8 @@ def test_circular_dependency_produces_error(tmp_path: Path):
 
 def test_directory_mode_skips_embedded_files(tmp_path: Path):
     """When processing a directory, files already embedded as children are skipped."""
-    from embedm.application.orchestration import (
-        _collect_embedded_sources,
-        _expand_directory_input,
-    )
+    from embedm.application.orchestration import _expand_directory_input
+    from embedm.application.plan_tree import collect_embedded_sources
 
     child = tmp_path / "child.md"
     child.write_text("Child content\n")
@@ -137,8 +135,7 @@ def test_directory_mode_skips_embedded_files(tmp_path: Path):
     # plan root and collect embedded sources
     context = _build_context(tmp_path)
     plan = plan_file(str(root), context)
-    embedded: set[str] = set()
-    _collect_embedded_sources(plan, embedded)
+    embedded = collect_embedded_sources(plan)
 
     # child.md is embedded, so it should be in the skip set
     child_resolved = str(child.resolve())

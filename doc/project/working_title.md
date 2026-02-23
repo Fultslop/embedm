@@ -1,4 +1,4 @@
-Cocreation with Claude
+Cocreating Embedm with Claude
 ======================================
 
 > _"Creator of Claude Code: "Coding is solved""_
@@ -18,7 +18,9 @@ With this in mind, I started working on something that has been bugging me in my
 
 I had a general approach in mind, but never got around building it because while trivial on paper, there are a surprising number of implementation details, seemingly unassuming features and other considerations that go into making "automatic document maintenance" work. 
 
-Using various Google and free versions of the chatbot cadre, I _briefly_ verified if no obvious solution existed. The research came up with some similar tools but nothing concrete. Based on the principle that everything already exists and no idea is new, I assume there is a tool that covers Embedm's functionality (maybe some clever grep / regex could even do it), but I am happy to stay ignorant in this respect pretending I've created something original.  
+Using various Google and free versions of the chatbot cadre, I _briefly_ verified if no obvious solution existed. The research came up with some similar tools but nothing concrete. Based on the principle that everything already exists and no idea is new, I assume there is a tool that covers Embedm's functionality (maybe some clever grep / regex could even do it), but I am happy to stay ignorant in this respect pretending we've created something original.  
+
+That something, hopefully but probably not very, original thing is `Embedm`.
 
 **My background**
 
@@ -31,6 +33,8 @@ One of the projects we ran was based on the [Alice](https://en.wikipedia.org/wik
 It wasn't until a random afternoon, where being stuck in a somewhat boring company townhall, I prompted the free Claude-version to build a JS based, bare-bones 2D physics engine and it did so, with graphics and all, in under a couple of seconds. It wasn't perfect but with one or two fixes, it performed admirally well. I was impressed and decided to buy a Claude pro-version to see and explore what it could do.
 
 A couple of weeks later, here we are...
+
+**Current state**
 
 ## What went wrong
 
@@ -59,20 +63,22 @@ Claude Improvements:
  - More (cost-)effective reasoning 
 
 User Improvements:
- - Lean towards smaller, well defined, items with clear outcomes. 
- - Set/ask for limits, early feedback 
+ - Lean towards smaller, well defined, items with clear outcomes. Iterate over planning until these are in place.
+ - Set/ask for limits, early feedback.
 
 **Maintaining Design/Architecture**
 
-**Ignoring directives** Esp no magic values
+Maintaining a coherent, clear and scope-deliniated architecture is complicated with this entity that materializes the requested features at light speed. 
 
-**Overthinks without asking for feedback**
+**Ignoring directives** 
+
+Esp no magic values
+
+**Metric - and outcome oriented code**
 
 **Fixing tests to match the output**
 
 **Commenting balance is hard**
-
-**Metric oriented code**
 
 **Context window fills up too fast**
 Compacting compacting and then forgetting
