@@ -96,129 +96,22 @@ old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
 
 Key decisions about plugin structure, registration, and naming extracted from the decision log.
 
-> 23/02/26 [TASK] featagentcontextdocument — initial implementation: doc/project/agentcontext.src.md with recall/file directives (CLAUDE.md whole + devlog recall for plugin conventions / architectural rules / miss patterns + active spec file embed); doc/project/embedm-config.yaml; compiled to doc/project/agent_context.md. Registered as entry point and added to DEFAULTPLUGIN_SEQUENCE after synopsis. 22/02/26 [TASK] Refactor embedmplugins — split monolithic pluginresources.py into five per-plugin resource files (fileresources, querypathresources, synopsisresources, tableresources, tocresources); renamed normalizejson/yaml/xml/toml to querypathnormalize to make ownership explicit. 22/02/26 [TASK] featverboseclioption — update spec (stderr, all config fields, two-stage plugin discovery, planning tree node definition, lookup failure shows available types, NOCOLOR convention noted), then implement -v/--verbose flag. 19/02/26 [Arch] Plugin load failures treated as user errors — `loadplugins` now returns `list[Status]` and catches per-entry exceptions gracefully.
+> Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis. 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_ to make ownership explicit. 22/02/26 [TASK] feat_verbose_cli_option — update spec (stderr, all config fields, two-stage plugin discovery, planning tree node definition, lookup failure shows available types, NO_COLOR convention noted), then implement -v/--verbose flag. 19/02/26 [Arch] Plugin load failures treated as user errors — `load_plugins` now returns `list[Status]` and catches per-entry exceptions gracefully. Plugin system already provides IoC via entry points.
 
 ## Architectural rules
 
 Core rules about the validation/transform boundary, error handling, and code quality.
 
-> 23/02/26 [ARCH] split CLAUDE.md — extracted full coding guidelines to doc/project/guidelines.md; CLAUDE.md slimmed to hard constraints + platform + session-start pointer (~20 lines). 22/02/26 [TASK] featpluginconfigurability — implement pluginconfiguration section in embedm-config.yaml: Configuration.pluginconfiguration field; configloader parses and validates inner dicts; PluginBase gets getpluginconfigschema() and validatepluginconfig() with no-op defaults; PluginConfiguration carries pluginsettings; orchestration.validatepluginconfigs() runs two-phase validation (schema type-check + plugin semantic); extraction.py gains DEFAULTREGIONSTART/END constants and compileregion_pattern() factory; RegionParams accepts template overrides; FilePlugin publishes schema and validates {tag} presence; region templates threaded end-to-end. 22/02/26 [ARCH] featpluginconfigurability — settled design: `pluginconfiguration` section in `embedm-config.yaml` (no separate file); two-phase validation: framework validates structure via `getpluginconfigschema()`, plugin validates semantics via `validatepluginconfig()`; unknown keys silently ignored (logged with --verbose); missing keys fall back to hardcoded defaults. 21/02/26 [REVIEW] techmovevalidationfromtabletransformerexecute — pipeline steps (applyselect, applyorderby) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validateinput. 16/02/26 [Standards] Error handling guidelines — coding errors crash via assert, input errors collect Status and recover.
+> 23/02/26 [ARCH] feat_verify_cli_option — three design decisions added: (1) compilation errors exit 1 in all modes (not just verify), correcting prior soft-fail behaviour; (2) line_endings config option (lf|crlf, default lf) applied before write and before verify comparison — project-level not directive-level; (3) verify-mode summary reports files_checked/up-to-date/stale instead of files_written. 23/02/26 [TASK] bug_clean_text_mangles_snake_case — fix: add word-boundary guards (?<!\w) / (?!\w) to the {1,3}(.?){1,3} italic-removal regex in text_processing._clean_text; regression tests in text_processing_test.py. 23/02/26 [ARCH] split CLAUDE.md — extracted full coding guidelines to doc/project/guidelines.md; CLAUDE.md slimmed to hard constraints + platform + session-start pointer (~20 lines). 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input. 16/02/26 [Standards] Error handling guidelines — coding errors crash via assert, input errors collect Status and recover.
 
 ## Patterns — avoid these misses
 
 Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
 
-> agent_context.src.md updated to embed guidelines.md instead of CLAUDE.md, eliminating the circular reference. Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recallplugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md.
+> Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md. 22/02/26 [Fix] query-path trailing newline — scalar and format-string output from QueryPathTransformer now always appends \n so the blank-line separator after a directive fence is preserved in the rendered document.
 
 ## Active feature spec
 
-FEATURE: Agent Context Document
-========================================
-Draft  
-Release v1.0  
-Created: 23/02/2026  
-Closed: 23/02/2026  
-Created by: FS / Claude  
+`bug_recall_captures_absolute_paths.md` in `doc\project\backlog`.
 
-## Description
-
-Create a compiled markdown document that pre-filters project knowledge for the AI agent
-at session start. The agent reads this document instead of manually scanning CLAUDE.md,
-devlog.md, and active specs separately.
-
-Each Claude session starts cold with no memory of previous decisions. CLAUDE.md provides
-rules but not history. The devlog provides history but requires scanning. The context
-document bridges the gap: it uses recall and file directives to compile pre-targeted
-queries into a single, focused reference that surfaces what the agent needs without
-loading everything.
-
-This is dog-fooding: embedm is used to build the context that improves embedm's own
-development. The quality of the context document can be tracked via `[MISS]` entries
-in the devlog (errors the document should have prevented).
-
-Related: the document's long-term usefulness depends on devlog knowledge not being lost
-to archiving. A companion devlog archiving policy (see Design notes) is part of this feature.
-
-### Design notes
-
-**Source and output locations**
-
-- Source: `doc/project/src/agent_context.md`
-- Compiled output: `doc/project/agent_context.md`
-- The source uses recall, file, and query-path directives against project files.
-
-**Sections**
-
-The compiled document has four sections drawing from different sources:
-
-1. **Plugin conventions** — recall over devlog and source files: registration patterns,
-   resource file naming, entry point format, DEFAULT_PLUGIN_SEQUENCE placement.
-2. **Embed patterns** — recall over `doc/manual/src/readme.md` and compiled manual docs:
-   how project metadata (version, name) is embedded dynamically, established directive idioms.
-3. **Architectural decisions** — recall over devlog (permanent tags only): validation/transform
-   boundary, xenon thresholds, transformer purity rule, text_processing shared module.
-4. **Active work** — file embed of the current in-progress spec from
-   `doc/project/backlog/in_progress/`. Not recall — the full spec is needed.
-
-**Devlog archiving policy**
-
-The context document draws from the live devlog. As the devlog grows, recall results
-become noisier. The archiving policy ensures knowledge is preserved without polluting
-current queries.
-
-*Tag retention rules (enforced by convention, never automated):*
-
-- `[TASK]` and `[FEAT]` entries may be archived once they are sufficiently old.
-- `[ARCH]`, `[STANDARDS]`, `[MISS]`, and `[REVIEW]` entries are **never archived** —
-  they stay in the live devlog permanently.
-
-*Archiving process (user-executed, embedm-assisted):*
-
-embedm cannot move entries between files — it is a compiler, not an editor. Archiving
-is a manual operation performed by the user. embedm assists only the preparation step.
-
-1. When the devlog becomes large enough to affect recall quality, the user creates a
-   temporary source document with a recall directive over the entries to be archived:
-   ```yaml
-   type: recall
-   source: ./devlog.md
-   query: "convention rule architectural decision established"
-   max_sentences: 8
-   ```
-2. Compile and review the output (the promotion gate). Any surfaced decision not already
-   in CLAUDE.md must be promoted before proceeding.
-3. The user manually moves old `[TASK]` and `[FEAT]` entries from `devlog.md` to
-   `devlog_archive.md`.
-4. The archive file is retained. The context document may include an optional recall
-   over it for deep history.
-
-**Measuring effectiveness**
-
-`[MISS]` entries in the devlog record errors the context document should have prevented.
-Compare the `[MISS]` frequency across sessions before and after the document is introduced.
-This is the primary feedback signal for tuning the recall queries.
-
-## Acceptance criteria
-
-1. `doc/project/src/agent_context.md` exists as a source document using recall, file,
-   and query-path directives targeting devlog.md, CLAUDE.md, and the active spec.
-2. The source compiles cleanly with no errors or warnings.
-3. The compiled output contains the four sections described above: plugin conventions,
-   embed patterns, architectural decisions, active work.
-4. CLAUDE.md is updated to reference the compiled document and instruct the agent to
-   read it at session start before beginning any task.
-5. The devlog archiving policy (permanent tags, user-executed archiving, embedm-assisted
-   promotion gate) is documented in CLAUDE.md.
-6. At least one recall query per section is tuned so that the relevant content (e.g.
-   the resource file naming convention, the validation/transform boundary rule) appears
-   in the compiled output.
-7. After a simulated archive of old `[TASK]` entries, the compiled output of the context
-   document is unaffected: decisions and patterns remain accessible.
-
-## Comments
-
-23/02/26 Claude: Discussed in doc/project/claude-dialogs/on_recall_dog_food.md.
-  Core insight: devlog conflates audit trail (ephemeral) and decisions (permanent).
-  Archiving must not conflate them. Tag-based retention prevents knowledge loss by
-  construction; recall-based promotion gate catches untagged decisions before they
-  are archived.
+If you can't find this because the active spec may be moved or renamed, ask the user.

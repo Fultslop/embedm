@@ -291,3 +291,49 @@ def test_discover_returns_none_when_absent(tmp_path: Path) -> None:
     result = discover_config(str(input_file))
 
     assert result is None
+
+
+# --- line_endings ---
+
+
+def test_load_line_endings_lf(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("line_endings: lf\n", encoding="utf-8")
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.line_endings == "lf"
+
+
+def test_load_line_endings_crlf(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("line_endings: crlf\n", encoding="utf-8")
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.line_endings == "crlf"
+
+
+def test_load_line_endings_invalid_value_returns_error(tmp_path: Path) -> None:
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("line_endings: windows\n", encoding="utf-8")
+
+    _, errors = load_config_file(str(config_file))
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "line_endings" in errors[0].description
+
+
+def test_load_line_endings_absent_uses_default(tmp_path: Path) -> None:
+    from embedm.application.configuration import DEFAULT_LINE_ENDINGS
+
+    config_file = tmp_path / CONFIG_FILE_NAME
+    config_file.write_text("max_recursion: 3\n", encoding="utf-8")
+
+    config, errors = load_config_file(str(config_file))
+
+    assert not any(e.level == StatusLevel.ERROR for e in errors)
+    assert config.line_endings == DEFAULT_LINE_ENDINGS

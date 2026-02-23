@@ -35,6 +35,7 @@ def parse_command_line_arguments(
         config_file=parsed.config,
         is_accept_all=parsed.accept_all,
         is_dry_run=parsed.dry_run,
+        is_verify=parsed.verify,
         is_verbose=parsed.verbose,
     ), []
 
@@ -52,6 +53,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-n", "--dry-run", action="store_true", default=False, help="compile but do not write output files"
     )
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        default=False,
+        help="compile and compare against existing files; exit 1 if stale",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="write diagnostic output to stderr")
     parser.add_argument("--init", nargs="?", const="", default=None, help="generate embedm-config.yaml in directory")
     return parser
@@ -67,8 +74,23 @@ def _validate(parsed: argparse.Namespace) -> list[Status]:
     if parsed.output_file and _is_directory_input(parsed.input):
         errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_out_file_and_dir_input))
 
+    errors.extend(_validate_verify_flags(parsed))
+
     if not parsed.input and sys.stdin.isatty():
         errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_no_input))
+
+    return errors
+
+
+def _validate_verify_flags(parsed: argparse.Namespace) -> list[Status]:
+
+    errors: list[Status] = []
+
+    if parsed.verify and parsed.dry_run:
+        errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_verify_and_dry_run))
+
+    if parsed.verify and not parsed.output_file and not parsed.output_dir:
+        errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_verify_requires_output))
 
     return errors
 

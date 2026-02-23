@@ -272,6 +272,30 @@ def test_format_summary_includes_elapsed() -> None:
     assert "completed in 0.312s" in result
 
 
+def test_format_summary_verify_mode_up_to_date() -> None:
+    summary = RunSummary(is_verify=True, up_to_date_count=3, stale_count=0, elapsed_s=0.1)
+    result = _format_summary(summary)
+    assert "verify complete" in result
+    assert "3 files checked" in result
+    assert "3 up-to-date" in result
+    assert "0 stale" in result
+
+
+def test_format_summary_verify_mode_stale() -> None:
+    summary = RunSummary(is_verify=True, up_to_date_count=1, stale_count=2, elapsed_s=0.1)
+    result = _format_summary(summary)
+    assert "3 files checked" in result
+    assert "1 up-to-date" in result
+    assert "2 stale" in result
+
+
+def test_format_summary_verify_mode_singular_file() -> None:
+    summary = RunSummary(is_verify=True, up_to_date_count=1, stale_count=0)
+    result = _format_summary(summary)
+    assert "1 file checked" in result
+    assert "files" not in result.split("1 file checked")[0]
+
+
 def test_verbose_timing_emits_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
     verbose_timing("validate_input", "table", "/data/file.csv", 0.043)
     captured = capsys.readouterr()

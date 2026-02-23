@@ -16,6 +16,7 @@ DEFAULT_MAX_RECURSION = 8
 DEFAULT_MAX_MEMORY = 104_857_600  # 100 MB
 DEFAULT_MAX_EMBED_SIZE = 524_288  # 512 KB
 DEFAULT_ROOT_DIRECTIVE_TYPE = "file"
+DEFAULT_LINE_ENDINGS = "lf"
 CONFIG_FILE_NAME = "embedm-config.yaml"
 
 # include standard embedm plugins
@@ -71,6 +72,12 @@ class Configuration:
 
     # will only run, does not save any files
     is_dry_run: bool = False
+
+    # if set, compile and compare against existing files but do not write
+    is_verify: bool = False
+
+    # line endings applied to output files: "lf" (default) or "crlf"
+    line_endings: str = DEFAULT_LINE_ENDINGS
 
     # path to the config file (from --config or auto-discovered)
     config_file: str | None = None

@@ -15,6 +15,15 @@ For an LLM like Claude this is particularly valuable. When a markdown document i
   - [Language](#language)
   - [Fallback behaviour](#fallback-behaviour)
   - [Block model and positional decay](#block-model-and-positional-decay)
+  - [Building an AI agent context document](#building-an-ai-agent-context-document)
+    - [Step 1 — Identify your knowledge sources](#step-1-identify-your-knowledge-sources)
+    - [Step 2 — Create a source document](#step-2-create-a-source-document)
+    - [Step 3 — Compile](#step-3-compile)
+    - [Step 4 — Point your agent to the compiled output](#step-4-point-your-agent-to-the-compiled-output)
+    - [Step 5 — Recompile when sources change](#step-5-recompile-when-sources-change)
+    - [Step 6 — Track misses and tune queries](#step-6-track-misses-and-tune-queries)
+    - [Step 7 — Maintain the knowledge base](#step-7-maintain-the-knowledge-base)
+    - [Keeping the bootstrap file minimal](#keeping-the-bootstrap-file-minimal)
 
 ## Basic Usage
 
@@ -150,3 +159,113 @@ final_score  = overlap_score × block_weight
 ```
 
 When two sentences have equal query overlap, the one appearing earlier in the document wins. This reflects the common pattern where important definitions and summaries appear at the start of a section.
+
+## Building an AI agent context document
+
+Every AI coding session starts cold. Tools like Claude have no memory of previous decisions, established patterns, or project history unless that context is explicitly provided. Loading entire files is expensive; recall makes targeted context assembly affordable.
+
+An agent context document is a compiled markdown file containing recall directives that pre-filter your project's knowledge sources — guidelines, a decision log, active work items — into a single focused reference. The AI reads the compiled output at session start and arrives with the right context rather than a blank slate.
+
+### Step 1 — Identify your knowledge sources
+
+Decide which files contain knowledge worth pre-filtering:
+
+- **Guidelines** — coding standards, architectural rules, naming conventions
+- **Decision log** — a chronological record of design decisions and corrections
+- **Active spec** — the feature or task currently in progress
+
+### Step 2 — Create a source document
+
+Create a source file (e.g., `agent_context.src.md`) with one or more directives per knowledge category. Use `file` for short, complete documents you always want in full. Use `recall` for long documents where only the relevant passages matter.
+
+For a guidelines file (short enough to embed whole):
+
+```yaml
+type: file
+source: ./CLAUDE.md
+```
+
+For a long decision log (embed only the architecturally relevant passages):
+
+```yaml
+type: recall
+source: ./devlog.md
+query: "architectural decision convention rule established"
+max_sentences: 6
+```
+
+For the active spec (full content needed):
+
+```yaml
+type: file
+source: ./backlog/in_progress/current_feature.md
+```
+
+Use specific, technical queries — terms that only appear in the passages you actually want. Vague queries like `"how does it work"` produce noise; specific ones like `"validation transform boundary plugin pure"` produce signal.
+
+### Step 3 — Compile
+
+```
+embedm agent_context.src.md agent_context.md
+```
+
+Review the compiled output. Each recall section should surface genuinely useful content. If a section looks wrong, refine the query: add domain-specific terms, remove ambiguous words, or adjust `max_sentences`.
+
+### Step 4 — Point your agent to the compiled output
+
+Tell the AI to read the compiled document at session start. For Claude Code, add a line to `CLAUDE.md`:
+
+```
+At the start of each session, read doc/project/agent_context.md before beginning any task.
+```
+
+### Step 5 — Recompile when sources change
+
+The compiled document is a snapshot. Recompile it after significant additions to the decision log or when the active spec changes. A stale context document is still useful, but a current one is better.
+
+### Step 6 — Track misses and tune queries
+
+When the agent makes an error the context document should have prevented, record it — for example with a `[MISS]` tag in the decision log. After a few sessions, review the misses: are they clustered around a knowledge category the document does not cover? If so, add or tune a recall directive to target that gap.
+
+### Step 7 — Maintain the knowledge base
+
+Recall quality degrades as source documents grow. A decision log with hundreds of entries will produce noisier results than one with fifty. Periodic archiving keeps queries sharp.
+
+Before archiving a batch of entries, create a temporary source document to run what is called the *promotion gate*: a recall over the entries to be archived, looking for decisions that were recorded but never formally captured as rules.
+
+```yaml
+type: recall
+source: ./devlog.md
+query: "convention rule architectural decision established"
+max_sentences: 8
+```
+
+Compile it and review the output. Any surfaced decision not already in your guidelines file should be added before archiving. Then manually move the old entries to an archive file — they remain searchable if you later add a recall directive over the archive for deep history.
+
+This process ensures that archiving removes noise without removing knowledge.
+
+### Keeping the bootstrap file minimal
+
+If you use a tool like Claude Code, the agent automatically reads `.claude/CLAUDE.md` at session start. That file therefore has two jobs: holding rules and bootstrapping the context document. As your guidelines grow, these two jobs pull in opposite directions — you want the auto-read file to be small and fast, but the rules keep accumulating.
+
+The solution is to separate them:
+
+- **Bootstrap file** (`.claude/CLAUDE.md`) — hard constraints, platform notes, and the session-start pointer only. Stays small permanently.
+- **Guidelines file** (`doc/project/guidelines.md`) — the full coding rules, architecture decisions, tooling standards. Grows freely.
+- **Context document source** (`agent_context.src.md`) — embeds `guidelines.md`, not the bootstrap file.
+
+The bootstrap file shrinks to roughly twenty lines. The guidelines file is the authoritative rules source. The agent context document compiles the guidelines plus targeted recall sections from the decision log. The relationship is clean and one-directional:
+
+```
+bootstrap → agent_context ← guidelines
+                 ↑ (recall)
+              devlog
+```
+
+Without this split there is a circular feeling: the auto-read file instructs the agent to read a compiled document that embeds the auto-read file back. The split removes that loop and makes each file's purpose unambiguous.
+
+**Recommendation** 
+
+As mentioned this requires capturing activities during the project. We keep a 'devlog.md' in the Embedm project. To see if the agent_context.md adds value, keep track of "misses" by the agent, ie actions that resulted in wrong outcomes or errors. Utilizing the agent_context should recude the number of misses over time. Note that this is a working hypothesis, a full controlled test is outside the scope.
+
+In other words, the recall plugin is the glue: it turns a growing, noisy log into a focused, readable signal at a moment you choose. The [MISS] feedback loop closes it — misses tell you when the queries need tuning.

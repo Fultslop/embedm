@@ -12,7 +12,64 @@ Cocreation with Claude
 
 **Goal of the project**
 
+The goal of this project was to get first hand experience with co-creating with an coding assistant, Claude in this case. The project was meant to be limited in scope and moderate in complexity. To narrow down the latter statement, the intention was to have a set of non-trivial, relevant problems that have a well-defined to "define-able" input, output behavior. In other words, something more complex than building a shopping-list-app or calculator, but something well below of theshold of "solve fusion and build me a schematic I can fit in my tiny backyard". 
+
+With this in mind, I started working on something that has been bugging me in my both my professional work and own personal projects: documentation maintenance. While I'm hardly an accomplished writer, I appreciate well written, easy to understand documentation. I generally make an effort to provide something that new users can quickly scan and get going with any of my projects. This sentiment - also generally - dies as soon as the project becomes big enough that examples in the documentation become a liability and maintenance cost as the code being documented changes, is deleted, or superceded by new code. I want the code upkeep to be automated.
+
+I had a general approach in mind, but never got around building it because while trivial on paper, there are a surprising number of implementation details, seemingly unassuming features and other considerations that go into making "automatic document maintenance" work. 
+
+Using various Google and free versions of the chatbot cadre, I _briefly_ verified if no obvious solution existed. The research came up with some similar tools but nothing concrete. Based on the principle that everything already exists and no idea is new, I assume there is a tool that covers Embedm's functionality (maybe some clever grep / regex could even do it), but I am happy to stay ignorant in this respect pretending I've created something original.  
+
 **My background**
+
+In brief, I'm a software engineer with 25+ years of professional experience ranging from start-ups to Fortune 500 companies and at least one of the major software giants. I've worked on the hardware level all the way up to framework(s)-du-jour on the front-end. During this time I wore many hats from code monkey to engineering manager. On a good day, with enough coffee and a good night of sleep, I imagine I am capable of producing average-grade but production ready software. I'm capable, but not a genious. 
+
+What is somewhat ironic is that I am late to the AI party considering I started my career 28 years ago in a company that build ... software agents. Although I'm sure I'm reflecting on this through the pink-colered glasses of nostalgia, the people in that company were some of the smartest people I worked with. The software we produced was well ahead of its time. We had a messaging-bus when Kafka was only known as writer, we created scalable object storage and retrieval almost a decade before the the likes of Redis and Hazelcast appeared, micro-services came as a side-effect of the platform. The company ultimately failed because its solutions were way ahead of its time and in need of a timely problem(s) to solve. 
+
+One of the projects we ran was based on the [Alice](https://en.wikipedia.org/wiki/Artificial_Linguistic_Internet_Computer_Entity) framework. The results were not encouraging and as I result I've been somewhat dismissive the rise of chatbots over the last few years (somewhat of a category error I suppose). My experiences with an early version of co-pilot, which with its auto-complete intrusiveness of nonsense co-snippets, were not encouraging to look deeper into the subject either. 
+
+It wasn't until a random afternoon, where being stuck in a somewhat boring company townhall, I prompted the free Claude-version to build a JS based, bare-bones 2D physics engine and it did so, with graphics and all, in under a couple of seconds. It wasn't perfect but with one or two fixes, it performed admirally well. I was impressed and decided to buy a Claude pro-version to see and explore what it could do.
+
+A couple of weeks later, here we are...
+
+## What went wrong
+
+Let's start with all the things that yielded a "MISS" (*). Something that either caused Claude to produce a wrong solution, or more broadly, yielded a negative user experience.
+
+(*) MISS was identified, by Claude as a useful category in the dev backlog, capturing 'something' that Claude didn't do right. In my experience a lot of these could be attributed to PICNIC or overly broad requests. 
+
+**Token Anxiety**
+
+For those that are not familiar, when working with Claude Code, you have a token budget. Asking Claude Code to do something uses up these tokens. Spend all your tokens and Claude will stop their work. You are left dangling as you have to wait until your next refresh. This next refresh can either come on a 'daily' cadence as you deplete your 'session' allowance or weekly cadence and you deplete your 'weekly' allowance. Antrophic provides a helpful dashboard where you can see your current budget.
+
+The budget is set, in my experience, to a fairly low number (for the Pro plan). I'm estimating working full time with Claude, you are getting 2.5 - 4 days per week depending on what you ask Claude and what work you're doing yourself. After that you're stuck with having to do all the tedious work yourself. 
+
+A lot of burn is caused by Claude going off on some recursive side-quest that sometimes reads like an angsty-anime of doubt and self-discovery. Claude may discover a side-effect of something you asked and instead of getting back to the user, it will wander off looking for a solution. Two sentences after the initial discovery, the stories twist reveals itself with a "But wait.." and a new side quest is or trace-back is initiated. When it eventually resolves ("maybe i should ask the user"), 50% of your session budget could be gone. 
+
+Another of these instances is where Claude's context window gets too full and a so-called `compaction process` is started. After this Claude feels fresh and new but has to read up on what it was doing... which also consumes a budget. At a particular junction in the project, we were closing in on a feature with only a few more tweaks to go. We had 2% of tokens left, but given that the remaining issues were small that should have fitted in the budget... Then compacting started, Claude woke up and consumed the remaining 2% catching up on things.
+
+Both cases (and others) lead to a sub optimal user experience where you as a user feel penalized for Claude's reflections and memory refreshes while being only marginally in control over these.  
+
+I understand Antropic needs to earn a living but right now it 'feels' there is a more than reasonable margin on the product they are selling (tokens) at the expense of the user's interest. Hopefully things like the context window size, more effective reasoning, improve in the future  
+
+**Maintaining Design/Architecture**
+
+**Ignoring directives** Esp no magic values
+
+**Overthinks without asking for feedback**
+
+**Fixing tests to match the output**
+
+**Commenting balance is hard**
+
+**Metric oriented code**
+
+**Context window fills up too fast**
+Compacting compacting and then forgetting
+
+**Fighting with Xenon**
+
+**Keeping up with Claude**
 
 ## What went right
 
@@ -46,26 +103,7 @@ Plan:
 **Called out tech debt as a to-do**
 Recognized opportunity to re-use shared code, wonder if this only works if this inside their context window. 
 
-## What went wrong
 
-**Token Anxiety**
-
-**Maintaining Design**
-
-**Ignoring directives** Esp no magic values
-
-**Overthinks without asking for feedback**
-
-**Fixing tests to match the output**
-
-**Commenting balance is hard**
-
-**Metric oriented code**
-
-**Context window fills up too fast**
-Compacting compacting and then forgetting
-
-**Fighting with Xenon**
 
 ## What was surprising
 
@@ -97,8 +135,9 @@ However, the user is explicitly asking me to update test_regression.py. That's a
 
 ## References
 
-[0]https://www.lennysnewsletter.com/p/head-of-claude-code-what-happens  
-[1]https://www.reddit.com/r/programming/comments/1rakdst/creator_of_claude_code_coding_is_solved  
+|0| https://www.lennysnewsletter.com/p/head-of-claude-code-what-happens  
+|1| https://www.reddit.com/r/programming/comments/1rakdst/creator_of_claude_code_coding_is_solved  
+|2| Alice https://en.wikipedia.org/wiki/Artificial_Linguistic_Internet_Computer_Entity
 
 ## Appendix 
 

@@ -28,6 +28,7 @@ _CONFIG_FIELDS: dict[str, type] = {
     "root_directive_type": str,
     "plugin_sequence": list,
     "plugin_configuration": dict,
+    "line_endings": str,
 }
 
 _DEFAULT_CONFIG_TEMPLATE = f"""\
@@ -155,11 +156,7 @@ def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
 
         overrides[key] = value
 
-    if "plugin_configuration" in overrides:
-        plugin_cfg_errors = _validate_plugin_configuration(overrides["plugin_configuration"])
-        errors.extend(plugin_cfg_errors)
-        if plugin_cfg_errors:
-            del overrides["plugin_configuration"]
+    errors.extend(_validate_special_overrides(overrides))
 
     if any(s.level == StatusLevel.ERROR for s in errors):
         return Configuration(), errors
@@ -170,3 +167,20 @@ def _parse_config(raw: dict[str, Any]) -> tuple[Configuration, list[Status]]:
         return Configuration(), [range_error]
 
     return config, errors
+
+
+def _validate_special_overrides(overrides: dict[str, Any]) -> list[Status]:
+    """Validate plugin_configuration and line_endings fields, removing invalid entries in-place."""
+    errors: list[Status] = []
+
+    if "plugin_configuration" in overrides:
+        plugin_cfg_errors = _validate_plugin_configuration(overrides["plugin_configuration"])
+        errors.extend(plugin_cfg_errors)
+        if plugin_cfg_errors:
+            del overrides["plugin_configuration"]
+
+    if "line_endings" in overrides and overrides["line_endings"] not in ("lf", "crlf"):
+        errors.append(Status(StatusLevel.ERROR, "config key 'line_endings' must be 'lf' or 'crlf'"))
+        del overrides["line_endings"]
+
+    return errors

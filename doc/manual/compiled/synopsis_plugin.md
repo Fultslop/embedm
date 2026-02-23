@@ -1,5 +1,7 @@
 # Synopsis Plugin
 
+version 0.6.1
+
 The synopsis plugin generates a concise blockquote summary of a document. It scores sentences using statistical algorithms and selects the most representative ones, biased toward introductory content through a block-level positional decay model.
 
   - [Basic Usage](#basic-usage)

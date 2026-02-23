@@ -30,6 +30,10 @@ class RunSummary:
     warning_count: int = 0
     error_count: int = 0
     elapsed_s: float = 0.0
+    # verify-mode counters
+    is_verify: bool = False
+    up_to_date_count: int = 0
+    stale_count: int = 0
 
 
 def present_title() -> None:
@@ -49,6 +53,11 @@ def present_errors(errors: Sequence[Status] | str) -> None:
 def present_result(result: str) -> None:
     """Print compilation result to stdout."""
     print(result, end="")
+
+
+def present_verify_status(status: str, path: str) -> None:
+    """Print a verify-mode per-file status line to stderr (always, not behind --verbose)."""
+    print(f"[{status.upper()}] {path}", file=sys.stderr)
 
 
 def prompt_continue() -> ContinueChoice:
@@ -88,6 +97,8 @@ def verbose_config(config: Configuration) -> None:
     _vprint(f"root_directive:     {config.root_directive_type}")
     _vprint(f"is_accept_all:      {config.is_accept_all}")
     _vprint(f"is_dry_run:         {config.is_dry_run}")
+    _vprint(f"is_verify:          {config.is_verify}")
+    _vprint(f"line_endings:       {config.line_endings}")
     _vprint(f"is_verbose:         {config.is_verbose}")
     _vprint("plugin_sequence:")
     for module in config.plugin_sequence:
@@ -186,6 +197,14 @@ def _worst_status_label(statuses: list[Status]) -> str:
 
 
 def _format_summary(summary: RunSummary) -> str:
+    if summary.is_verify:
+        checked = summary.up_to_date_count + summary.stale_count
+        noun = "file" if checked == 1 else "files"
+        return (
+            f"embedm verify complete, {checked} {noun} checked, "
+            f"{summary.up_to_date_count} up-to-date, {summary.stale_count} stale, "
+            f"{summary.error_count} errors, completed in {summary.elapsed_s:.3f}s"
+        )
     noun = "file" if summary.files_written == 1 else "files"
     target = f"to {summary.output_target}" if summary.output_target != "stdout" else "to stdout"
     return (

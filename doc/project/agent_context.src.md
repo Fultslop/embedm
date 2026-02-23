@@ -46,7 +46,6 @@ max_sentences: 4
 
 ## Active feature spec
 
-```yaml embedm
-type: file
-source: ./backlog/in_progress/feat_agent_context_document.md
-```
+`bug_recall_captures_absolute_paths.md` in `doc\project\backlog`.
+
+If you can't find this because the active spec may be moved or renamed, ask the user.

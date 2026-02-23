@@ -279,3 +279,52 @@ def test_verbose_defaults_to_false() -> None:
 
     assert not errors
     assert config.is_verbose is False
+
+
+# --- verify ---
+
+
+def test_verify_flag_sets_is_verify() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "--verify", "-o", "out.md"])
+
+    assert not errors
+    assert config.is_verify is True
+
+
+def test_verify_defaults_to_false() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md"])
+
+    assert not errors
+    assert config.is_verify is False
+
+
+def test_verify_and_dry_run_conflict() -> None:
+    _, errors = parse_command_line_arguments(["my_content.md", "--verify", "--dry-run", "-o", "out.md"])
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "verify" in errors[0].description.lower()
+    assert "dry-run" in errors[0].description.lower()
+
+
+def test_verify_without_output_target_returns_error() -> None:
+    _, errors = parse_command_line_arguments(["my_content.md", "--verify"])
+
+    assert any(e.level == StatusLevel.ERROR for e in errors)
+    assert any("output" in e.description.lower() for e in errors)
+
+
+def test_verify_with_output_file_is_valid() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md", "--verify", "-o", "out.md"])
+
+    assert not errors
+    assert config.is_verify is True
+    assert config.output_file == "out.md"
+
+
+def test_verify_with_output_dir_is_valid() -> None:
+    config, errors = parse_command_line_arguments(["./*", "--verify", "-d", "./out"])
+
+    assert not errors
+    assert config.is_verify is True
+    assert config.output_directory == "./out"
