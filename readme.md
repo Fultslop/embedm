@@ -1,78 +1,124 @@
 # EmbedM
 
-> [!NOTE]
-> This project is to test the capabilities of AI code assistants. The first iteration yielded valuable insights but ultimately failed to produce valuable code. If you want to see the result, see the archive folder. The next iteration (2) has just started.
-> The readme still reflects the intentions of the project, so it's allowed to stay around.
+version 0.6.1
 
+A Markdown compiler driven by source files.
 
-Iteration 2 
-
-```yaml embedm
-type: query-path
-source: ./pyproject.toml
-path: project.version
-```
-
-Safely embed files, code, and content directly into Markdown — and keep them in sync.
-
-  - [Why EmbedM?](#why-embedm)
-  - [See It In Action](#see-it-in-action)
+  - [How It Works](#how-it-works)
+  - [Use Cases](#use-cases)
+    - [Keeping code documentation in sync](#keeping-code-documentation-in-sync)
+    - [Live metadata in a README or changelog](#live-metadata-in-a-readme-or-changelog)
+    - [Data tables without copy-paste](#data-tables-without-copy-paste)
+    - [CI drift detection](#ci-drift-detection)
+    - [AI agent context documents](#ai-agent-context-documents)
+  - [Directives](#directives)
   - [Quick Start](#quick-start)
   - [Features](#features)
   - [Documentation](#documentation)
-  - [Safety and Validation](#safety-and-validation)
   - [Project Background](#project-background)
   - [License](#license)
   - [Contributing](#contributing)
 
-## Why EmbedM?
+## How It Works
 
-If you've ever copied code into documentation, later changed the code, and forgot to update the docs — your documentation is already out of date.
+EmbedM compiles Markdown documents from directive blocks. Each directive references a source — a code file, a data query, a CSV table, or another document — and is replaced with the extracted, formatted content on compile. Change the source; recompile; the document is current.
 
-EmbedM lets you embed code, data, and file fragments directly from source files into Markdown, safely and repeatably. When the source changes, recompile and your docs are up-to-date.
+## Use Cases
 
-## See It In Action
+### Keeping code documentation in sync
 
-You add an embed directive to your Markdown (inside a ` ```yaml embedm ` fenced block):
-
-````yaml
-type: file
-source: examples/demo.py
-region: connect
-````
-
-EmbedM produces:
-
-```py
-def connect(host, port=5432, timeout=30):
-    """Establish a database connection."""
-    conn = Database.connect(
-        host=host,
-        port=port,
-        timeout=timeout,
-    )
-    return conn
-```
-
-The embedded code is pulled directly from the source file. When `demo.py` changes, the docs update automatically on the next compile.
-
-You can also extract by symbol name — no region markers needed:
+Embed a function directly from the source file, scoped by a named region or by symbol name. When the implementation changes the docs regenerate on the next compile — no copy-paste, no drift.
 
 ````yaml
 type: file
-source: examples/demo.py
-symbol: query
+source: src/api/handlers.java
+symbol: UserHandler.createUser
+title: "POST /users"
+link: true
 ````
 
-```py
-def query(conn, sql, params=None):
-    """Execute a parameterized query safely."""
-    cursor = conn.cursor()
-    cursor.execute(sql, params or [])
-    return cursor.fetchall()
+### Live metadata in a README or changelog
+
+Pull version numbers, project names, and other values from `pyproject.toml`, `package.json`, or any JSON/YAML/TOML/XML file. The version at the top of this page is a live example — it is compiled from `pyproject.toml` at build time.
+
+````yaml
+type: query-path
+source: pyproject.toml
+path: project.version
+format: "Released: **v{value}**"
+````
+
+### Data tables without copy-paste
+
+Embed CSV or TSV data as formatted Markdown tables. Apply column selection, filtering, and sorting inline — the source file is the single source of truth.
+
+````yaml
+type: table
+source: reports/q4-summary.csv
+select: "Region as Region, Revenue as Revenue_USD"
+order_by: "Revenue_USD desc"
+limit: 10
+````
+
+### CI drift detection
+
+Use `--verify` in your pipeline to catch documentation that has fallen behind its sources. Exit code 1 if any compiled file is stale.
+
 ```
+embedm ./docs/src --verify -d ./docs/compiled
+```
+
+### AI agent context documents
+
+Use `recall` to query a large document — a devlog, a decision log, an ADR set — and extract the sentences most relevant to a given topic. Compose multiple queries into a single compiled context file that an AI assistant reads at session start.
+
+````yaml
+type: recall
+source: ./devlog.md
+query: "validation transform boundary error handling"
+max_sentences: 5
+````
+
+EmbedM itself uses this: its agent context file is compiled from the project devlog using four targeted recall queries — plugin conventions, architectural rules, common mistakes, and the active spec. The context window stays focused without manual curation.
+
+## Directives
+
+Directives are fenced YAML blocks tagged `` ```yaml embedm ``. On compile, each is replaced in-place with the extracted content:
+
+````yaml
+type: file
+source: src/config/defaults.py
+region: connection_defaults
+````
+
+```python
+# connection_defaults
+HOST = "localhost"
+PORT = 5432
+TIMEOUT = 30
+POOL_SIZE = 10
+```
+
+Structured data queries render inline:
+
+````yaml
+type: query-path
+source: config/app.yaml
+path: database.pool_size
+format: "Default pool size: **{value}**"
+````
+
+> Default pool size: **10**
 
 ## Quick Start
+
+**Install**
+
+```
+pip install embedm
+```
+
+Or from source:
 
 ```
 git clone https://github.com/Fultslop/embedm.git
@@ -80,38 +126,83 @@ cd embedm
 pip install -e .
 ```
 
-Then:
+**Compile a single file**
 
 ```
-embedm input.md                    # creates input.compiled.md
-embedm input.md output.md          # explicit output
-embedm docs/src/ docs/compiled/    # batch process a directory
-embedm input.md --dry-run          # validate without writing
+embedm content.md -o compiled/content.md
+```
+
+**Compile a directory**
+
+```
+embedm ./docs/src -d ./docs/compiled
+```
+
+**Preview without writing**
+
+```
+embedm content.md -n
+```
+
+**Check that compiled files are up to date**
+
+```
+embedm ./docs/src --verify -d ./docs/compiled
+```
+
+**Generate a default config file**
+
+```
+embedm --init
 ```
 
 ## Features
 
-- **File embedding** — entire files or specific line ranges (`L10-20`)
-- **Named regions** — extract sections marked with `md.start:name` / `md.end:name`
-- **Symbol extraction** — embed functions, classes, or methods by name (Python, JS, C#, Java, C/C++, Go, SQL)
+**File embedding**
+- Embed entire files, line ranges (`5..10`), or named regions (`md.start:name` / `md.end:name`)
+- Markdown sources are merged inline; all other types are wrapped in a fenced code block
+- Optional title, source link, and line-number annotation
 
-- **File access sandbox** — restricts source paths to the project root by default
-- **Safety limits** — configurable caps on file size, recursion depth, embed count, and output size
+**Symbol extraction**
+- Extract classes and methods by name from C/C++, C#, and Java source files
+- Dot-notation for nested symbols: `OuterClass.InnerClass.methodName`
+- Overload disambiguation: `add(int, int)` vs `add(int, int, int)`
 
-- **Line numbers** — text or styled HTML line numbers
-- **CSV/Json to table** — automatic Markdown table conversion
-- **Table of contents** — generated from document headings
-- **Layouts** — multi-column/row flexbox-based layouts
-- **Recursive embedding** — Markdown files that embed other Markdown files
-- **Simplified mermaid charts** - Add mermaid flowcharts using a shorthand notation.
+**Structured data**
+- Query any value from JSON, YAML, TOML, or XML using dot-notation paths
+- Scalars render inline; dicts and lists render as YAML code blocks
+- Format strings for inline interpolation: `"version {value}"`
+
+**Data tables**
+- Render CSV and TSV files as Markdown tables
+- Column selection, row filtering (exact match and comparison operators), sorting, pagination
+
+**Table of contents**
+- Auto-generated from document headings, including headings in embedded files
+- GitHub-compatible anchor links
+
+**AI context**
+- `synopsis` — generate a condensed summary of a document
+- `recall` — build structured retrieval blocks for AI agent context files
+
+**Recursive embedding**
+- Markdown files that embed other Markdown files, up to a configurable depth
+
+**Safety**
+- Configurable limits on file size, memory, recursion depth, and embed output size
+- `--verify` mode for CI drift detection
 
 ## Documentation
 
-## Safety and Validation
-
-EmbedM uses a three-phase pipeline — **Discovery, Validation, Execution** — that checks all files, limits, and dependencies before writing any output. Errors are reported upfront with file:line references. A file access sandbox restricts embeds to the project root (detected via git), with `--allow-path` for exceptions.
-
-Use `--dry-run` to validate without processing, or `--force` to embed warnings in the output and continue.
+| Document | Description |
+|----------|-------------|
+| [CLI Reference](doc/manual/compiled/cli.md) | All flags, input modes, and exit codes |
+| [Configuration Reference](doc/manual/compiled/configuration.md) | `embedm-config.yaml` properties and defaults |
+| [File Plugin](doc/manual/compiled/file_plugin.md) | File embedding, regions, lines, symbol extraction |
+| [Query-Path Plugin](doc/manual/compiled/query_path_plugin.md) | Structured data extraction from JSON/YAML/TOML/XML |
+| [Table Plugin](doc/manual/compiled/table_plugin.md) | CSV/TSV tables with filtering and sorting |
+| [Toc Plugin](doc/manual/compiled/toc_plugin.md) | Table-of-contents generation |
+| [Architecture](doc/manual/compiled/architecture.md) | System design, plugin model, plan/compile pipeline |
 
 ## Project Background
 
@@ -119,13 +210,12 @@ EmbedM is part of an exploration into how far AI-assisted development can go whe
 
 The goal is not just to demo AI, but to see whether AI-assisted development can produce software that is readable, testable, maintainable, and genuinely useful.
 
-The first iteration of this project was a usable proof of concept. Concepts were explored, the projects scope was set and features were delivered (unless halicunated). However, the code driving these features was "less than optimial". Having unittests, test coverage and regression tests was not enough to keep the AI on track. The result of this first iteration can be found in [the archive](./archive/iteration_1/).
+The first iteration was a usable proof of concept. Concepts were explored, the project scope was set, and features were delivered. However, the code quality was inconsistent — having unit tests and coverage was not enough to keep the AI on track. The result can be found in [the archive](./archive/iteration_1/).
 
-Based on these findings, reading up on people with similar experiences and consulting with a knowledgable AI assistant or two, the next iteration would add some more guardrails:
-
-* Create an document outlining the goals and constraint of the project and code.
-* Identifying core features and create a scaffolding to which the ai has to stick.
-* Add more automation tooling to detect the AI going off rails. 
+The second iteration added guardrails:
+- A document outlining the goals and constraints of the project and its code
+- Core feature identification and a scaffolding the AI must respect
+- Automation tooling to detect when the AI goes off-rails
 
 ## License
 
