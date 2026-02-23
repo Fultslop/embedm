@@ -36,7 +36,7 @@ def parse_command_line_arguments(
         is_accept_all=parsed.accept_all,
         is_dry_run=parsed.dry_run,
         is_verify=parsed.verify,
-        is_verbose=parsed.verbose,
+        verbosity=parsed.verbose if parsed.verbose is not None else 2,
     ), []
 
 
@@ -59,7 +59,15 @@ def _build_parser() -> argparse.ArgumentParser:
         default=False,
         help="compile and compare against existing files; exit 1 if stale",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", default=False, help="write diagnostic output to stderr")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        nargs="?",
+        type=int,
+        const=3,
+        default=None,
+        help="verbosity level 0-3 (default 2; -v alone sets 3)",
+    )
     parser.add_argument("--init", nargs="?", const="", default=None, help="generate embedm-config.yaml in directory")
     return parser
 
@@ -73,6 +81,9 @@ def _validate(parsed: argparse.Namespace) -> list[Status]:
 
     if parsed.output_file and _is_directory_input(parsed.input):
         errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_out_file_and_dir_input))
+
+    if parsed.verbose is not None and parsed.verbose not in range(4):
+        errors.append(Status(StatusLevel.ERROR, str_resources.err_cli_invalid_verbosity.format(level=parsed.verbose)))
 
     errors.extend(_validate_verify_flags(parsed))
 

@@ -17,7 +17,7 @@ def _make_context(
 ) -> EmbedmContext:
     config = MagicMock()
     config.max_recursion = max_recursion
-    config.is_verbose = False
+    config.verbosity = 2
 
     file_cache = FileCache(
         max_file_size=1024,

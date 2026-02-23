@@ -20,6 +20,7 @@ from embedm_plugins.file_plugin import FilePlugin
 def _make_context(tmp_path: Path, max_recursion: int = 10) -> EmbedmContext:
     config = MagicMock()
     config.max_recursion = max_recursion
+    config.verbosity = 2
     file_cache = FileCache(
         max_file_size=1024,
         memory_limit=4096,
@@ -322,6 +323,7 @@ def test_validate_directive_with_source():
 def _make_context_with_embed_limit(tmp_path: Path, max_embed_size: int) -> EmbedmContext:
     config = MagicMock()
     config.max_recursion = 10
+    config.verbosity = 2
     file_cache = FileCache(
         max_file_size=1024,
         memory_limit=4096,

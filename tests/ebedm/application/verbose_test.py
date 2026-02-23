@@ -94,7 +94,7 @@ def test_present_run_hint_includes_hint(capsys: pytest.CaptureFixture[str]) -> N
     summary = RunSummary(files_written=1, output_target="out.md", error_count=1)
     present_run_hint(summary)
     captured = capsys.readouterr()
-    assert "Use -v or --verbose" in captured.err
+    assert "Use -v 3 or --verbose 3" in captured.err
 
 
 # --- verbose_plan_tree ---
@@ -215,7 +215,7 @@ def test_plugin_registry_loaded_plugin_not_in_skipped() -> None:
 def _make_verbose_context(tmp_path: Path) -> EmbedmContext:
     config = MagicMock()
     config.max_recursion = 10
-    config.is_verbose = True
+    config.verbosity = 3
     config.max_embed_size = 0
     file_cache = FileCache(max_file_size=1024, memory_limit=4096, allowed_paths=[str(tmp_path)])
     registry = PluginRegistry()
@@ -246,7 +246,7 @@ def test_planner_verbose_unknown_type_shows_available(tmp_path: Path) -> None:
 def test_planner_non_verbose_unknown_type_no_available(tmp_path: Path) -> None:
     config = MagicMock()
     config.max_recursion = 10
-    config.is_verbose = False
+    config.verbosity = 2
     file_cache = FileCache(max_file_size=1024, memory_limit=4096, allowed_paths=[str(tmp_path)])
     registry = PluginRegistry()
     context = EmbedmContext(config=config, file_cache=file_cache, plugin_registry=registry)
