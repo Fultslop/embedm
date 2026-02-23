@@ -3,7 +3,7 @@ FEATURE: Agent Context Document
 Draft  
 Release v1.0  
 Created: 23/02/2026  
-Closed: `<date>`  
+Closed: 23/02/2026  
 Created by: FS / Claude  
 
 ## Description

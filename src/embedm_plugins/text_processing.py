@@ -19,7 +19,7 @@ def _clean_text(text: str) -> str:
     text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
     # Remove bold / italic markers
     text = re.sub(r"\*{1,3}(.*?)\*{1,3}", r"\1", text)
-    text = re.sub(r"_{1,3}(.*?)_{1,3}", r"\1", text)
+    text = re.sub(r"(?<!\w)_{1,3}(.*?)_{1,3}(?!\w)", r"\1", text)
     # Remove links and images: [text](url) → text, ![alt](url) → remove
     text = re.sub(r"!\[[^\]]*\]\([^\)]*\)", "", text)
     text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)

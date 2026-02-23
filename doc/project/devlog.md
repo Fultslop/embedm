@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 23/02/26 [TASK] bug_clean_text_mangles_snake_case — fix: add word-boundary guards (?<!\w) / (?!\w) to the _{1,3}(.*?)_{1,3} italic-removal regex in text_processing._clean_text; regression tests in text_processing_test.py.
+
 * 23/02/26 [ARCH] split CLAUDE.md — extracted full coding guidelines to doc/project/guidelines.md; CLAUDE.md slimmed to hard constraints + platform + session-start pointer (~20 lines). agent_context.src.md updated to embed guidelines.md instead of CLAUDE.md, eliminating the circular reference. Archiving policy note moved to guidelines.md.
 
 * 23/02/26 [SUGGESTION] bug: _clean_text underscore italic regex mangles snake_case identifiers in recall output (e.g. plugin_resources.py → pluginresources.py). The _{1,3}(.*?)_{1,3} pattern matches across word boundaries when multiple underscores appear on one line. Recall output is semantically correct but identifiers are less readable. Fix: anchor underscore matching to word boundaries or exclude underscores surrounded by word characters.

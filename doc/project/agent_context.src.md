@@ -48,5 +48,5 @@ max_sentences: 4
 
 ```yaml embedm
 type: file
-source: ./backlog/open/features/v1.0/feat_agent_context_document.md
+source: ./backlog/in_progress/feat_agent_context_document.md
 ```
