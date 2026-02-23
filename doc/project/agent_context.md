@@ -112,6 +112,6 @@ Established patterns that have caused errors when overlooked. Check these before
 
 ## Active feature spec
 
-implement `feat_improve_v1_interface.md` in `doc\project\backlog`.
+document `doc_document_missing_plugins.md` in `doc\project\backlog`.
 
 If you can't find this because the active spec may be moved or renamed, ask the user.
