@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 23/02/26 [TASK] extract text_processing module — moved shared NLP pipeline (_clean_text, _split_into_blocks, _block_to_sentences, _tokenize, _score_frequency, _select_top, _build_word_freq, _sentence_score) from synopsis_transformer into embedm_plugins.text_processing; synopsis_transformer and recall_transformer now both import from the shared module.
+
 * 23/02/26 [TASK] feat_recall_plugin — new recall plugin: query-based sentence retrieval using sparse token-overlap scoring; shares _clean_text / _split_into_blocks / _tokenize / _score_frequency / _select_top pipeline from synopsis_transformer; falls back to frequency scoring with a note when no sentences match the query. Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis.
 
 * 22/02/26 [TASK] feat_dry_run_cli_option — wire --dry-run / -n flag in cli.py; is_dry_run already existed on Configuration and orchestration already respected it. 3 new tests; 565 pass.

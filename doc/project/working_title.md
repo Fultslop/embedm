@@ -43,6 +43,8 @@ Plan:
 - Run full test suite
 - Run regression examples and evaluate quality
 
+**Called out tech debt as a to-do**
+Recognized opportunity to re-use shared code, wonder if this only works if this inside their context window. 
 
 ## What went wrong
 

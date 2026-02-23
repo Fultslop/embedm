@@ -5,11 +5,10 @@ from dataclasses import dataclass, field
 from embedm.plugins.transformer_base import TransformerBase
 from embedm_plugins.recall_resources import str_resources
 from embedm_plugins.synopsis_stopwords import STOPWORDS
-
-# TODO: _clean_text, _split_into_blocks, _tokenize, _score_frequency, _select_top are shared
-# with synopsis_transformer. These should be extracted to a shared text_processing module in v2.0.
-from embedm_plugins.synopsis_transformer import (
+from embedm_plugins.text_processing import (
+    _apply_block_weights,
     _clean_text,
+    _flatten_blocks,
     _score_frequency,
     _select_top,
     _split_into_blocks,
@@ -56,16 +55,6 @@ class RecallTransformer(TransformerBase[RecallParams]):
         return f"{note}> {result}\n"
 
 
-def _flatten_blocks(blocks: list[list[str]]) -> tuple[list[str], list[int]]:
-    """Flatten block-of-sentences into a flat sentence list with a parallel block-index list."""
-    sentences: list[str] = []
-    block_indices: list[int] = []
-    for block_idx, block_sentences in enumerate(blocks):
-        sentences.extend(block_sentences)
-        block_indices.extend([block_idx] * len(block_sentences))
-    return sentences, block_indices
-
-
 def _score_with_fallback(
     sentences: list[str],
     query_tokens: frozenset[str],
@@ -77,11 +66,6 @@ def _score_with_fallback(
     if fallback:
         raw_scores = _score_frequency(sentences, stopwords)
     return raw_scores, fallback
-
-
-def _apply_block_weights(raw_scores: list[tuple[float, int]], block_indices: list[int]) -> list[tuple[float, int]]:
-    """Apply positional block decay: earlier blocks score higher for equal overlap."""
-    return [(score * (1.0 / (1 + block_indices[i])), i) for score, i in raw_scores]
 
 
 def _score_recall(sentences: list[str], query_tokens: frozenset[str]) -> list[tuple[float, int]]:

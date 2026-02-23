@@ -5,10 +5,10 @@ import pytest
 from embedm_plugins.recall_transformer import (
     RecallParams,
     RecallTransformer,
-    _flatten_blocks,
     _score_recall,
     _score_with_fallback,
 )
+from embedm_plugins.text_processing import _flatten_blocks
 
 
 def _run(text: str, query: str, max_sentences: int = 3, language: str = "en", sections: int = 0) -> str:
