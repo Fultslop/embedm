@@ -3,7 +3,7 @@ FEATURE: Recall plugin — query-based context retrieval
 Draft  
 Release v1.0  
 Created: 22/02/2026  
-Closed: `<date>`  
+Closed: 23/02/2026  
 Created by: Claude  
 
 ## Description

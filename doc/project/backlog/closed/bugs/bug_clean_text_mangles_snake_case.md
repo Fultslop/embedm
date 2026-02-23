@@ -1,9 +1,8 @@
 BUG: `_clean_text mangles snake_case identifiers in recall output`
 ========================================
-Created: 23/02/2026
-Closed: `<date>`
-Created by: Claude
-
+Created: 23/02/2026  
+Closed: 23/02/2026  
+Created by: Claude  
 
 ## Description
 
