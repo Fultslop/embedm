@@ -72,7 +72,9 @@ Maintaining a coherent, clear and scope-deliniated architecture is complicated w
 
 The next weekend we started over. I put in the effort to set up a document outlining topics such as goals, scope and workflow. Furthermore, I setup an skelton implementation defining all the interfaces. From there on we started implementation with regular review sessions.
 
-While the second iteration worked _much_ better, I still feel Claude isn't too interested in looking for generalizations in the code and happy to apply 
+While the second iteration worked _much_ better, I still feel Claude isn't too interested 'architecuture'. I rarely see it looking for generalizations in the code that would improve and simplify the overall code base. Moreover they are happy to apply whatever pattern leads to what they think will achieve the current goal, wether that pattern fits or not. *TODO* Investigate logging.
+
+As developer you will have to 
 
 **Ignoring directives** 
 
