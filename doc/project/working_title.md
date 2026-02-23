@@ -68,7 +68,11 @@ User Improvements:
 
 **Maintaining Design/Architecture**
 
-Maintaining a coherent, clear and scope-deliniated architecture is complicated with this entity that materializes the requested features at light speed. 
+Maintaining a coherent, clear and scope-deliniated architecture is complicated with this entity that materializes the requested features at light speed. On Friday, during the initial feature discovery phase of the project I set out some architecture guidelines and concept in an md file and ignited the engine. At the end of the weekend we had working features but a complete broken architecture which would make further expansions costly at best. 
+
+The next weekend we started over. I put in the effort to set up a document outlining topics such as goals, scope and workflow. Furthermore, I setup an skelton implementation defining all the interfaces. From there on we started implementation with regular review sessions.
+
+While the second iteration worked _much_ better, I still feel Claude isn't too interested in looking for generalizations in the code and happy to apply 
 
 **Ignoring directives** 
 

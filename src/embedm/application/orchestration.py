@@ -91,26 +91,7 @@ def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]
     if any(s.level == StatusLevel.ERROR for s in errors):
         return config, errors
 
-    # merge: config file provides base values, CLI-only fields come from the parsed config
-    return Configuration(
-        input_mode=config.input_mode,
-        input=config.input,
-        output_file=config.output_file,
-        output_directory=config.output_directory,
-        max_file_size=file_config.max_file_size,
-        max_recursion=file_config.max_recursion,
-        max_memory=file_config.max_memory,
-        max_embed_size=file_config.max_embed_size,
-        root_directive_type=file_config.root_directive_type,
-        plugin_sequence=file_config.plugin_sequence,
-        plugin_configuration=file_config.plugin_configuration,
-        line_endings=file_config.line_endings,
-        is_accept_all=config.is_accept_all,
-        is_dry_run=config.is_dry_run,
-        is_verify=config.is_verify,
-        is_verbose=config.is_verbose,
-        config_file=config_path,
-    ), errors
+    return Configuration.merge(config, file_config, config_path), errors
 
 
 def _dispatch_input(config: Configuration, context: EmbedmContext, summary: RunSummary) -> None:
