@@ -8,11 +8,7 @@ Created by: `<Author>`
 
 ## Description
 
-`<High level description of the feature>`
-
-`<optional link to original / related feature(s)>`
-
-`<optional dependencies on other feature(s)>`
+The current output on the console
 
 ## Acceptance criteria
 
@@ -38,6 +34,11 @@ Discuss how we make all of these levels:
  - Easily readable
  - Understandable at a glance
  - Nice to look at, for as far as that's possible with console output
+ - Easily parsable by tools
+
+  * No functional changes
+
+  * Update tests if needed
 
 ## Comments
 

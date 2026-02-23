@@ -311,7 +311,7 @@ def _process_single_input(
         _update_summary(summary, plan_root, wrote=bool(result))
 
 
-def _validate_plugin_configs(config: Configuration, registry: PluginRegistry) -> list[Status]:
+def _validate_plugin_config_schemas(config: Configuration, registry: PluginRegistry) -> list[Status]:
     """Validate per-plugin config sections against each plugin's declared schema."""
     errors: list[Status] = []
     for module, settings in config.plugin_configuration.items():
@@ -348,7 +348,7 @@ def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
     )
     plugin_registry = PluginRegistry()
     errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
-    errors.extend(_validate_plugin_configs(config, plugin_registry))
+    errors.extend(_validate_plugin_config_schemas(config, plugin_registry))
     return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors
 
 
