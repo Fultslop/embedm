@@ -70,3 +70,5 @@ sections: 0
 ## Comments
 
 `22/02/2026 FS/Claude:` This plugin is what makes embedm genuinely useful in an AI/agent workflow. The synopsis plugin already established the infrastructure; recall is a scoring variation, not a new architecture. The "no vector database" angle is the key differentiator — it works entirely offline on flat markdown files, making it viable in CI pipelines and agent context assembly scripts. Future extension: support multiple queries weighted by priority.
+
+`23/02/2026 FS/Claude:` Considered adding an `algorithm:` option mirroring synopsis. Decided against it for v1.0: the only alternative scoring approaches are TF-IDF weighted overlap (subtle, users won't perceive the difference) and semantic/embedding-based retrieval (qualitatively better, but requires a heavy model or API — its own v2.0 feature). v1.0 ships one offline algorithm (sparse overlap); the scoring function should be kept cleanly separated in the implementation to make future extension mechanical.

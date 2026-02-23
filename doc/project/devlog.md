@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 23/02/26 [TASK] feat_recall_plugin — new recall plugin: query-based sentence retrieval using sparse token-overlap scoring; shares _clean_text / _split_into_blocks / _tokenize / _score_frequency / _select_top pipeline from synopsis_transformer; falls back to frequency scoring with a note when no sentences match the query. Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis.
+
 * 22/02/26 [TASK] feat_dry_run_cli_option — wire --dry-run / -n flag in cli.py; is_dry_run already existed on Configuration and orchestration already respected it. 3 new tests; 565 pass.
 
 * 22/02/26 [REVIEW] feat_dry_run_cli_option — original spec said "only runs the planner, does not compile" but orchestration code already compiles fully and redirects to stdout. CLI flag also not yet wired up in cli.py. Spec updated to reflect actual intent: compile + print to stdout, no file write. is_dry_run field and orchestration logic already exist; only cli.py wiring remains.
