@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import time
-from enum import Enum
 from pathlib import Path
 
 from embedm.domain.plan_node import PlanNode
@@ -34,6 +33,7 @@ from .console import (
 )
 from .embedm_context import EmbedmContext
 from .planner import plan_content, plan_file
+from .verification import VerifyStatus, apply_line_endings, verify_file_output
 
 
 def main() -> None:
@@ -165,7 +165,7 @@ def _process_directory_file(
     if result and config.is_verify and config.output_directory:
         relative = Path(file_path).resolve().relative_to(base_dir)
         output_path = str((Path(config.output_directory) / relative).resolve())
-        vstatus = _verify_file_output(result, output_path, config)
+        vstatus = verify_file_output(result, output_path, config)
         present_verify_status(vstatus.value, output_path)
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
@@ -279,7 +279,7 @@ def _write_directory_output(
 
     Returns the path written to, or None if written to stdout.
     """
-    content = _apply_line_endings(result, config.line_endings)
+    content = apply_line_endings(result, config.line_endings)
 
     if config.is_dry_run or not config.output_directory:
         present_result(content)
@@ -326,7 +326,7 @@ def _process_single_input(
 
     if config.is_verify and result and config.output_file:
         output_path = str(Path(config.output_file).resolve())
-        vstatus = _verify_file_output(result, output_path, config)
+        vstatus = verify_file_output(result, output_path, config)
         present_verify_status(vstatus.value, output_path)
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
@@ -402,28 +402,6 @@ def _collect_tree_errors(node: PlanNode) -> list[Status]:
     return errors
 
 
-class _VerifyStatus(Enum):
-    UP_TO_DATE = "up-to-date"
-    STALE = "stale"
-    MISSING = "missing"
-
-
-def _apply_line_endings(text: str, line_endings: str) -> str:
-    """Normalise output line endings. 'crlf' converts LF→CRLF; 'lf' is a no-op."""
-    if line_endings == "crlf":
-        return text.replace("\n", "\r\n")
-    return text
-
-
-def _verify_file_output(result: str, output_path: str, config: Configuration) -> _VerifyStatus:
-    """Compare compiled result against the existing file on disk without writing."""
-    normalised = _apply_line_endings(result, config.line_endings).encode("utf-8")
-    path = Path(output_path)
-    if not path.exists():
-        return _VerifyStatus.MISSING
-    return _VerifyStatus.UP_TO_DATE if path.read_bytes() == normalised else _VerifyStatus.STALE
-
-
 def _write_output(result: str, config: Configuration) -> str | None:
     """Write compilation result to the configured destination.
 
@@ -432,7 +410,7 @@ def _write_output(result: str, config: Configuration) -> str | None:
     if not result:
         return None
 
-    content = _apply_line_endings(result, config.line_endings)
+    content = apply_line_endings(result, config.line_endings)
 
     if config.is_dry_run:
         present_result(content)
@@ -460,7 +438,7 @@ def _update_summary(
     summary: RunSummary,
     plan_root: PlanNode,
     wrote: bool,
-    verify_status: _VerifyStatus | None = None,
+    verify_status: VerifyStatus | None = None,
 ) -> None:
     """Update the run summary from a completed plan."""
     has_error = _tree_has_level(plan_root, (StatusLevel.ERROR, StatusLevel.FATAL))
@@ -468,7 +446,7 @@ def _update_summary(
 
     if verify_status is not None:
         summary.is_verify = True
-        if verify_status == _VerifyStatus.UP_TO_DATE:
+        if verify_status == VerifyStatus.UP_TO_DATE:
             summary.up_to_date_count += 1
         else:
             summary.stale_count += 1

@@ -13,3 +13,6 @@ Created by: `<Author>`
 
 `<Optional: list of line description of tests to measure improvements>`
 
+## Comments
+
+`<Optional comments in the form DD/MM/YY Author: comment>`

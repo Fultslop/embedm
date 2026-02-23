@@ -50,7 +50,17 @@ Another of these instances is where Claude's context window gets too full and a 
 
 Both cases (and others) lead to a sub optimal user experience where you as a user feel penalized for Claude's reflections and memory refreshes while being only marginally in control over these.  
 
-I understand Antropic needs to earn a living but right now it 'feels' there is a more than reasonable margin on the product they are selling (tokens) at the expense of the user's interest. Hopefully things like the context window size, more effective reasoning, improve in the future  
+I understand Antropic needs to earn a living but right now it 'feels' there is a more than reasonable margin on the product they are selling (tokens) at the expense of the user's interest. 
+
+Claude Improvements:
+ - Better user control over Claude's spending 
+ - Preventing Claude from too deep reasoning and requesting user direction earlier
+ - Improved context window size 
+ - More (cost-)effective reasoning 
+
+User Improvements:
+ - Lean towards smaller, well defined, items with clear outcomes. 
+ - Set/ask for limits, early feedback 
 
 **Maintaining Design/Architecture**
 

@@ -11,4 +11,6 @@ Created by: `<Author>`
 
 `<optional link to original / related feature(s)>`
 
+## Comments
 
+`<Optional comments in the form DD/MM/YY Author: comment>`
