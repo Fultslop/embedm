@@ -1,0 +1,10 @@
+project:
+  name: my-app
+  version: 1.2.0
+  tags:
+    - backend
+    - api
+    - stable
+build:
+  target: production
+  minify: true
