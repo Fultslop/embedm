@@ -12,6 +12,7 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.parsing.extraction import DEFAULT_REGION_END, DEFAULT_REGION_START, is_valid_line_range
 from embedm.parsing.symbol_parser import get_language_config
+from embedm.plugins.directive_options import get_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm_plugins.file_resources import render_error_note, str_resources
@@ -117,8 +118,8 @@ class FilePlugin(PluginBase):
             return render_error_note([content.description])
 
         title = plan_node.directive.options.get("title")
-        show_link = plan_node.directive.get_option("link", bool, False)
-        show_line_range = plan_node.directive.get_option("line_numbers_range", bool, False)
+        show_link = get_option(plan_node.directive, "link", bool, False)
+        show_line_range = get_option(plan_node.directive, "line_numbers_range", bool, False)
         compiled_dir = plugin_config.compiled_dir if plugin_config else ""
         header = _build_header(source_path, compiled_dir, title, show_line_range, show_link, line_range)
 

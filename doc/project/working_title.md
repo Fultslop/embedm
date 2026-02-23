@@ -74,7 +74,22 @@ The next weekend we started over. I put in the effort to set up a document outli
 
 While the second iteration worked _much_ better, I still feel Claude isn't too interested 'architecuture'. I rarely see it looking for generalizations in the code that would improve and simplify the overall code base. Moreover they are happy to apply whatever pattern leads to what they think will achieve the current goal, wether that pattern fits or not. *TODO* Investigate logging.
 
-As developer you will have to 
+As developer you will have to make navigate between two stances:
+
+- Stay on top of the evolving architecture, correct Claude whenever it veers off course.
+
+- Impose testable boundries and "act on exception". The latter is a paraphrased term from the field of logistics, where customers cannot track the state of each of their individual containers because the volume is too large and only get involved is something wrong, seriously wrong or catastrophically borked. For the rest they 'assume' things will generally work out.
+
+My experience with this project is that for me on this project with low stakes, I started out with the first but as volume of code grew, leaned more and more on tests, linters static-analysis to find those 'exception triggers' for me, with an occasional check-in to see if anything started to smell fishy.
+
+Claude Improvements:
+  - Claude should take a pro-active stance and an interest in maintaining, defining and enforcing a coherent architecture without excessive directives in its claude.md file.
+
+User activities to avoid architectural drift:
+  - Maintain an architecture doc
+  - Implement interfaces yourself
+  - Utilize on determinstic analysis tools (mypy, xenon, radon, vulture)
+  - Utilize unit -, integration test and user controlled regression tests
 
 **Ignoring directives** 
 

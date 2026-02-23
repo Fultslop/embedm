@@ -57,14 +57,8 @@ def create_plan(
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
     )
-    validation_errors, buildable, error_children = _validate_directives(
-        directives,
-        depth,
-        ancestors,
-        context,
-        plugin_config,
-    )
-    all_errors.extend(validation_errors)
+    all_errors.extend(_check_plugins(directives, context, plugin_config))
+    buildable, error_children = _check_sources(directives, depth, ancestors, context)
 
     # step 4: recurse into buildable source directives, include error children
     children = _build_children(buildable, depth, ancestors, context, plugin_config) + error_children
@@ -80,18 +74,13 @@ def create_plan(
     )
 
 
-def _validate_directives(
+def _check_plugins(
     directives: list[Directive],
-    depth: int,
-    ancestors: frozenset[str],
     context: EmbedmContext,
     plugin_config: PluginConfiguration,
-) -> tuple[list[Status], list[Directive], list[PlanNode]]:
-    """Validate directives. Returns (all_errors, buildable_directives, error_children)."""
+) -> list[Status]:
+    """Check plugin existence and run validate_directive for each directive. Returns all errors."""
     errors: list[Status] = []
-    buildable: list[Directive] = []
-    error_children: list[PlanNode] = []
-
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
@@ -106,17 +95,28 @@ def _validate_directives(
             errors.extend(plugin.validate_directive(d, plugin_config))
             if context.config.is_verbose:
                 verbose_timing("validate_directive", d.type, d.source, time.perf_counter() - t0)
+    return errors
 
-    valid_directives = (d for d in directives if d.source)
 
-    for d in valid_directives:
+def _check_sources(
+    directives: list[Directive],
+    depth: int,
+    ancestors: frozenset[str],
+    context: EmbedmContext,
+) -> tuple[list[Directive], list[PlanNode]]:
+    """Check source directives for cycles, depth, and file access.
+
+    Returns (buildable_directives, error_children).
+    """
+    buildable: list[Directive] = []
+    error_children: list[PlanNode] = []
+    for d in (d for d in directives if d.source):
         error = _validate_source(d, depth, ancestors, context)
         if error:
             error_children.append(_error_node(d, [error]))
         else:
             buildable.append(d)
-
-    return errors, buildable, error_children
+    return buildable, error_children
 
 
 def _validate_source(
