@@ -13,6 +13,7 @@ from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 from embedm_plugins.file_plugin import FilePlugin
 
@@ -56,7 +57,7 @@ def test_plain_text_no_directives(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert result == "Just plain text\n"
 
@@ -70,7 +71,7 @@ def test_multiline_plain_text(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert result == content
 
@@ -87,7 +88,7 @@ def test_directive_without_source(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Before\n" in result
     assert "hello embedded world!" in result
@@ -105,7 +106,7 @@ def test_multiple_directives(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Start\n" in result
     assert "Middle\n" in result
@@ -127,7 +128,7 @@ def test_directive_with_source_compiles_child(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Before\n" in result
     assert "Child content\n" in result
@@ -148,7 +149,7 @@ def test_nested_recursion(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Root start\n" in result
     assert "Child start\n" in result
@@ -169,7 +170,7 @@ def test_source_with_mixed_directives(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Root\n" in result
     assert "Child has\n" in result
@@ -191,7 +192,7 @@ def test_no_document_returns_empty(tmp_path: Path):
     file_cache = FileCache(1024, 4096, [str(tmp_path)])
     registry = PluginRegistry()
 
-    result = plugin.transform(node, [], file_cache, registry)
+    result = plugin.transform(node, [], PluginContext(file_cache, registry))
 
     assert result == ""
 
@@ -223,7 +224,7 @@ def test_unknown_plugin_renders_error_note(tmp_path: Path):
     del context.plugin_registry.lookup["unknown_plugin"]
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Before\n" in result
     assert "After\n" in result
@@ -240,7 +241,7 @@ def test_source_not_in_children_renders_error_note(tmp_path: Path):
     plan = plan_file(str(source), context)
     plugin = FilePlugin()
 
-    result = plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    result = plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Before\n" in result
     assert "After\n" in result
@@ -269,7 +270,7 @@ def test_toc_above_file_embed_sees_embedded_headings(tmp_path: Path):
     context.plugin_registry.lookup[ToCPlugin().name] = ToCPlugin()
     plan = plan_file(str(source), context)
     plugin_config = PluginConfiguration(max_embed_size=0, max_recursion=10, plugin_sequence=("file", "toc"))
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry, plugin_config)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
 
     assert "Chapter from file" in result
     assert result.index("- Chapter from file") < result.index("## Chapter from file")
@@ -286,7 +287,7 @@ def test_single_pass_fallback_without_plugin_sequence(tmp_path: Path):
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
 
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Before\n" in result
     assert "Child content\n" in result
@@ -344,7 +345,7 @@ def test_embed_size_exceeded_renders_error_note(tmp_path: Path):
     _register_mock_plugin(context, "hello_world", transform_result="hello world!")  # 12 bytes > 5
 
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Before\n" in result
     assert "After\n" in result
@@ -362,7 +363,7 @@ def test_embed_size_within_limit_passes_through(tmp_path: Path):
     _register_mock_plugin(context, "hello_world", transform_result="hello world!")
 
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "hello world!" in result
     assert "> [!CAUTION]" not in result
@@ -378,7 +379,7 @@ def test_embed_size_zero_disables_limit(tmp_path: Path):
     _register_mock_plugin(context, "hello_world", transform_result=large_output)
 
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert large_output in result
     assert "> [!CAUTION]" not in result
@@ -396,7 +397,7 @@ def test_non_markdown_source_wrapped_in_code_block(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "```cs" in result
     assert "public class Hello" in result
@@ -477,7 +478,7 @@ def test_region_extraction_from_code_file(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "DoWork" in result
     assert "class S" not in result
@@ -493,7 +494,7 @@ def test_region_not_found_renders_error(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "> [!CAUTION]" in result
     assert "missing" in result
@@ -511,7 +512,7 @@ def test_line_extraction_from_code_file(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "line2" in result
     assert "line4" in result
@@ -539,7 +540,7 @@ def test_symbol_extraction_from_cs_file(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "Add" in result
     assert "return a + b" in result
@@ -556,7 +557,7 @@ def test_title_option_prepends_bold_label(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert '**"My Utility"**' in result
     assert result.index('**"My Utility"**') < result.index("```cs")
@@ -571,7 +572,7 @@ def test_link_option_falls_back_to_filename_without_compiled_dir(tmp_path: Path)
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "[link util.cs](util.cs)" in result
     assert result.index("[link util.cs]") < result.index("```cs")
@@ -592,7 +593,7 @@ def test_link_option_uses_compiled_dir_for_path(tmp_path: Path):
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
     plugin_config = PluginConfiguration(max_embed_size=0, max_recursion=10, compiled_dir=str(out_dir))
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry, plugin_config)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
 
     assert "[link util.cs](../src/util.cs)" in result
 
@@ -606,7 +607,7 @@ def test_line_numbers_range_with_lines_option(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "(lines 2..4)" in result
     assert result.index("(lines 2..4)") < result.index("```cs")
@@ -621,7 +622,7 @@ def test_line_numbers_range_without_lines_option_shows_nothing(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     # line_numbers_range with no lines option produces no range header
     assert result.startswith("```cs")
@@ -639,7 +640,7 @@ def test_all_header_options_ordered_title_range_link(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     title_pos = result.index('**"My Label"**')
     range_pos = result.index("(lines 1..2)")
@@ -656,7 +657,7 @@ def test_symbol_not_found_renders_error(tmp_path: Path):
 
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
     assert "> [!CAUTION]" in result
     assert "Missing" in result
@@ -721,7 +722,7 @@ def test_region_extraction_with_custom_marker(tmp_path: Path):
     )
     context = _make_context(tmp_path)
     plan = plan_file(str(source), context)
-    result = FilePlugin().transform(plan, [], context.file_cache, context.plugin_registry, plugin_config)
+    result = FilePlugin().transform(plan, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
 
     assert "def greet(): pass" in result
     assert "> [!CAUTION]" not in result

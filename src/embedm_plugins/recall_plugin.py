@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
@@ -11,11 +10,9 @@ from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm_plugins.recall_resources import str_resources
 from embedm_plugins.recall_transformer import RecallParams, RecallTransformer
-
-if TYPE_CHECKING:
-    from embedm.plugins.plugin_registry import PluginRegistry
 
 MAX_SENTENCES_KEY = "max_sentences"
 LANGUAGE_KEY = "language"
@@ -64,12 +61,10 @@ class RecallPlugin(PluginBase):
         self,
         plan_node: PlanNode,
         parent_document: Sequence[Fragment],
-        file_cache: FileCache | None = None,
-        _plugin_registry: PluginRegistry | None = None,
-        _plugin_config: PluginConfiguration | None = None,
+        context: PluginContext | None = None,
     ) -> str:
         """Transform a recall directive into a GFM blockquote of relevant sentences."""
-        text = _extract_text(plan_node, parent_document, file_cache)
+        text = _extract_text(plan_node, parent_document, context.file_cache if context else None)
         query = get_option(plan_node.directive, QUERY_KEY, cast=str, default_value="")
         max_sentences = get_option(
             plan_node.directive, MAX_SENTENCES_KEY, cast=int, default_value=_DEFAULT_MAX_SENTENCES

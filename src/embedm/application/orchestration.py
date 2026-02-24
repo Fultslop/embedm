@@ -8,6 +8,7 @@ from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .cli import parse_command_line_arguments
@@ -213,7 +214,7 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
         plugin_settings=context.config.plugin_configuration,
     )
     t0 = time.perf_counter()
-    result = plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
+    result = plugin.transform(plan_root, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
     elapsed_s = time.perf_counter() - t0
     if context.config.verbosity >= 3:
         verbose_timing("transform", plan_root.directive.type, plan_root.directive.source, elapsed_s)

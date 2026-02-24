@@ -3,26 +3,23 @@ from __future__ import annotations
 import os
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.infrastructure.file_cache import FileCache
 from embedm.parsing.extraction import DEFAULT_REGION_END, DEFAULT_REGION_START, is_valid_line_range
 from embedm.parsing.symbol_parser import get_language_config
 from embedm.plugins.directive_options import get_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm_plugins.file_resources import render_error_note, str_resources
 from embedm_plugins.file_transformer import FileParams, FileTransformer
 from embedm_plugins.line_transformer import LineParams, LineTransformer
 from embedm_plugins.region_transformer import RegionParams, RegionTransformer
 from embedm_plugins.symbol_transformer import SymbolParams, SymbolTransformer
-
-if TYPE_CHECKING:
-    from embedm.plugins.plugin_registry import PluginRegistry
 
 _EXTRACTION_OPTIONS = ("region", "lines", "symbol")
 _MARKDOWN_EXTENSIONS = {".md", ".markdown"}
@@ -84,12 +81,11 @@ class FilePlugin(PluginBase):
         self,
         plan_node: PlanNode,
         parent_document: Sequence[Fragment],
-        file_cache: FileCache | None = None,
-        plugin_registry: PluginRegistry | None = None,
-        plugin_config: PluginConfiguration | None = None,
+        context: PluginContext | None = None,
     ) -> str:
-        assert file_cache is not None, "file_cache is required — orchestration must provide it"
-        assert plugin_registry is not None, "plugin_registry is required — orchestration must provide it"
+        assert context is not None, "context is required — orchestration must provide it"
+        assert context.file_cache is not None, "context.file_cache is required"
+        assert context.plugin_registry is not None, "context.plugin_registry is required"
 
         if plan_node.document is None:
             return ""
@@ -98,9 +94,7 @@ class FilePlugin(PluginBase):
             FileParams(
                 plan_node=plan_node,
                 parent_document=parent_document,
-                file_cache=file_cache,
-                plugin_registry=plugin_registry,
-                plugin_config=plugin_config,
+                context=context,
             )
         )
 
@@ -109,7 +103,9 @@ class FilePlugin(PluginBase):
         line_range = plan_node.directive.options.get("lines")
         symbol = plan_node.directive.options.get("symbol")
 
-        settings = plugin_config.plugin_settings.get(self.__class__.__module__, {}) if plugin_config else {}
+        settings = (
+            context.plugin_config.plugin_settings.get(self.__class__.__module__, {}) if context.plugin_config else {}
+        )
         region_start = settings.get("region_start", DEFAULT_REGION_START)
         region_end = settings.get("region_end", DEFAULT_REGION_END)
 
@@ -120,7 +116,7 @@ class FilePlugin(PluginBase):
         title = plan_node.directive.options.get("title")
         show_link = get_option(plan_node.directive, "link", bool, False)
         show_line_range = get_option(plan_node.directive, "line_numbers_range", bool, False)
-        compiled_dir = plugin_config.compiled_dir if plugin_config else ""
+        compiled_dir = context.plugin_config.compiled_dir if context.plugin_config else ""
         header = _build_header(source_path, compiled_dir, title, show_line_range, show_link, line_range)
 
         is_markdown = Path(source_path).suffix.lower() in _MARKDOWN_EXTENSIONS

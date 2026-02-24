@@ -6,6 +6,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import StatusLevel
+from embedm.plugins.plugin_context import PluginContext
 from embedm_plugins.recall_plugin import RecallPlugin
 
 _PLUGIN = RecallPlugin()
@@ -153,6 +154,6 @@ def test_transform_with_source_reads_from_file_cache() -> None:
         options={"query": "authentication session", "max_sentences": "1"},
     )
     node = _leaf_node(directive)
-    result = _PLUGIN.transform(node, [], file_cache=_FakeFileCache(_TEXT))  # type: ignore[arg-type]
+    result = _PLUGIN.transform(node, [], PluginContext(_FakeFileCache(_TEXT)))  # type: ignore[arg-type]
     assert result.startswith("> ")
     assert result.endswith("\n")

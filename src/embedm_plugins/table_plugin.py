@@ -3,16 +3,16 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.validation_base import ValidationResult
 from embedm_plugins.table_resources import str_resources
 from embedm_plugins.table_transformer import (
@@ -40,9 +40,6 @@ from embedm_plugins.table_validation import (
     JsonTableValidation,
     JsonValidationParams,
 )
-
-if TYPE_CHECKING:
-    from embedm.plugins.plugin_registry import PluginRegistry
 
 
 def _validate_filter(filter_str: str) -> list[Status]:
@@ -140,12 +137,8 @@ class TablePlugin(PluginBase):
         self,
         plan_node: PlanNode,
         _parent_document: Sequence[Fragment],
-        file_cache: FileCache | None = None,
-        _plugin_registry: PluginRegistry | None = None,
-        _plugin_config: PluginConfiguration | None = None,
+        _context: PluginContext | None = None,
     ) -> str:
-        assert file_cache is not None, "file_cache is required — orchestration must provide it"
-
         if plan_node.document is None:
             return ""
 

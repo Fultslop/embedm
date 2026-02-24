@@ -2,19 +2,15 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import Any, ClassVar
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status
-from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.validation_base import ValidationResult
-
-from .plugin_configuration import PluginConfiguration
-
-if TYPE_CHECKING:
-    from .plugin_registry import PluginRegistry
 
 
 class PluginBase(ABC):
@@ -30,11 +26,14 @@ class PluginBase(ABC):
         """Validate semantic constraints on plugin-level config. Override as needed."""
         return []
 
-    @abstractmethod
     def validate_directive(
-        self, directive: Directive, configuration: PluginConfiguration | None = None
+        self, _directive: Directive, _configuration: PluginConfiguration | None = None
     ) -> list[Status]:
-        pass
+        """Validate the directive before planning. Override to add directive-level checks.
+
+        The default implementation accepts any directive without error.
+        """
+        return []
 
     def validate_input(
         self,
@@ -54,8 +53,6 @@ class PluginBase(ABC):
         self,
         plan_node: PlanNode,
         parent_document: Sequence[Fragment],
-        file_cache: FileCache | None = None,
-        plugin_registry: PluginRegistry | None = None,
-        plugin_config: PluginConfiguration | None = None,
+        context: PluginContext | None = None,
     ) -> str:
         pass
