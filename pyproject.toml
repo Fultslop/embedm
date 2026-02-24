@@ -193,3 +193,9 @@ disallow_untyped_defs = true
 disallow_any_generics = true
 check_untyped_defs = true
 exclude = ["tests/"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=5.0.0",
+]

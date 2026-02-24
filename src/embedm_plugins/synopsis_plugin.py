@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
@@ -11,11 +10,9 @@ from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm_plugins.synopsis_resources import str_resources
 from embedm_plugins.synopsis_transformer import SynopsisParams, SynopsisTransformer
-
-if TYPE_CHECKING:
-    from embedm.plugins.plugin_registry import PluginRegistry
 
 MAX_SENTENCES_KEY = "max_sentences"
 ALGORITHM_KEY = "algorithm"
@@ -62,11 +59,9 @@ class SynopsisPlugin(PluginBase):
         self,
         plan_node: PlanNode,
         parent_document: Sequence[Fragment],
-        file_cache: FileCache | None = None,
-        _plugin_registry: PluginRegistry | None = None,
-        _plugin_config: PluginConfiguration | None = None,
+        context: PluginContext | None = None,
     ) -> str:
-        text = _extract_text(plan_node, parent_document, file_cache)
+        text = _extract_text(plan_node, parent_document, context.file_cache if context else None)
         max_sentences = get_option(
             plan_node.directive, MAX_SENTENCES_KEY, cast=int, default_value=_DEFAULT_MAX_SENTENCES
         )

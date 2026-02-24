@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status
-from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm_plugins.toc_transformer import (
     ADD_SLUGS_KEY,
     MAX_DEPTH_KEY,
@@ -19,9 +18,6 @@ from embedm_plugins.toc_transformer import (
     ToCParams,
     ToCTransformer,
 )
-
-if TYPE_CHECKING:
-    from embedm.plugins.plugin_registry import PluginRegistry
 
 
 class ToCPlugin(PluginBase):
@@ -44,9 +40,7 @@ class ToCPlugin(PluginBase):
         self,
         plan_node: PlanNode,
         parent_document: Sequence[Fragment],
-        _file_cache: FileCache | None = None,
-        _plugin_registry: PluginRegistry | None = None,
-        _plugin_config: PluginConfiguration | None = None,
+        _context: PluginContext | None = None,
     ) -> str:
         if not parent_document:
             return ""

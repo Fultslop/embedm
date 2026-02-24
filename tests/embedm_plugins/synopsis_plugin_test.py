@@ -8,6 +8,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import StatusLevel
+from embedm.plugins.plugin_context import PluginContext
 from embedm_plugins.synopsis_plugin import SynopsisPlugin
 
 _PLUGIN = SynopsisPlugin()
@@ -152,5 +153,5 @@ def test_transform_with_source_reads_from_file_cache() -> None:
     )
     node = _leaf_node(directive)
     file_text = "Space exploration is fascinating. Mars is a red planet. Astronauts explore space on missions."
-    result = _PLUGIN.transform(node, [], file_cache=_FakeFileCache(file_text))  # type: ignore[arg-type]
+    result = _PLUGIN.transform(node, [], PluginContext(_FakeFileCache(file_text)))  # type: ignore[arg-type]
     assert result.startswith("> ")

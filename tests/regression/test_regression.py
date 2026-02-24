@@ -20,6 +20,7 @@ from embedm.application.planner import plan_file
 from embedm.domain.plan_node import PlanNode
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 
 _PROJECT_ROOT = Path(__file__).parents[2]
@@ -74,7 +75,7 @@ def _compile(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = ""
         compiled_dir=compiled_dir,
         plugin_sequence=_build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
     )
-    return plugin.transform(plan_root, [], context.file_cache, context.plugin_registry, plugin_config)
+    return plugin.transform(plan_root, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
 
 
 def _snapshot_files(snapshot_dir: Path) -> list[Path]:

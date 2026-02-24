@@ -3,15 +3,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.validation_base import ValidationResult
 from embedm_plugins import query_path_engine as engine
 from embedm_plugins import query_path_normalize_json as normalize_json
@@ -20,9 +20,6 @@ from embedm_plugins import query_path_normalize_xml as normalize_xml
 from embedm_plugins import query_path_normalize_yaml as normalize_yaml
 from embedm_plugins.query_path_resources import str_resources
 from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
-
-if TYPE_CHECKING:
-    from embedm.plugins.plugin_registry import PluginRegistry
 
 _SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({"json", "yaml", "yml", "xml", "toml"})
 _EXT_TO_LANG_TAG: dict[str, str] = {"json": "json", "yaml": "yaml", "yml": "yaml", "xml": "xml", "toml": "toml"}
@@ -138,9 +135,7 @@ class QueryPathPlugin(PluginBase):
         self,
         plan_node: PlanNode,
         _parent_document: Sequence[Fragment],
-        _file_cache: FileCache | None = None,
-        _plugin_registry: PluginRegistry | None = None,
-        _plugin_config: PluginConfiguration | None = None,
+        _context: PluginContext | None = None,
     ) -> str:
         """Render the resolved query result as a string."""
         if plan_node.document is None:

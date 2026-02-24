@@ -8,6 +8,7 @@ from embedm.application.planner import plan_file
 from embedm.application.application_resources import str_resources
 from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
+from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 
 
@@ -31,7 +32,7 @@ def _compile(file_path: Path, context: EmbedmContext) -> str:
 
     plugin = context.plugin_registry.find_plugin_by_directive_type(plan.directive.type)
     assert plugin is not None
-    return plugin.transform(plan, [], context.file_cache, context.plugin_registry)
+    return plugin.transform(plan, [], PluginContext(context.file_cache, context.plugin_registry))
 
 
 def test_hello_world_directive_compiles(tmp_path: Path):
