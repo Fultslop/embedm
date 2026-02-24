@@ -9,28 +9,32 @@ jobs:
     name: Build and publish Python distro to PyPI
     runs-on: ubuntu-latest
     permissions:
-      # This permission is required for Trusted Publishing
       id-token: write
       contents: read
 
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.x"
-
     - name: Install uv
-      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      uses: astral-sh/setup-uv@v5
+
+    - name: Set up Python
+      run: uv python install 3.x
 
     - name: Install dependencies
-      run: uv pip install -e ".[dev]"
+      run: uv sync --all-extras --dev
+  
+    - name: Prepare README and Docs
+      run: make manual
+
+    - name: Create snapshots
+      run: make update_snapshots
 
     - name: Run tests
       run: uv run pytest
 
     - name: Build release distributions
+      # This creates the files in the ./dist/ directory
       run: uv build
 
     - name: Publish to PyPI
