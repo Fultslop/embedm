@@ -24,17 +24,18 @@ jobs:
       run: uv python install
 
     - name: Install dependencies
-      run: uv sync --all-extras --dev
-  
+      run: uv sync --all-extras --dev 
+    
     - name: Create snapshots
       run: make update_snapshots PYTHON="uv run python"
 
     - name: Run tests
       run: uv run pytest
 
-    - name: Build release distributions
-      # This creates the files in the ./dist/ directory
-      run: uv build
+    - name: Clean and Build
+      run: |
+        rm -rf dist/
+        uv build
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

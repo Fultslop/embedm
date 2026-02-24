@@ -1,10 +1,11 @@
 [project]
 name = "embedm"
-version = "0.9.1"
+version = "0.9.2"
 description = "A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents with built-in safety limits and validation"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
+license-files = ["LICENSE"]
 authors = [
     {name = "Fultslop"}
 ]
@@ -12,7 +13,6 @@ keywords = ["markdown", "embedding", "documentation", "code-snippets", "table-of
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
