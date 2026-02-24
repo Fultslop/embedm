@@ -17,7 +17,11 @@ def plan_content(content: str, context: EmbedmContext) -> PlanNode:
     """Create a plan for raw content, using cwd as the base directory."""
     source = str(Path.cwd() / "<stdin>")
     root_directive = Directive(type=context.config.root_directive_type, source=source)
-    return create_plan(root_directive, content, 0, context)
+    plugin_config = PluginConfiguration(
+        max_embed_size=context.config.max_embed_size,
+        max_recursion=context.config.max_recursion,
+    )
+    return _validate_and_plan(root_directive, content, 0, frozenset(), context, plugin_config)
 
 
 def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
@@ -30,7 +34,11 @@ def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
             root_directive,
             errors if errors else [Status(StatusLevel.ERROR, f"failed to load file '{resolved}'")],
         )
-    return create_plan(root_directive, content, 0, context, frozenset({resolved}))
+    plugin_config = PluginConfiguration(
+        max_embed_size=context.config.max_embed_size,
+        max_recursion=context.config.max_recursion,
+    )
+    return _validate_and_plan(root_directive, content, 0, frozenset({resolved}), context, plugin_config)
 
 
 def create_plan(
@@ -154,27 +162,39 @@ def _build_child(
     context: EmbedmContext,
     plugin_config: PluginConfiguration,
 ) -> PlanNode:
-    """Build a single child plan node, running validate_input if a plugin is registered."""
+    """Build a single child plan node, loading content then delegating to _validate_and_plan."""
     source_content, load_errors = context.file_cache.get_file(directive.source)
     if load_errors or source_content is None:
         errors = load_errors or [Status(StatusLevel.ERROR, f"failed to load '{directive.source}'")]
         return _error_node(directive, errors)
+    return _validate_and_plan(
+        directive, source_content, depth + 1, ancestors | {directive.source}, context, plugin_config
+    )
 
+
+def _validate_and_plan(
+    directive: Directive,
+    content: str,
+    depth: int,
+    ancestors: frozenset[str],
+    context: EmbedmContext,
+    plugin_config: PluginConfiguration,
+) -> PlanNode:
+    """Run validate_input if a plugin is registered, then build a plan node."""
     plugin = context.plugin_registry.find_plugin_by_directive_type(directive.type)
     if plugin is not None:
         t0 = time.perf_counter()
-        validate_result = plugin.validate_input(directive, source_content, plugin_config)
+        validate_result = plugin.validate_input(directive, content, plugin_config)
         if context.config.verbosity >= 3:
             verbose_timing("validate_input", directive.type, directive.source, time.perf_counter() - t0)
     else:
         validate_result = None
     if validate_result is not None and validate_result.errors:
         return _error_node(directive, validate_result.errors)
-
-    child = create_plan(directive, source_content, depth + 1, context, ancestors | {directive.source})
+    node = create_plan(directive, content, depth, context, ancestors)
     if validate_result is not None and validate_result.artifact is not None:
-        child.artifact = validate_result.artifact
-    return child
+        node.artifact = validate_result.artifact
+    return node
 
 
 def _error_node(directive: Directive, errors: list[Status]) -> PlanNode:

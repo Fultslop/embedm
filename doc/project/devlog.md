@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 24/02/26 [MISS] fix root directive skipping validate_input — `plan_file` and `plan_content` called `create_plan` directly, bypassing `plugin.validate_input` on the root node. Only child directives (processed via `_build_child`) ever reached `validate_input`, forcing plugin authors to handle root vs child as two separate cases. Fix: extracted `_validate_and_plan` helper from `_build_child` containing the validate→plan→artifact sequence; `plan_file`, `plan_content`, and `_build_child` all now delegate to it.
+
 * 23/02/26 [ARCH] feat_verify_cli_option — three design decisions added: (1) compilation errors exit 1 in all modes (not just verify), correcting prior soft-fail behaviour; (2) line_endings config option (lf|crlf, default lf) applied before write and before verify comparison — project-level not directive-level; (3) verify-mode summary reports files_checked/up-to-date/stale instead of files_written.
 
 * 23/02/26 [TASK] bug_clean_text_mangles_snake_case — fix: add word-boundary guards (?<!\w) / (?!\w) to the _{1,3}(.*?)_{1,3} italic-removal regex in text_processing._clean_text; regression tests in text_processing_test.py.

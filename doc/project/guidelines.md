@@ -37,6 +37,7 @@ Use `[MISS]` when documenting a correction: something that should have been know
 - Public APIs must have docstrings. Never include usage examples in docstrings.
 - Line length: 120 chars maximum.
 - Testing: `pytest`. Cover edge cases and errors. New features require tests; bug fixes require regression tests.
+- Prefer low cyclomatic complexity.
 
 ---
 

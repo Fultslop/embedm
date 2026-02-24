@@ -2,7 +2,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from embedm.application.embedm_context import EmbedmContext
-from embedm.application.planner import create_plan, plan_file
+from embedm.application.planner import create_plan, plan_content, plan_file
 from embedm.domain.directive import Directive
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
@@ -17,6 +17,7 @@ def _make_context(
 ) -> EmbedmContext:
     config = MagicMock()
     config.max_recursion = max_recursion
+    config.max_embed_size = 1024 * 1024
     config.verbosity = 2
 
     file_cache = FileCache(
@@ -419,3 +420,89 @@ def test_validate_input_no_op_does_not_block_child(tmp_path: Path):
     assert len(plan.children) == 1
     assert plan.children[0].document is not None
     assert plan.children[0].artifact is None
+
+
+# --- validate_input on root ---
+
+
+def test_plan_file_validate_input_is_called(tmp_path: Path):
+    """validate_input is called on the root directive when using plan_file."""
+    root_file = tmp_path / "root.md"
+    root_file.write_text("# Root content\n")
+
+    context = _make_context(tmp_path)
+    context.config.root_directive_type = "root_type"
+    plugin = _register_plugin(context, "root_type")
+
+    plan_file(str(root_file), context)
+
+    plugin.validate_input.assert_called_once()
+    assert plugin.validate_input.call_args[0][0].type == "root_type"
+
+
+def test_plan_file_validate_input_errors_produce_error_root(tmp_path: Path):
+    """validate_input errors on the root directive produce an error node (document is None)."""
+    root_file = tmp_path / "root.md"
+    root_file.write_text("# Root content\n")
+
+    error = Status(StatusLevel.ERROR, "root input is invalid")
+    context = _make_context(tmp_path)
+    context.config.root_directive_type = "root_type"
+    _register_plugin(context, "root_type", validate_input_result=ValidationResult(artifact=None, errors=[error]))
+
+    plan = plan_file(str(root_file), context)
+
+    assert plan.document is None
+    assert any("root input is invalid" in s.description for s in plan.status)
+
+
+def test_plan_file_validate_input_artifact_stored_on_root(tmp_path: Path):
+    """validate_input artifact is attached to the root PlanNode when using plan_file."""
+    root_file = tmp_path / "root.md"
+    root_file.write_text("# Root content\n")
+
+    artifact = {"parsed": True}
+    context = _make_context(tmp_path)
+    context.config.root_directive_type = "root_type"
+    _register_plugin(context, "root_type", validate_input_result=ValidationResult(artifact=artifact))
+
+    plan = plan_file(str(root_file), context)
+
+    assert plan.artifact == artifact
+
+
+def test_plan_content_validate_input_is_called(tmp_path: Path):
+    """validate_input is called on the root directive when using plan_content."""
+    context = _make_context(tmp_path)
+    context.config.root_directive_type = "root_type"
+    plugin = _register_plugin(context, "root_type")
+
+    plan_content("# Content\n", context)
+
+    plugin.validate_input.assert_called_once()
+    assert plugin.validate_input.call_args[0][0].type == "root_type"
+
+
+def test_plan_content_validate_input_errors_produce_error_root(tmp_path: Path):
+    """validate_input errors on the root directive produce an error node (document is None)."""
+    error = Status(StatusLevel.ERROR, "stdin input is invalid")
+    context = _make_context(tmp_path)
+    context.config.root_directive_type = "root_type"
+    _register_plugin(context, "root_type", validate_input_result=ValidationResult(artifact=None, errors=[error]))
+
+    plan = plan_content("# Content\n", context)
+
+    assert plan.document is None
+    assert any("stdin input is invalid" in s.description for s in plan.status)
+
+
+def test_plan_content_validate_input_artifact_stored_on_root(tmp_path: Path):
+    """validate_input artifact is attached to the root PlanNode when using plan_content."""
+    artifact = {"parsed": True}
+    context = _make_context(tmp_path)
+    context.config.root_directive_type = "root_type"
+    _register_plugin(context, "root_type", validate_input_result=ValidationResult(artifact=artifact))
+
+    plan = plan_content("# Content\n", context)
+
+    assert plan.artifact == artifact

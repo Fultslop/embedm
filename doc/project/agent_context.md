@@ -45,6 +45,7 @@ Use `[MISS]` when documenting a correction: something that should have been know
 - Public APIs must have docstrings. Never include usage examples in docstrings.
 - Line length: 120 chars maximum.
 - Testing: `pytest`. Cover edge cases and errors. New features require tests; bug fixes require regression tests.
+- Prefer low cyclomatic complexity.
 
 ---
 
@@ -96,7 +97,7 @@ old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
 
 Key decisions about plugin structure, registration, and naming extracted from the decision log.
 
-> Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis. 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_ to make ownership explicit. 22/02/26 [TASK] feat_verbose_cli_option — update spec (stderr, all config fields, two-stage plugin discovery, planning tree node definition, lookup failure shows available types, NO_COLOR convention noted), then implement -v/--verbose flag. 19/02/26 [Arch] Plugin load failures treated as user errors — `load_plugins` now returns `list[Status]` and catches per-entry exceptions gracefully. Plugin system already provides IoC via entry points.
+> 24/02/26 [MISS] fix root directive skipping validate_input — `plan_file` and `plan_content` called `create_plan` directly, bypassing `plugin.validate_input` on the root node. Only child directives (processed via `_build_child`) ever reached `validate_input`, forcing plugin authors to handle root vs child as two separate cases. Fix: extracted `_validate_and_plan` helper from `_build_child` containing the validate→plan→artifact sequence; `plan_file`, `plan_content`, and `_build_child` all now delegate to it. Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis. 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_ to make ownership explicit.
 
 ## Architectural rules
 
