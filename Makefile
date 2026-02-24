@@ -19,6 +19,11 @@ regression:
 
 manual:
 	$(PYTHON) $(SRC_DIR) './doc/manual/src/**' -d ./doc/manual/compiled/
+	$(MAKE) copy-read-me
+	
+copy-read-me:	
+	@echo "Copying README to root..."
+	$(PYTHON) -c "import shutil; shutil.copy2('./doc/manual/compiled/README.md', './README.md')"
 
 context:
 	$(PYTHON) $(SRC_DIR) ./doc/project/agent_context.src.md -o ./doc/project/agent_context.md
