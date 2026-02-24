@@ -25,7 +25,7 @@ jobs:
       run: uv sync --all-extras --dev
   
     - name: Create snapshots
-      run: make update_snapshots
+      run: make update_snapshots PYTHON="uv run python"
 
     - name: Run tests
       run: uv run pytest
