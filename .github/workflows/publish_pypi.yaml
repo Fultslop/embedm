@@ -19,14 +19,11 @@ jobs:
       uses: astral-sh/setup-uv@v5
 
     - name: Set up Python
-      run: uv python install 3.x
+      run: uv python install
 
     - name: Install dependencies
       run: uv sync --all-extras --dev
   
-    - name: Prepare README and Docs
-      run: make manual
-
     - name: Create snapshots
       run: make update_snapshots
 
