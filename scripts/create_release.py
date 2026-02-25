@@ -2,7 +2,15 @@ import subprocess
 import sys
 import argparse
 import subprocess
-import tomllib  # Built-in in Python 3.11+
+import tomllib  
+
+# Automate the release build, updates the tag, triggers the
+# associated gh action. Make sure all code has been committed
+#
+# Run from project root as:  
+# (ensure `gh auth login` was succesfull and complete)
+# uv run python scripts/create_release.py |version| |--dry-run|
+# eg: uv run python scripts/create_release.py 3.4.5 --dry-run
 
 def check_permissions():
     """Checks if the authenticated user has admin rights to the repo."""

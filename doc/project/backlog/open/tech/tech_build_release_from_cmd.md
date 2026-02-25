@@ -1,8 +1,7 @@
-TECHNICAL IMPROVEMENT: `<TITLE>`
-========================================
-`<Optional Draft>`
-Created: `<date>`
-Closed: `<date>`
+TECHNICAL IMPROVEMENT: Build release from the command line
+==========================================================
+Created: 25/02/2026
+Closed: 25/02/2026
 Created by: `<Author>`
 
 ## Description
