@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: Create Precommit on-push GH action
 ========================================
 Created: 25/02/2026
-Closed: `<date>`
+Closed: 25/02/2026
 Created by: FS
 
 ## Description

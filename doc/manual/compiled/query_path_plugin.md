@@ -1,6 +1,6 @@
 # Query-Path Plugin
 
-version 0.9.7
+version 0.9.8
 
 The query-path plugin extracts and embeds a value from a structured data file using a dot-notation path. It supports JSON, YAML, TOML, and XML sources. Without a path the full file is embedded as a fenced code block; with a path the resolved value is rendered inline or as a nested structure.
 

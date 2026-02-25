@@ -1,6 +1,16 @@
 import subprocess
 import sys
 import argparse
+import subprocess
+import tomllib  
+
+# Automate the release build, updates the tag, triggers the
+# associated gh action. Make sure all code has been committed
+#
+# Run from project root as:  
+# (ensure `gh auth login` was succesfull and complete)
+# uv run python scripts/create_release.py |version| |--dry-run|
+# eg: uv run python scripts/create_release.py 3.4.5 --dry-run
 
 def check_permissions():
     """Checks if the authenticated user has admin rights to the repo."""
@@ -9,62 +19,78 @@ def check_permissions():
         # Result looks like: {"permission": "admin"}
         perm_json = run_cmd("gh api repos/:owner/:repo/collaborators/{owner}/permission", dry_run=False)
         if '"permission":"admin"' not in perm_json.replace(" ", ""):
-            print("❌ Access Denied: You must have Admin permissions to release.")
+            print("[ERROR] Access Denied: You must have Admin permissions to release.")
             sys.exit(1)
     except Exception:
-        print("⚠️ Could not verify permissions. Ensure 'gh' is logged in.")
+        print("[WARN] Could not verify permissions. Ensure 'gh' is logged in.")
         sys.exit(1)
 
+
+def get_current_version():
+    with open("pyproject.toml", "rb") as f:
+        data = tomllib.load(f)
+        return data["project"]["version"]
+
+def calculate_next_version(current, bump_type):
+    # Simple semantic versioning logic for dry-run visualization
+    major, minor, patch = map(int, current.split('.'))
+    if bump_type == "major":
+        return f"{major + 1}.0.0"
+    elif bump_type == "minor":
+        return f"{major}.{minor + 1}.0"
+    else: # patch
+        return f"{major}.{minor}.{patch + 1}"
+
 def run_cmd(cmd, dry_run=False):
-    """Executes a command or just prints it if in dry-run mode."""
     if dry_run:
         print(f"[DRY-RUN] Would execute: {cmd}")
-        return "v0.0.0-dryrun" # Dummy version for dry run logic
+        return None
     
     try:
-        # shell=True is necessary for Windows to find .exe files in PATH
         result = subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.STDOUT)
         return result.strip()
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error executing: {cmd}\n{e.output}")
+        print(f"[ERROR] Error executing: {cmd}\n{e.output}")
         sys.exit(1)
 
 def main():
     check_permissions()
-
-    parser = argparse.ArgumentParser(description="Release manager for embedm")
-    parser.add_argument("version", nargs="?", default="patch", help="major, minor, patch, or a specific version (e.g. 1.0.0)")
-    parser.add_argument("--dry-run", action="store_true", help="See what would happen without making changes")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("version", nargs="?", default="patch")
+    parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
-    print(f"🚀 Starting {'DRY RUN ' if args.dry_run else ''}release process...")
-
-    # 1. Bump version in pyproject.toml
-    bump_type = args.version
-    if bump_type in ["major", "minor", "patch"]:
-        run_cmd(f"uv version --bump {bump_type}", args.dry_run)
-    else:
-        run_cmd(f"uv version {bump_type}", args.dry_run)
-
-    # 2. Get the new version string
-    new_version = run_cmd("uv version --short", args.dry_run)
-    tag = f"v{new_version}"
+    current_v = get_current_version()
     
-    # 3. Git Operations
-    print(f"📦 Committing and tagging {tag}...")
+    # Calculate what the version WILL be
+    if args.version in ["major", "minor", "patch"]:
+        target_v = calculate_next_version(current_v, args.version)
+    else:
+        target_v = args.version # User provided specific version like "1.0.0"
+
+    tag = f"v{target_v}"
+
+    print(f"Starting {'DRY RUN ' if args.dry_run else ''}release: {current_v} -> {target_v}")
+
+    # 1. Bump version
+    run_cmd(f"uv version {target_v}", args.dry_run)
+
+    # 2. Git Operations
+    print(f"Committing and tagging {tag}...")
     run_cmd("git add pyproject.toml", args.dry_run)
-    run_cmd(f'git commit -m "chore: bump version to {new_version}"', args.dry_run)
+    run_cmd(f'git commit -m "chore: bump version to {target_v}"', args.dry_run)
     run_cmd(f"git tag -a {tag} -m \"Release {tag}\"", args.dry_run)
 
-    # 4. Push and Release
-    print(f"⬆️ Pushing to GitHub...")
+    # 3. Push and Release
+    print(f"Pushing to GitHub...")
     run_cmd("git push origin main", args.dry_run)
     run_cmd("git push origin --tags", args.dry_run)
 
-    print(f"✨ Creating GitHub Release...")
+    print(f"Creating GitHub Release...")
     run_cmd(f"gh release create {tag} --generate-notes", args.dry_run)
 
-    print(f"\n✅ Done! {'(Dry run complete - no changes made)' if args.dry_run else 'Release pushed.'}")
+    if args.dry_run:
+        print(f"\n[OK] Dry run complete. It would have created release {tag}")
 
 if __name__ == "__main__":
     main()
