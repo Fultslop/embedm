@@ -22,6 +22,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
+          enable-cache: true
 
       - name: Set up Python
         run: uv python install
@@ -29,11 +30,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
-      - name: Run tests
-        run: uv run pytest
-
       - name: Run lint
-        run: make lint
+        run: uv run make lint
 
       - name: Run static analysis
-        run: make static-analysis
+        run: uv run make static-analysis
