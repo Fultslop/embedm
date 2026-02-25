@@ -35,3 +35,6 @@ jobs:
 
       - name: Run static analysis
         run: uv run make static-analysis
+
+      - name: Run tests
+        run: uv run pytest
