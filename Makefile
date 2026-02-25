@@ -29,7 +29,7 @@ regression:
 
 manual:
 	@echo "Building manual..."
-	$(PYTHON) -m $(MODULE) './doc/manual/src/**' -d ./doc/manual/compiled/
+	$(PYTHON) -m $(MODULE) './doc/manual/src/*' -d ./doc/manual/compiled/
 	$(MAKE) copy-read-me
 	
 copy-read-me:   

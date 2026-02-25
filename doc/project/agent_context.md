@@ -97,7 +97,7 @@ old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
 
 Key decisions about plugin structure, registration, and naming extracted from the decision log.
 
-> 24/02/26 [MISS] fix root directive skipping validate_input — `plan_file` and `plan_content` called `create_plan` directly, bypassing `plugin.validate_input` on the root node. Only child directives (processed via `_build_child`) ever reached `validate_input`, forcing plugin authors to handle root vs child as two separate cases. Fix: extracted `_validate_and_plan` helper from `_build_child` containing the validate→plan→artifact sequence; `plan_file`, `plan_content`, and `_build_child` all now delegate to it. Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis. 22/02/26 [TASK] Refactor embedm_plugins — split monolithic plugin_resources.py into five per-plugin resource files (file_resources, query_path_resources, synopsis_resources, table_resources, toc_resources); renamed normalize_json/yaml/xml/toml to query_path_normalize_ to make ownership explicit.
+> Updated `test_create_plan_directive_without_source` to reflect the new correct behaviour (source-less directives with a registered plugin now produce a child node). 24/02/26 [MISS] fix root directive skipping validate_input — `plan_file` and `plan_content` called `create_plan` directly, bypassing `plugin.validate_input` on the root node. Only child directives (processed via `_build_child`) ever reached `validate_input`, forcing plugin authors to handle root vs child as two separate cases. Fix: extracted `_validate_and_plan` helper from `_build_child` containing the validate→plan→artifact sequence; `plan_file`, `plan_content`, and `_build_child` all now delegate to it. Registered as entry point and added to DEFAULT_PLUGIN_SEQUENCE after synopsis.
 
 ## Architectural rules
 
@@ -109,7 +109,7 @@ Core rules about the validation/transform boundary, error handling, and code qua
 
 Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
 
-> Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md. 22/02/26 [Fix] query-path trailing newline — scalar and format-string output from QueryPathTransformer now always appends \n so the blank-line separator after a directive fence is preserved in the rendered document.
+> 25/02/26 [ARCH] tech_unify_directive_planning — the current fix for source-less directives (`_validate_sourceless_directives`) is a parallel code path rather than a unified one. Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md.
 
 ## Active feature spec
 

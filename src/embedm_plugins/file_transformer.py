@@ -121,10 +121,10 @@ def _transform_directive(
 
 def _find_or_create_node(directive: Directive, child_lookup: dict[int, PlanNode]) -> PlanNode:
     """Look up the pre-planned child node, or create a leaf node for source-less directives."""
+    child = child_lookup.get(id(directive))
+    if child is not None:
+        return child
     if directive.source:
-        child = child_lookup.get(id(directive))
-        if child is not None:
-            return child
         return PlanNode(
             directive=directive,
             status=[Status(StatusLevel.ERROR, f"source '{directive.source}' could not be processed")],
