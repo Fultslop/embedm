@@ -8,9 +8,9 @@ from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status
+from embedm.plugins.normalization_base import NormalizationResult
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm.plugins.validation_base import ValidationResult
 
 
 class PluginBase(ABC):
@@ -35,18 +35,18 @@ class PluginBase(ABC):
         """
         return []
 
-    def validate_input(
+    def normalize_input(
         self,
         _directive: Directive,
         _content: str,
         _plugin_config: PluginConfiguration | None = None,
-    ) -> ValidationResult[Any]:
-        """Validate file content before transformation. Override in plugins that require it.
+    ) -> NormalizationResult[Any]:
+        """Normalize the content before transformation. Override in plugins that require it.
 
-        Returns a ValidationResult with an artifact on success, or errors on failure.
-        The artifact is stored on the PlanNode and made available to transform().
+        Returns a NormalizationResult with an normalized data on success, or errors on failure.
+        The normalized data is stored on the PlanNode and made available to transform().
         """
-        return ValidationResult(artifact=None)
+        return NormalizationResult(normalized_data=None)
 
     @abstractmethod
     def transform(
