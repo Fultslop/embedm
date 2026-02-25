@@ -13,6 +13,14 @@ from .console import verbose_timing
 from .embedm_context import EmbedmContext
 
 
+def _rel(path: str) -> str:
+    """Return path relative to CWD as a POSIX string, or the original path if not under CWD."""
+    try:
+        return Path(path).relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        return path
+
+
 def plan_content(content: str, context: EmbedmContext) -> PlanNode:
     """Create a plan for raw content, using cwd as the base directory."""
     source = str(Path.cwd() / "<stdin>")
@@ -32,7 +40,7 @@ def plan_file(file_name: str, context: EmbedmContext) -> PlanNode:
     if errors or content is None:
         return _error_node(
             root_directive,
-            errors if errors else [Status(StatusLevel.ERROR, f"failed to load file '{resolved}'")],
+            errors if errors else [Status(StatusLevel.ERROR, f"failed to load file '{_rel(resolved)}'")],
         )
     plugin_config = PluginConfiguration(
         max_embed_size=context.config.max_embed_size,
@@ -136,7 +144,7 @@ def _validate_source(
 ) -> Status | None:
     """Check a single source directive for cycles, depth, and file access. Returns error or None."""
     if directive.source in ancestors:
-        return Status(StatusLevel.ERROR, f"circular dependency detected: '{directive.source}'")
+        return Status(StatusLevel.ERROR, f"circular dependency detected: '{_rel(directive.source)}'")
     if depth >= context.config.max_recursion:
         return Status(StatusLevel.ERROR, f"max recursion depth ({context.config.max_recursion}) reached")
     source_errors = context.file_cache.validate(directive.source)
@@ -191,7 +199,7 @@ def _build_child(
     """Build a single child plan node, loading content then delegating to _validate_and_plan."""
     source_content, load_errors = context.file_cache.get_file(directive.source)
     if load_errors or source_content is None:
-        errors = load_errors or [Status(StatusLevel.ERROR, f"failed to load '{directive.source}'")]
+        errors = load_errors or [Status(StatusLevel.ERROR, f"failed to load '{_rel(directive.source)}'")]
         return _error_node(directive, errors)
     return _validate_and_plan(
         directive, source_content, depth + 1, ancestors | {directive.source}, context, plugin_config

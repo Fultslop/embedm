@@ -109,7 +109,7 @@ Core rules about the validation/transform boundary, error handling, and code qua
 
 Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
 
-> 25/02/26 [ARCH] tech_unify_directive_planning — the current fix for source-less directives (`_validate_sourceless_directives`) is a parallel code path rather than a unified one. Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive. Correct pattern was established in doc/manual/src/readme.md.
+> Added `_rel(path)` helper (CWD-relative POSIX string, fallback to original) to `file_cache.py` and `planner.py`; applied to all path-bearing error strings in `validate()`, `write()`, `get_files()` (file_cache) and `plan_file()`, `_validate_source()`, `_build_child()` (planner). 25/02/26 [ARCH] tech_unify_directive_planning — the current fix for source-less directives (`_validate_sourceless_directives`) is a parallel code path rather than a unified one. Compiled context document using recall/file/query-path directives to pre-filter project knowledge for agent at session start. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
 
 ## Active feature spec
 
