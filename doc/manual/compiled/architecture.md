@@ -1,6 +1,6 @@
 # Architecture
 
-version 0.9.6
+version 0.9.7
 
 embedm is a markdown document compiler. Source files containing ```` ```yaml embedm ```` directive blocks are read, a plan tree is built and validated, and then each directive is resolved by a plugin and replaced with its compiled output. The result is a complete, self-contained markdown document.
 

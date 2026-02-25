@@ -1,6 +1,6 @@
 # Table Plugin
 
-version 0.9.6
+version 0.9.7
 
 The table plugin embeds CSV, TSV, or JSON data as a formatted markdown table. It supports column selection with aliases, row filtering, sorting, pagination, and display formatting — all declared inline in your markdown.
 

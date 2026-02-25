@@ -1,0 +1,28 @@
+# embedm configuration file
+# see https://github.com/embedm/embedm for documentation
+
+# max file size in bytes
+max_file_size: 1048576
+
+# max recursion depth for nested embeds
+max_recursion: 8
+
+# max memory for file cache in bytes
+max_memory: 104857600
+
+# max embed size in bytes
+max_embed_size: 524288
+
+# directive type used for root plan nodes
+root_directive_type: file
+
+# plugin load order
+plugin_sequence:
+  - embedm_plugins.file_plugin
+  - embedm_plugins.query_path_plugin
+  - embedm_plugins.table_plugin
+  - embedm_plugins.hello_world_plugin
+  - mermaid_plugin
+  - embedm_plugins.synopsis_plugin
+  - embedm_plugins.recall_plugin
+  - embedm_plugins.toc_plugin

@@ -1,6 +1,6 @@
 [project]
 name = "embedm"
-version = "0.9.6"
+version = "0.9.7"
 description = "A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents with built-in safety limits and validation"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -198,4 +198,9 @@ exclude = ["tests/"]
 dev = [
     "pytest>=8.3.5",
     "pytest-cov>=5.0.0",
+    "ruff>=0.9.0",
+    "mypy>=1.11.0",
+    "radon>=6.0.0",
+    "xenon>=0.9.0",
+    "types-pyyaml", # Helpful for mypy since you use PyYAML
 ]

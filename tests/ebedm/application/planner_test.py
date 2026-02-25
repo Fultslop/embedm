@@ -74,7 +74,10 @@ def test_create_plan_directive_without_source(tmp_path: Path):
     assert plan.directive == directive
     assert plan.document is not None
     assert plan.children is not None
-    assert len(plan.children) == 0
+    # source-less directives with a registered plugin get a child node (for validate_input / artifact)
+    assert len(plan.children) == 1
+    assert plan.children[0].directive.type == "hello_world"
+    assert plan.children[0].document is None
     assert any(s.level == StatusLevel.OK for s in plan.status)
 
 

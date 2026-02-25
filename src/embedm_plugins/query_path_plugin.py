@@ -9,6 +9,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
+from embedm.infrastructure.file_util import to_relative
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
@@ -117,7 +118,7 @@ class QueryPathPlugin(PluginBase):
         except (KeyError, IndexError):
             error = Status(
                 StatusLevel.ERROR,
-                str_resources.err_query_path_not_found.format(path=path_str, source=directive.source),
+                str_resources.err_query_path_not_found.format(path=path_str, source=to_relative(directive.source)),
             )
             return ValidationResult(artifact=None, errors=[error])
 
