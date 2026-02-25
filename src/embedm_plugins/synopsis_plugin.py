@@ -11,8 +11,8 @@ from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm_plugins.synopsis_resources import str_resources
-from embedm_plugins.synopsis_transformer import SynopsisParams, SynopsisTransformer
+from embedm_plugins.synopsis.synopsis_resources import str_resources
+from embedm_plugins.synopsis.synopsis_transformer import SynopsisParams, SynopsisTransformer
 
 MAX_SENTENCES_KEY = "max_sentences"
 ALGORITHM_KEY = "algorithm"

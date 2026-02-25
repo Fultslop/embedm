@@ -1,4 +1,4 @@
-from embedm_plugins.region_transformer import RegionParams, RegionTransformer
+from embedm_plugins.file.region_transformer import RegionParams, RegionTransformer
 
 
 def _run(content: str, region: str) -> str | None:

@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.table_resources import str_resources
+from embedm_plugins.table.table_resources import str_resources
 
 SELECT_KEY = "select"
 ORDER_BY_KEY = "order_by"

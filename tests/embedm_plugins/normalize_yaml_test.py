@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from embedm_plugins.query_path_normalize_yaml import normalize
+from embedm_plugins.query_path.query_path_normalize_yaml import normalize
 
 
 def test_simple_mapping():

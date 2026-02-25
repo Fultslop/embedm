@@ -14,13 +14,13 @@ from embedm.plugins.normalization_base import NormalizationResult
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm_plugins import query_path_engine as engine
-from embedm_plugins import query_path_normalize_json as normalize_json
-from embedm_plugins import query_path_normalize_toml as normalize_toml
-from embedm_plugins import query_path_normalize_xml as normalize_xml
-from embedm_plugins import query_path_normalize_yaml as normalize_yaml
-from embedm_plugins.query_path_resources import str_resources
-from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
+from embedm_plugins.query_path import query_path_engine as engine
+from embedm_plugins.query_path import query_path_normalize_json as normalize_json
+from embedm_plugins.query_path import query_path_normalize_toml as normalize_toml
+from embedm_plugins.query_path import query_path_normalize_xml as normalize_xml
+from embedm_plugins.query_path import query_path_normalize_yaml as normalize_yaml
+from embedm_plugins.query_path.query_path_resources import str_resources
+from embedm_plugins.query_path.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
 
 _SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({"json", "yaml", "yml", "xml", "toml"})
 _EXT_TO_LANG_TAG: dict[str, str] = {"json": "json", "yaml": "yaml", "yml": "yaml", "xml": "xml", "toml": "toml"}

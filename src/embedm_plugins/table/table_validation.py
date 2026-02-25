@@ -9,7 +9,7 @@ from typing import Any
 
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.plugins.normalization_base import NormalizationBase, NormalizationResult
-from embedm_plugins.table_resources import str_resources
+from embedm_plugins.table.table_resources import str_resources
 
 Row = dict[str, str]
 

@@ -10,7 +10,7 @@ from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm_plugins.toc_transformer import (
+from embedm_plugins.toc.toc_transformer import (
     ADD_SLUGS_KEY,
     MAX_DEPTH_KEY,
     START_FRAGMENT_KEY,

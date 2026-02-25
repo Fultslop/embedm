@@ -1,5 +1,5 @@
 from embedm.domain.status_level import StatusLevel
-from embedm_plugins.table_validation import (
+from embedm_plugins.table.table_validation import (
     CsvTsvTableValidation,
     CsvTsvValidationParams,
     JsonTableValidation,

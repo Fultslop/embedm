@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from embedm_plugins.query_path_normalize_json import normalize
+from embedm_plugins.query_path.query_path_normalize_json import normalize
 
 
 def test_scalar_string():

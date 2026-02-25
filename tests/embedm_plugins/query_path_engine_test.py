@@ -1,6 +1,6 @@
 import pytest
 
-from embedm_plugins.query_path_engine import parse_path, resolve
+from embedm_plugins.query_path.query_path_engine import parse_path, resolve
 
 
 # --- parse_path ---

@@ -1,4 +1,4 @@
-from embedm_plugins.line_transformer import LineParams, LineTransformer
+from embedm_plugins.file.line_transformer import LineParams, LineTransformer
 
 _CONTENT = "a\nb\nc\nd\ne\n"
 

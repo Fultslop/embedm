@@ -10,7 +10,7 @@ from embedm.domain.span import Span
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.file_resources import render_error_note, str_resources
+from embedm_plugins.file.file_resources import render_error_note, str_resources
 
 
 @dataclass

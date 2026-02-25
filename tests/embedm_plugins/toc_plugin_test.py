@@ -5,7 +5,7 @@
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm_plugins.toc_plugin import ToCPlugin
-from embedm_plugins.toc_transformer import ADD_SLUGS_KEY, MAX_DEPTH_KEY
+from embedm_plugins.toc.toc_transformer import ADD_SLUGS_KEY, MAX_DEPTH_KEY
 
 
 def test_plugin_validate_directive_greenpath():

@@ -14,8 +14,8 @@ from embedm.plugins.normalization_base import NormalizationResult
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm_plugins.table_resources import str_resources
-from embedm_plugins.table_transformer import (
+from embedm_plugins.table.table_resources import str_resources
+from embedm_plugins.table.table_transformer import (
     DATE_FORMAT_KEY,
     DEFAULT_LIMIT,
     DEFAULT_MAX_CELL_LENGTH,
@@ -34,7 +34,7 @@ from embedm_plugins.table_transformer import (
     TableParams,
     TableTransformer,
 )
-from embedm_plugins.table_validation import (
+from embedm_plugins.table.table_validation import (
     CsvTsvTableValidation,
     CsvTsvValidationParams,
     JsonTableValidation,

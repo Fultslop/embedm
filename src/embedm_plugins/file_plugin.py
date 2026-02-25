@@ -15,11 +15,11 @@ from embedm.plugins.directive_options import get_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm_plugins.file_resources import render_error_note, str_resources
-from embedm_plugins.file_transformer import FileParams, FileTransformer
-from embedm_plugins.line_transformer import LineParams, LineTransformer
-from embedm_plugins.region_transformer import RegionParams, RegionTransformer
-from embedm_plugins.symbol_transformer import SymbolParams, SymbolTransformer
+from embedm_plugins.file.file_resources import render_error_note, str_resources
+from embedm_plugins.file.file_transformer import FileParams, FileTransformer
+from embedm_plugins.file.line_transformer import LineParams, LineTransformer
+from embedm_plugins.file.region_transformer import RegionParams, RegionTransformer
+from embedm_plugins.file.symbol_transformer import SymbolParams, SymbolTransformer
 
 _EXTRACTION_OPTIONS = ("region", "lines", "symbol")
 _MARKDOWN_EXTENSIONS = {".md", ".markdown"}

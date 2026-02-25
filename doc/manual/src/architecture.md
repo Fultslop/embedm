@@ -58,6 +58,7 @@ The document is built once during planning and consumed during compilation.
 
 A `PlanNode` is one node in the plan tree. Every directive in a document becomes a child node of the document's root node. The tree is built recursively: if a directive's source is itself a markdown file containing directives, those are planned as grandchildren.
 
+# TODO: pull from src 
 ```python
 @dataclass
 class PlanNode:
@@ -65,7 +66,7 @@ class PlanNode:
     status: list[Status]
     document: Document | None
     children: list[PlanNode] | None
-    artifact: Any                  # set by validate_input; available to transform()
+    normalized_data: Any                  # set by validate_input; available to transform()
 ```
 
 `document` holds the parsed fragments of this node's source. It is `None` when planning failed before a document could be built. `artifact` carries structured data computed during the plan phase (e.g. a parsed JSON tree) so that the compile phase does not need to re-parse files.
@@ -74,6 +75,7 @@ class PlanNode:
 
 `Status` is the shared language for all error reporting: from directive parsing, through plugin validation, to compile-time failures.
 
+# TODO: pull from src 
 ```python
 class StatusLevel(Enum):
     OK      = 1
@@ -95,6 +97,7 @@ See [Error Model](#error-model) for how each level is handled by the orchestrato
 
 Every plugin is a class that inherits from `PluginBase` and declares three class-level attributes. The `hello_world_plugin` in the standard distribution is the canonical minimal example: no source, no options, just a `validate_directive` that checks the type and a `transform` that returns a fixed string. It is useful as a starting point when writing a new plugin.
 
+# TODO: pull from src 
 ```python
 class PluginBase(ABC):
     name: ClassVar[str]           # human-readable name
@@ -104,6 +107,7 @@ class PluginBase(ABC):
 
 The abstract interface has two mandatory methods and two optional ones:
 
+# TODO: pull from src 
 | Method | Required | Purpose |
 |--------|----------|---------|
 | `validate_directive(directive, config)` | Yes | Check options syntax; return `list[Status]` |
@@ -115,6 +119,7 @@ The abstract interface has two mandatory methods and two optional ones:
 
 Plugins are discovered at startup via Python's `importlib.metadata` entry-point mechanism. Any installed package can register plugins under the `embedm.plugins` group in its `pyproject.toml`:
 
+# TODO: pull from src 
 ```toml
 [project.entry-points."embedm.plugins"]
 file        = "embedm_plugins.file_plugin:FilePlugin"

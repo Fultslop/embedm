@@ -1,5 +1,5 @@
-from embedm_plugins.table_resources import str_resources
-from embedm_plugins.table_transformer import TableParams, TableTransformer
+from embedm_plugins.table.table_resources import str_resources
+from embedm_plugins.table.table_transformer import TableParams, TableTransformer
 
 Row = dict[str, str]
 
