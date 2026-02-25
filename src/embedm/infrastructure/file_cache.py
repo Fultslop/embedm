@@ -8,6 +8,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 from embedm.domain.status_level import Status, StatusLevel
+from embedm.infrastructure.file_util import to_relative
 
 from .infrastructure_resources import str_resources
 
@@ -63,11 +64,11 @@ class FileCache:
         errors: list[Status] = []
 
         if not _is_path_allowed(path, self.allowed_paths):
-            errors.append(Status(StatusLevel.FATAL, f"path is not in allowed paths: '{_rel(path)}'"))
+            errors.append(Status(StatusLevel.FATAL, f"path is not in allowed paths: '{to_relative(path)}'"))
             return errors
 
         if not os.path.isfile(path):
-            errors.append(Status(StatusLevel.ERROR, f"file does not exist: '{_rel(path)}'"))
+            errors.append(Status(StatusLevel.ERROR, f"file does not exist: '{to_relative(path)}'"))
             return errors
 
         file_size = os.path.getsize(path)
@@ -75,7 +76,7 @@ class FileCache:
             errors.append(
                 Status(
                     StatusLevel.ERROR,
-                    f"file exceeds max size ({file_size} > {self.max_file_size}): '{_rel(path)}'",
+                    f"file exceeds max size ({file_size} > {self.max_file_size}): '{to_relative(path)}'",
                 )
             )
 
@@ -131,7 +132,7 @@ class FileCache:
         The written file is added to the cache.
         """
         if not _is_path_allowed(path, self.allowed_paths):
-            return None, [Status(StatusLevel.FATAL, str_resources.err_path_not_allowed.format(path=_rel(path)))]
+            return None, [Status(StatusLevel.FATAL, str_resources.err_path_not_allowed.format(path=to_relative(path)))]
 
         actual_path = path
         if os.path.isfile(path) and self.write_mode == WriteMode.CREATE_NEW:
@@ -171,7 +172,9 @@ class FileCache:
             if _is_path_allowed(resolved, self.allowed_paths):
                 files.append(resolved)
             else:
-                errors.append(Status(StatusLevel.ERROR, f"matched file is not in allowed paths: '{_rel(resolved)}'"))
+                errors.append(
+                    Status(StatusLevel.ERROR, f"matched file is not in allowed paths: '{to_relative(resolved)}'")
+                )
 
         return files, errors
 
@@ -193,14 +196,6 @@ class FileCache:
                     self._on_event(path, "eviction", 0.0)
                 return True
         return False
-
-
-def _rel(path: str) -> str:
-    """Return path relative to CWD as a POSIX string, or the original path if not under CWD."""
-    try:
-        return Path(path).relative_to(Path.cwd()).as_posix()
-    except ValueError:
-        return path
 
 
 def _is_path_allowed(path: str, allowed_paths: list[str]) -> bool:

@@ -27,4 +27,4 @@ mydb
 Invalid path:
 
 > [!CAUTION]
-> **embedm:** path 'does.not.exist' not found in 'C:\Users\lassc\Code\python\embedm\tests\regression\src\query_path\package.json'.
+> **embedm:** path 'does.not.exist' not found in 'tests/regression/src/query_path/package.json'.
