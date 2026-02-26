@@ -24,6 +24,12 @@ The domain layer is a small set of immutable dataclasses that flow through the e
 
 A `Directive` represents a single parsed embedm block. It holds the `type` string that identifies which plugin handles it, an optional `source` path, a dict of additional `options`, and the `base_dir` of the file that contains it (used for relative link computation).
 
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/directive.py
+symbol: Directive
+```
+
 ```python
 @dataclass
 class Directive:

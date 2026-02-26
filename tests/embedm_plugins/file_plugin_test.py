@@ -445,7 +445,7 @@ def test_validate_directive_valid_lines_format():
 
 def test_validate_directive_symbol_unsupported_extension():
     plugin = FilePlugin()
-    directive = Directive(type="file", source="foo.py", options={"symbol": "MyClass"})
+    directive = Directive(type="file", source="foo.go", options={"symbol": "MyClass"})
 
     errors = plugin.validate_directive(directive)
 

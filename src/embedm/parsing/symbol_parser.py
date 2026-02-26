@@ -196,6 +196,40 @@ def _extract_block_rest_of_file(lines: list[str], _start_idx: int, _style: Comme
     return len(lines) - 1
 
 
+def _extract_block_indent(lines: list[str], start_idx: int, _style: CommentStyle) -> int:
+    """Find the end of a Python indentation-delimited block.
+
+    Scans from start_idx + 1 for lines whose indentation exceeds the declaration
+    line. Blank lines are skipped but do not terminate the block if body lines follow.
+    Returns start_idx if no body lines are found.
+    """
+    decl_indent = len(lines[start_idx]) - len(lines[start_idx].lstrip())
+    last_body_idx = start_idx
+    for line_idx in range(start_idx + 1, len(lines)):
+        line = lines[line_idx]
+        if not line.strip():
+            continue
+        if len(line) - len(line.lstrip()) <= decl_indent:
+            break
+        last_body_idx = line_idx
+    return last_body_idx
+
+
+def _get_base_indent(lines: list[str], range_start: int, range_end: int) -> int:
+    """Return the indentation of the first non-blank line in the given range."""
+    for idx in range(range_start, range_end + 1):
+        if lines[idx].strip():
+            return len(lines[idx]) - len(lines[idx].lstrip())
+    return 0
+
+
+def _is_at_base_indent(line: str, base_indent: int) -> bool:
+    """Return True if line has content at exactly the given indentation level."""
+    if not line.strip():
+        return False
+    return len(line) - len(line.lstrip()) == base_indent
+
+
 def _find_block_start(lines: list[str], start_idx: int, style: CommentStyle) -> int:
     """Return the line index of the opening '{' of a block, scanning from start_idx."""
     state = _ScanState()
@@ -209,6 +243,7 @@ def _find_block_start(lines: list[str], start_idx: int, style: CommentStyle) -> 
 _BLOCK_STRATEGIES = {
     "brace": _extract_block_brace,
     "rest_of_file": _extract_block_rest_of_file,
+    "indent": _extract_block_indent,
 }
 
 
@@ -365,8 +400,41 @@ JAVA_CONFIG = LanguageConfig(
     ],
 )
 
+_PYTHON_COMMENT = CommentStyle(
+    line_comment="#",
+    block_comment_start=None,
+    block_comment_end=None,
+    string_delimiters=['"', "'"],
+)
+
+PYTHON_CONFIG = LanguageConfig(
+    name="Python",
+    extensions=["py"],
+    comment_style=_PYTHON_COMMENT,
+    patterns=[
+        SymbolPattern(
+            kind="enum",
+            regex_template=r"^\s*class\s+{name}\s*\([^)]*[Ee]num[^)]*\)",
+            block_style="indent",
+            nestable=False,
+        ),
+        SymbolPattern(
+            kind="class",
+            regex_template=r"^\s*class\s+{name}\b",
+            block_style="indent",
+            nestable=True,
+        ),
+        SymbolPattern(
+            kind="function",
+            regex_template=r"^\s*(?:async\s+)?def\s+{name}\s*\(",
+            block_style="indent",
+            nestable=False,
+        ),
+    ],
+)
+
 _EXTENSION_MAP: dict[str, LanguageConfig] = {
-    ext: config for config in [C_CPP_CONFIG, CSHARP_CONFIG, JAVA_CONFIG] for ext in config.extensions
+    ext: config for config in [C_CPP_CONFIG, CSHARP_CONFIG, JAVA_CONFIG, PYTHON_CONFIG] for ext in config.extensions
 }
 
 
@@ -563,6 +631,38 @@ def _try_match_at_line(
         return None
 
 
+def _check_at_depth(line: str, depth: int, restrict_depth: bool, uses_indent_blocks: bool, base_indent: int) -> bool:
+    """Return True if the line is eligible for matching in the current depth context."""
+    if not restrict_depth:
+        return True
+    return _is_at_base_indent(line, base_indent) if uses_indent_blocks else depth == 0
+
+
+def _scan_pattern_in_range(
+    lines: list[str],
+    pattern: SymbolPattern,
+    regex: re.Pattern[str],
+    config: LanguageConfig,
+    range_start: int,
+    range_end: int,
+    requested_params: list[str] | None,
+    restrict_depth: bool,
+    uses_indent_blocks: bool,
+    base_indent: int,
+) -> tuple[int, int, str] | None:
+    scan_state = _ScanState()
+    depth = 0
+    for line_idx in range(range_start, range_end + 1):
+        real, scan_state = _scan_line(lines[line_idx], scan_state, config.comment_style)
+        if _check_at_depth(lines[line_idx], depth, restrict_depth, uses_indent_blocks, base_indent):
+            end_idx = _try_match_at_line(lines, line_idx, real, pattern, regex, requested_params, config)
+            if end_idx is not None:
+                return (line_idx, end_idx, pattern.block_style)
+        if restrict_depth and not uses_indent_blocks:
+            depth += _count_braces(real)
+    return None
+
+
 def _find_symbol_in_range(
     lines: list[str],
     name: str,
@@ -575,28 +675,30 @@ def _find_symbol_in_range(
 ) -> tuple[int, int, str] | None:
     """Search for a symbol declaration within a line range.
 
-    When restrict_depth is True, only matches at brace depth 0 (direct members).
+    When restrict_depth is True, only matches at scope depth 0 (direct members).
     Returns (start_idx, end_idx, block_style) or None if not found.
     """
     requested_params = _parse_requested_params(signature, has_parens)
     escaped = re.escape(name)
+    uses_indent_blocks = all(p.block_style == "indent" for p in config.patterns)
+    base_indent = _get_base_indent(lines, range_start, range_end) if (restrict_depth and uses_indent_blocks) else 0
 
     for pattern in config.patterns:
         regex = re.compile(pattern.regex_template.replace("{name}", escaped))
-        scan_state = _ScanState()
-        depth = 0
-
-        for line_idx in range(range_start, range_end + 1):
-            real, scan_state = _scan_line(lines[line_idx], scan_state, config.comment_style)
-            at_depth = depth == 0 if restrict_depth else True
-
-            if at_depth:
-                end_idx = _try_match_at_line(lines, line_idx, real, pattern, regex, requested_params, config)
-                if end_idx is not None:
-                    return (line_idx, end_idx, pattern.block_style)
-
-            if restrict_depth:
-                depth += _count_braces(real)
+        result = _scan_pattern_in_range(
+            lines,
+            pattern,
+            regex,
+            config,
+            range_start,
+            range_end,
+            requested_params,
+            restrict_depth,
+            uses_indent_blocks,
+            base_indent,
+        )
+        if result is not None:
+            return result
 
     return None
 

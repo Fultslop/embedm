@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 26/02/26 [TASK] feat_python_symbol_config — add Python language config to symbol_parser.py (class, function, enum patterns). Requires new `indent` block_style strategy and indent-based depth tracking in `_find_symbol_in_range` (Python uses indentation, not braces). Enum pattern matches `class Foo(Enum):` form. Tests added to symbol_parser_test.py.
+
 * 25/02/26 [TASK] reorganize embedded.plugin directory. Rename validate_input to normalize_input
 
 * 25/02/26 [TASK] relative paths in error messages — absolute paths in error messages broke regression snapshots across machines and CI. Added `_rel(path)` helper (CWD-relative POSIX string, fallback to original) to `file_cache.py` and `planner.py`; applied to all path-bearing error strings in `validate()`, `write()`, `get_files()` (file_cache) and `plan_file()`, `_validate_source()`, `_build_child()` (planner).
