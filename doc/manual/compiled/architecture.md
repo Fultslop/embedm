@@ -10,15 +10,11 @@ This document covers the core architecture for users who want to understand how 
     - [Directive](#directive)
     - [Document and Fragments](#document-and-fragments)
     - [PlanNode](#plannode)
-- [TODO: pull from src](#todo-pull-from-src)
     - [Status and StatusLevel](#status-and-statuslevel)
-- [TODO: pull from src](#todo-pull-from-src-1)
   - [Plugin Architecture](#plugin-architecture)
     - [PluginBase](#pluginbase)
-- [TODO: pull from src](#todo-pull-from-src-2)
-- [TODO: pull from src](#todo-pull-from-src-3)
     - [Plugin Discovery](#plugin-discovery)
-- [TODO: pull from src](#todo-pull-from-src-4)
+- [TODO: pull from src](#todo-pull-from-src)
     - [PluginRegistry](#pluginregistry)
   - [Plan / Compile Two-Phase Model](#plan-compile-two-phase-model)
     - [Phase 1: Plan](#phase-1-plan)
@@ -44,38 +40,28 @@ The domain layer is a small set of immutable dataclasses that flow through the e
 
 A `Directive` represents a single parsed embedm block. It holds the `type` string that identifies which plugin handles it, an optional `source` path, a dict of additional `options`, and the `base_dir` of the file that contains it (used for relative link computation).
 
+> [link directive.py](../../../src/embedm/domain/directive.py)
 ```py
 class Directive:
     type: str
-    # source file, may be None if a directive does not use an input file
-    # eg ToC
-    source: str = ""
-    options: dict[str, str] = field(default_factory=dict)
-    # directory of the file that contains this directive (for relative link computation)
-    base_dir: str = ""
-```
-```python
-@dataclass
-class Directive:
-    type: str
     source: str = ""
     options: dict[str, str] = field(default_factory=dict)
     base_dir: str = ""
 ```
-
 ### Document and Fragments
 
 A `Document` wraps the parsed output of a single source file: its file name and an ordered list of `Fragment` objects.
 
 ```python
 Fragment = str | Span | Directive
+```
 
-@dataclass
+> [link document.py](../../../src/embedm/domain/document.py)
+```py
 class Document:
     file_name: str
     fragments: list[Fragment] = field(default_factory=list)
 ```
-
 A `Fragment` is one of three things:
 
 - **`str`** — a literal text segment from the source file.
@@ -88,37 +74,35 @@ The document is built once during planning and consumed during compilation.
 
 A `PlanNode` is one node in the plan tree. Every directive in a document becomes a child node of the document's root node. The tree is built recursively: if a directive's source is itself a markdown file containing directives, those are planned as grandchildren.
 
-# TODO: pull from src 
-```python
-@dataclass
+> [link plan_node.py](../../../src/embedm/domain/plan_node.py)
+```py
 class PlanNode:
     directive: Directive
     status: list[Status]
-    document: Document | None
-    children: list[PlanNode] | None
-    normalized_data: Any                  # set by validate_input; available to transform()
+    document: Document | None = None
+    children: list[PlanNode] | None = None
+    normalized_data: Any = field(default=None, compare=False)
 ```
-
 `document` holds the parsed fragments of this node's source. It is `None` when planning failed before a document could be built. `artifact` carries structured data computed during the plan phase (e.g. a parsed JSON tree) so that the compile phase does not need to re-parse files.
 
 ### Status and StatusLevel
 
 `Status` is the shared language for all error reporting: from directive parsing, through plugin validation, to compile-time failures.
 
-# TODO: pull from src 
-```python
+> [link status_level.py](../../../src/embedm/domain/status_level.py)
+```py
 class StatusLevel(Enum):
-    OK      = 1
+    OK = 1
     WARNING = 2
-    ERROR   = 3
-    FATAL   = 4
-
-@dataclass
+    ERROR = 3
+    FATAL = 4
+```
+> [link status_level.py](../../../src/embedm/domain/status_level.py)
+```py
 class Status:
     level: StatusLevel
     description: str
 ```
-
 See [Error Model](#error-model) for how each level is handled by the orchestrator.
 
 ## Plugin Architecture
@@ -127,23 +111,21 @@ See [Error Model](#error-model) for how each level is handled by the orchestrato
 
 Every plugin is a class that inherits from `PluginBase` and declares three class-level attributes. The `hello_world_plugin` in the standard distribution is the canonical minimal example: no source, no options, just a `validate_directive` that checks the type and a `transform` that returns a fixed string. It is useful as a starting point when writing a new plugin.
 
-# TODO: pull from src 
-```python
+> [link plugin_base.py](../../../src/embedm/plugins/plugin_base.py)
+```py
 class PluginBase(ABC):
-    name: ClassVar[str]           # human-readable name
-    api_version: ClassVar[int]    # must be 1
-    directive_type: ClassVar[str] # the type string matched in embedm blocks
+    name: ClassVar[str]
+    api_version: ClassVar[int]
+    directive_type: ClassVar[str]
 ```
-
 The abstract interface has two mandatory methods and two optional ones:
 
-# TODO: pull from src 
 | Method | Required | Purpose |
-|--------|----------|---------|
-| `validate_directive(directive, config)` | Yes | Check options syntax; return `list[Status]` |
-| `transform(plan_node, parent_document, ...)` | Yes | Produce the compiled string output |
-| `validate_input(directive, content, config)` | No | Parse the source file; return a typed `ValidationResult` |
+| --- | --- | --- |
+| `validate_directive(directive, config)` | Yes | Check options syntax; `return list[Status]` |
 | `validate_plugin_config(settings)` | No | Validate per-plugin config from `embedm-config.yaml` |
+| `normalize_input(directive, content, config)` | No | Parse the source file or directive input; return a typed `NormalizedResult` |
+| `transform(plan_node, parent_document, ...)` | Yes | Produce the compiled string output |
 
 ### Plugin Discovery
 

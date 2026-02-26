@@ -4,6 +4,8 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 26/02/26 [TASK] feat_add_filter_comments — implement `filter_comments: true` option for the file plugin. New `comment_filter.py` in `embedm.parsing` with `filter_comments(content, style)` (drops full-line comments, strips trailing inline comments, preserves blank lines and string literals). New `CommentFilterTransformer` in `embedm_plugins/file/`. File plugin applies transformer post-extraction. Validation warns when `filter_comments: true` is used with an unsupported extension.
+
 * 26/02/26 [TASK] feat_python_symbol_config — add Python language config to symbol_parser.py (class, function, enum patterns). Requires new `indent` block_style strategy and indent-based depth tracking in `_find_symbol_in_range` (Python uses indentation, not braces). Enum pattern matches `class Foo(Enum):` form. Tests added to symbol_parser_test.py.
 
 * 25/02/26 [TASK] reorganize embedded.plugin directory. Rename validate_input to normalize_input

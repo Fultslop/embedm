@@ -15,6 +15,7 @@ from embedm.plugins.directive_options import get_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
+from embedm_plugins.file.comment_filter_transformer import CommentFilterParams, CommentFilterTransformer
 from embedm_plugins.file.file_resources import render_error_note, str_resources
 from embedm_plugins.file.file_transformer import FileParams, FileTransformer
 from embedm_plugins.file.line_transformer import LineParams, LineTransformer
@@ -36,6 +37,22 @@ def _validate_symbol_option(source: str, symbol: str | None) -> Status | None:
         ext = Path(source).suffix
         return Status(StatusLevel.ERROR, str_resources.err_file_symbol_unsupported_ext.format(ext=ext))
     return None
+
+
+def _validate_filter_comments_option(source: str, filter_on: bool) -> Status | None:
+    if filter_on and get_language_config(source) is None:
+        ext = Path(source).suffix
+        return Status(StatusLevel.WARNING, str_resources.warn_filter_comments_unsupported_ext.format(ext=ext))
+    return None
+
+
+def _apply_comment_filter(content: str, source_path: str, directive: Directive) -> str:
+    if not get_option(directive, "filter_comments", bool, False):
+        return content
+    lang_config = get_language_config(source_path)
+    if lang_config is None:
+        return content
+    return CommentFilterTransformer().execute(CommentFilterParams(content=content, style=lang_config.comment_style))
 
 
 class FilePlugin(PluginBase):
@@ -68,9 +85,11 @@ class FilePlugin(PluginBase):
         if len(active) > 1:
             errors.append(Status(StatusLevel.ERROR, str_resources.err_file_exclusive_options))
 
+        filter_on = get_option(directive, "filter_comments", bool, False)
         for err in [
             _validate_lines_option(directive.options.get("lines")),
             _validate_symbol_option(directive.source, directive.options.get("symbol")),
+            _validate_filter_comments_option(directive.source, filter_on),
         ]:
             if err is not None:
                 errors.append(err)
@@ -112,6 +131,8 @@ class FilePlugin(PluginBase):
         content = _apply_extraction(compiled, source_path, region, line_range, symbol, region_start, region_end)
         if isinstance(content, Status):
             return render_error_note([content.description])
+
+        content = _apply_comment_filter(content, source_path, plan_node.directive)
 
         title = plan_node.directive.options.get("title")
         show_link = get_option(plan_node.directive, "link", bool, False)

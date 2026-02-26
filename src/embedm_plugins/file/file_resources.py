@@ -7,6 +7,7 @@ str_resources = SimpleNamespace(
     err_file_symbol_unsupported_ext="symbol extraction is not supported for '{ext}' files.",
     err_file_region_not_found="region '{region}' not found in '{source}'.",
     err_file_symbol_not_found="symbol '{symbol}' not found in '{source}'.",
+    warn_filter_comments_unsupported_ext="'filter_comments' has no effect for '{ext}' files (language not supported).",
 )
 
 

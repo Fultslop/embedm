@@ -1,0 +1,22 @@
+[
+    {
+        "Method": "`validate_directive(directive, config)`",
+        "Required": "Yes",
+        "Purpose": "Check options syntax; `return list[Status]`"
+    },
+    {
+        "Method": "`validate_plugin_config(settings)`",
+        "Required": "No",
+        "Purpose": "Validate per-plugin config from `embedm-config.yaml`"
+    },
+    {
+        "Method": "`normalize_input(directive, content, config)`",
+        "Required": "No",
+        "Purpose": "Parse the source file or directive input; return a typed `NormalizedResult`"
+    },
+    {
+        "Method": "`transform(plan_node, parent_document, ...)`",
+        "Required": "Yes",
+        "Purpose": "Produce the compiled string output"
+    }
+]

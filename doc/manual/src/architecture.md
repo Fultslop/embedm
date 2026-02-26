@@ -28,15 +28,9 @@ A `Directive` represents a single parsed embedm block. It holds the `type` strin
 type: file
 source: ../../../src/embedm/domain/directive.py
 symbol: Directive
-```
-
-```python
-@dataclass
-class Directive:
-    type: str
-    source: str = ""
-    options: dict[str, str] = field(default_factory=dict)
-    base_dir: str = ""
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 ### Document and Fragments
@@ -45,11 +39,15 @@ A `Document` wraps the parsed output of a single source file: its file name and 
 
 ```python
 Fragment = str | Span | Directive
+```
 
-@dataclass
-class Document:
-    file_name: str
-    fragments: list[Fragment] = field(default_factory=list)
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/document.py
+symbol: Document
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 A `Fragment` is one of three things:
@@ -64,15 +62,13 @@ The document is built once during planning and consumed during compilation.
 
 A `PlanNode` is one node in the plan tree. Every directive in a document becomes a child node of the document's root node. The tree is built recursively: if a directive's source is itself a markdown file containing directives, those are planned as grandchildren.
 
-# TODO: pull from src 
-```python
-@dataclass
-class PlanNode:
-    directive: Directive
-    status: list[Status]
-    document: Document | None
-    children: list[PlanNode] | None
-    normalized_data: Any                  # set by validate_input; available to transform()
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/plan_node.py
+symbol: PlanNode
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 `document` holds the parsed fragments of this node's source. It is `None` when planning failed before a document could be built. `artifact` carries structured data computed during the plan phase (e.g. a parsed JSON tree) so that the compile phase does not need to re-parse files.
@@ -81,18 +77,22 @@ class PlanNode:
 
 `Status` is the shared language for all error reporting: from directive parsing, through plugin validation, to compile-time failures.
 
-# TODO: pull from src 
-```python
-class StatusLevel(Enum):
-    OK      = 1
-    WARNING = 2
-    ERROR   = 3
-    FATAL   = 4
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/status_level.py
+symbol: StatusLevel
+filter_comments: true
+link: true
+line_numbers_range: true
+```
 
-@dataclass
-class Status:
-    level: StatusLevel
-    description: str
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/status_level.py
+symbol: Status
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 See [Error Model](#error-model) for how each level is handled by the orchestrator.
@@ -103,23 +103,21 @@ See [Error Model](#error-model) for how each level is handled by the orchestrato
 
 Every plugin is a class that inherits from `PluginBase` and declares three class-level attributes. The `hello_world_plugin` in the standard distribution is the canonical minimal example: no source, no options, just a `validate_directive` that checks the type and a `transform` that returns a fixed string. It is useful as a starting point when writing a new plugin.
 
-# TODO: pull from src 
-```python
-class PluginBase(ABC):
-    name: ClassVar[str]           # human-readable name
-    api_version: ClassVar[int]    # must be 1
-    directive_type: ClassVar[str] # the type string matched in embedm blocks
+```yaml embedm
+type: file
+source: ../../../src/embedm/plugins/plugin_base.py
+region: PluginBase
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 The abstract interface has two mandatory methods and two optional ones:
 
-# TODO: pull from src 
-| Method | Required | Purpose |
-|--------|----------|---------|
-| `validate_directive(directive, config)` | Yes | Check options syntax; return `list[Status]` |
-| `transform(plan_node, parent_document, ...)` | Yes | Produce the compiled string output |
-| `validate_input(directive, content, config)` | No | Parse the source file; return a typed `ValidationResult` |
-| `validate_plugin_config(settings)` | No | Validate per-plugin config from `embedm-config.yaml` |
+```yaml embedm
+type: table
+source: ./assets/tables/plugin_methods.json
+```
 
 ### Plugin Discovery
 

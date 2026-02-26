@@ -13,10 +13,12 @@ from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
 
 
+# md.start: PluginBase
 class PluginBase(ABC):
     name: ClassVar[str]
     api_version: ClassVar[int]
     directive_type: ClassVar[str]
+    # md.end: PluginBase
 
     def get_plugin_config_schema(self) -> dict[str, type] | None:
         """Return accepted config keys and their expected types, or None if plugin takes no config."""
