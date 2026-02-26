@@ -12,6 +12,24 @@ import tomllib
 # uv run python scripts/create_release.py |version| |--dry-run|
 # eg: uv run python scripts/create_release.py 3.4.5 --dry-run
 
+def verify_git_status():
+    """Ensures the environment is clean and on the correct branch."""
+    # 1. Check branch
+    current_branch = run_cmd("git rev-parse --abbrev-ref HEAD", dry_run=False)
+    if current_branch != "main":
+        print(f"[ERROR] You are on branch '{current_branch}'. Releases must happen on 'main'.")
+        sys.exit(1)
+
+    # 2. Check for uncommitted changes
+    # --porcelain gives a stable, script-readable output. Empty string = clean.
+    status = run_cmd("git status --porcelain", dry_run=False)
+    if status:
+        print("[ERROR] Your working directory is dirty. Commit or stash changes before releasing.")
+        print(f"Changes detected:\n{status}")
+        sys.exit(1)
+    
+    print("[OK] Git state verified: On main branch with a clean tree.")
+
 def check_permissions():
     """Checks if the authenticated user has admin rights to the repo."""
     try:
@@ -55,6 +73,7 @@ def run_cmd(cmd, dry_run=False):
 
 def main():
     check_permissions()
+    verify_git_status()
     parser = argparse.ArgumentParser()
     parser.add_argument("version", nargs="?", default="patch")
     parser.add_argument("--dry-run", action="store_true")
