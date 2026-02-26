@@ -71,9 +71,23 @@ def run_cmd(cmd, dry_run=False):
         print(f"[ERROR] Error executing: {cmd}\n{e.output}")
         sys.exit(1)
 
+def run_update_snapshots(args):
+    """Runs make update_snapshots and handles failure by reverting pyproject.toml."""
+    print("Running 'make update_snapshots' to update documentation and lockfiles...")
+    try:
+        # We use subprocess.run directly here to allow output to stream to console
+        subprocess.check_call(["make", "update_snapshots"])
+    except subprocess.CalledProcessError:
+        print("\n[ERROR] 'make update_snapshots' failed!")
+        if not args.dry_run:
+            print("Reverting pyproject.toml...")
+            run_cmd("git checkout pyproject.toml")
+        sys.exit(1)
+
 def main():
     check_permissions()
     verify_git_status()
+        
     parser = argparse.ArgumentParser()
     parser.add_argument("version", nargs="?", default="patch")
     parser.add_argument("--dry-run", action="store_true")
@@ -81,35 +95,43 @@ def main():
 
     current_v = get_current_version()
     
-    # Calculate what the version WILL be
     if args.version in ["major", "minor", "patch"]:
         target_v = calculate_next_version(current_v, args.version)
     else:
-        target_v = args.version # User provided specific version like "1.0.0"
+        target_v = args.version
 
     tag = f"v{target_v}"
-
     print(f"Starting {'DRY RUN ' if args.dry_run else ''}release: {current_v} -> {target_v}")
 
-    # 1. Bump version
+    # 1. Bump version in pyproject.toml
     run_cmd(f"uv version {target_v}", args.dry_run)
 
-    # 2. Git Operations
-    print(f"Committing and tagging {tag}...")
-    run_cmd("git add pyproject.toml", args.dry_run)
-    run_cmd(f'git commit -m "chore: bump version to {target_v}"', args.dry_run)
-    run_cmd(f"git tag -a {tag} -m \"Release {tag}\"", args.dry_run)
+    # 2. Run Snapshots (Updates uv.lock, docs, etc.)
+    if not args.dry_run:
+        run_update_snapshots(args)
+    else:
+        print("[DRY-RUN] Would run 'make snapshots'")
 
-    # 3. Push and Release
-    print(f"Pushing to GitHub...")
+    # 3. Commit EVERYTHING
+    print(f"Committing changes for {tag}...")
+    run_cmd("git add .", args.dry_run) # Stages pyproject.toml, uv.lock, and snapshots
+    run_cmd(f'git commit -m "chore: bump version to {target_v} and update snapshots"', args.dry_run)
+    
+    # 4. Push Main first (Ensure the code is there before the tag)
+    print(f"Pushing code to main...")
     run_cmd("git push origin main", args.dry_run)
+
+    # 5. Tag and Push Tag
+    print(f"Tagging {tag}...")
+    run_cmd(f"git tag -a {tag} -m \"Release {tag}\"", args.dry_run)
     run_cmd("git push origin --tags", args.dry_run)
 
+    # 6. Create GitHub Release
     print(f"Creating GitHub Release...")
     run_cmd(f"gh release create {tag} --generate-notes", args.dry_run)
 
     if args.dry_run:
-        print(f"\n[OK] Dry run complete. It would have created release {tag}")
+        print(f"\n[OK] Dry run complete.")
 
 if __name__ == "__main__":
     main()
