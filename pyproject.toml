@@ -9,9 +9,16 @@ license-files = ["LICENSE"]
 authors = [
     {name = "Fultslop"}
 ]
-keywords = ["markdown", "embedding", "documentation", "code-snippets", "table-of-contents"]
+
+keywords = [
+    "markdown", "embedding", "documentation", 
+    "ai-context", "llm-tools", "documentation-drift", 
+    "static-site-generator", "ci-cd", "single-source-of-truth",
+    "rag", "technical-writing", "automation"
+]
+
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
