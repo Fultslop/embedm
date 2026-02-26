@@ -14,6 +14,10 @@ type: toc
 add_slugs: True
 ```
 
+## Project Background
+
+EmbedM is part of an exploration into how far AI-assisted development can go when building a non-trivial tool that could be used in a production CD/CI chain. This project has been built based on a _human_ defined architecture, functional spec and a series of interface contracts, then implemented using using [Claude](https://claude.ai/) and to a lesser extent [Google Gemini](https://gemini.google.com/app). 
+
 ## How It Works
 
 EmbedM compiles Markdown documents from directive blocks. Each directive references a source — a code file, a data query, a CSV table, or another document — and is replaced with the extracted, formatted content on compile. Change the source; recompile; the document is current.
@@ -22,7 +26,17 @@ EmbedM compiles Markdown documents from directive blocks. Each directive referen
 
 ### Keeping code documentation in sync
 
-Embed a function directly from the source file, scoped by a named region or by symbol name. When the implementation changes the docs regenerate on the next compile — no copy-paste, no drift.
+Embed a function directly from the source file, scoped by a named region or by symbol name. When the implementation changes the docs regenerate on the next compile — no copy-paste, no drift. Instead of copying the function code, you simply add a reference to the class/function/method/enum or struct.
+
+Instead of adding code that may go out of date:
+
+```java
+public void createUser(string user) {
+    // ...
+}
+```
+
+You create a link to said method, which will be replaced with the up-to-date function at compile time, or give a clear error in case the method 'createUser' is no longer there.
 
 ````yaml
 type: file
@@ -34,7 +48,7 @@ link: true
 
 ### Live metadata in a README or changelog
 
-Pull version numbers, project names, and other values from `pyproject.toml`, `package.json`, or any JSON/YAML/TOML/XML file. The version at the top of this page is a live example — it is compiled from `pyproject.toml` at build time.
+Pull version numbers, project names, and other values from `pyproject.toml`, `package.json`, or any JSON/YAML/TOML/XML file. The version at the top of this page is a live example — it is compiled from `pyproject.toml` at build time. Instead of a hard coded version, create a reference to the project. Eg:
 
 ````yaml
 type: query-path
@@ -45,7 +59,7 @@ format: "Released: **v{value}**"
 
 ### Data tables without copy-paste
 
-Embed CSV or TSV data as formatted Markdown tables. Apply column selection, filtering, and sorting inline — the source file is the single source of truth.
+Embed CSV, TSV data or structured json as formatted Markdown tables. Apply column selection, filtering, and sorting inline — the source file is the single source of truth via:
 
 ````yaml
 type: table
@@ -110,7 +124,7 @@ format: "Default pool size: **{value}**"
 **Install**
 
 ```
-(coming soon) pip install embedm
+pip install embedm
 ```
 
 Or from source:
@@ -150,6 +164,10 @@ embedm ./docs/src --verify -d ./docs/compiled
 ```
 embedm --init
 ```
+
+**Creating new plugins**
+
+See the [plugin_tutorial](./doc/manual/src/assets/tutorial/plugin_tutorial.md)
 
 ## Features
 
@@ -198,10 +216,6 @@ embedm --init
 | [Table Plugin](doc/manual/compiled/table_plugin.md) | CSV/TSV tables with filtering and sorting |
 | [Toc Plugin](doc/manual/compiled/toc_plugin.md) | Table-of-contents generation |
 | [Architecture](doc/manual/compiled/architecture.md) | System design, plugin model, plan/compile pipeline |
-
-## Project Background
-
-EmbedM is part of an exploration into how far AI-assisted development can go when building a non-trivial tool that could be used in a production CD/CI chain. This project has been built based on a _human_ defined architecture, functional spec and a series of interface contracts, then implemented using using [Claude](https://claude.ai/) and to a lesser extent [Google Gemini](https://gemini.google.com/app). 
 
 ## License
 

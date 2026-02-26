@@ -34,12 +34,12 @@ Markdown sources are embedded inline — their content is merged directly into t
 
 ```yaml
 type: file
-source: ./example_snippet.md
+source: ./assets/md/example_snippet.md
 ```
 
 ```yaml embedm
 type: file
-source: ./example_snippet.md
+source: ./assets/md/example_snippet.md
 ```
 
 ## Extraction Options

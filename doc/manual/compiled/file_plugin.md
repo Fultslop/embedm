@@ -58,7 +58,7 @@ Markdown sources are embedded inline — their content is merged directly into t
 
 ```yaml
 type: file
-source: ./example_snippet.md
+source: ./assets/md/example_snippet.md
 ```
 
 This is an **example snippet** embedded from `example_snippet.md`.
