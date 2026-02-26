@@ -14,6 +14,10 @@ type: toc
 add_slugs: True
 ```
 
+## Project Background
+
+EmbedM is part of an exploration into how far AI-assisted development can go when building a non-trivial tool that could be used in a production CD/CI chain. This project has been built based on a _human_ defined architecture, functional spec and a series of interface contracts, then implemented using using [Claude](https://claude.ai/) and to a lesser extent [Google Gemini](https://gemini.google.com/app). 
+
 ## How It Works
 
 EmbedM compiles Markdown documents from directive blocks. Each directive references a source — a code file, a data query, a CSV table, or another document — and is replaced with the extracted, formatted content on compile. Change the source; recompile; the document is current.
@@ -110,7 +114,7 @@ format: "Default pool size: **{value}**"
 **Install**
 
 ```
-(coming soon) pip install embedm
+pip install embedm
 ```
 
 Or from source:
@@ -150,6 +154,10 @@ embedm ./docs/src --verify -d ./docs/compiled
 ```
 embedm --init
 ```
+
+**Creating new plugins**
+
+See the [plugin_tutorial](./plugin_tutorial.md)
 
 ## Features
 
@@ -198,10 +206,6 @@ embedm --init
 | [Table Plugin](doc/manual/compiled/table_plugin.md) | CSV/TSV tables with filtering and sorting |
 | [Toc Plugin](doc/manual/compiled/toc_plugin.md) | Table-of-contents generation |
 | [Architecture](doc/manual/compiled/architecture.md) | System design, plugin model, plan/compile pipeline |
-
-## Project Background
-
-EmbedM is part of an exploration into how far AI-assisted development can go when building a non-trivial tool that could be used in a production CD/CI chain. This project has been built based on a _human_ defined architecture, functional spec and a series of interface contracts, then implemented using using [Claude](https://claude.ai/) and to a lesser extent [Google Gemini](https://gemini.google.com/app). 
 
 ## License
 
