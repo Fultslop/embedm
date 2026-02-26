@@ -1,6 +1,6 @@
 # Recall Plugin
 
-version 0.9.8
+version 0.9.10
 
 The recall plugin retrieves the sentences from a document that are most relevant to a query. While the synopsis plugin summarises what a document is about, recall answers a specific question: *"which part of this document speaks to X?"*
 

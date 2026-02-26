@@ -1,6 +1,6 @@
 # Toc Plugin
 
-version 0.9.8
+version 0.9.10
 
 The toc plugin generates a table of contents from the headings in the compiled document. It scans all content from its position forward — including headings embedded from other files — and produces either a plain bullet list or a clickable list of anchor links.
 
