@@ -1,0 +1,18 @@
+[
+    {
+        "Level": "`OK`",
+        "Meaning": "Validation passed; set on a node when no other statuses are collected."
+    },
+    {
+        "Level": "`WARNING`",
+        "Meaning": "Something unexpected but non-blocking. Output is still produced."
+    },
+    {
+        "Level": "`ERROR`",
+        "Meaning": "A directive cannot be compiled as specified. The user is prompted to continue or abort."
+    },
+    {
+        "Level": "`FATAL`",
+        "Meaning": "A critical failure (e.g. circular dependency). Compilation of the affected file is aborted immediately."
+    }
+]

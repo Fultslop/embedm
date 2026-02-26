@@ -123,12 +123,10 @@ source: ./assets/tables/plugin_methods.json
 
 Plugins are discovered at startup via Python's `importlib.metadata` entry-point mechanism. Any installed package can register plugins under the `embedm.plugins` group in its `pyproject.toml`:
 
-# TODO: pull from src 
-```toml
-[project.entry-points."embedm.plugins"]
-file        = "embedm_plugins.file_plugin:FilePlugin"
-query-path  = "embedm_plugins.query_path_plugin:QueryPathPlugin"
-toc         = "embedm_plugins.toc_plugin:ToCPlugin"
+```yaml embedm
+type: file
+source: ../../../pyproject.toml
+region: entry_points
 ```
 
 This makes the plugin system open: third-party packages install alongside embedm and their plugins become available without any changes to the core codebase.
@@ -157,7 +155,7 @@ The system separates planning from compilation so that the entire input graph ca
 1. **Parses** — scans the source for ```` ```yaml embedm ```` blocks, producing a `Document` of `Fragment` objects.
 2. **Validates directives** — calls `plugin.validate_directive()` for every `Directive` in the document. Errors are collected but do not stop planning.
 3. **Checks sources** — verifies that each source file exists, is within size limits, is accessible, has not been seen before in the ancestor chain (cycle detection), and does not exceed the max recursion depth.
-4. **Validates input** — for buildable source directives, loads the source content and calls `plugin.validate_input()`. The returned `artifact` is stored on the child `PlanNode`.
+4. **Normalize input** — for buildable source directives, loads the source content and calls `plugin.normalize_input()`. The returned `normalized_data` is stored on the child `PlanNode`.
 5. **Recurses** — if the source is itself a markdown file, `create_plan` is called again for the child, incrementing depth and extending the ancestor set.
 
 The result is a fully populated tree of `PlanNode` objects. The plan phase never writes output.
@@ -176,12 +174,10 @@ When a directive is compiled, its pre-built `PlanNode` (from the plan phase) is 
 
 ### Status Levels
 
-| Level | Meaning |
-|-------|---------|
-| `OK` | Validation passed; set on a node when no other statuses are collected. |
-| `WARNING` | Something unexpected but non-blocking. Output is still produced. |
-| `ERROR` | A directive cannot be compiled as specified. The user is prompted to continue or abort. |
-| `FATAL` | A critical failure (e.g. circular dependency). Compilation of the affected file is aborted immediately. |
+```yaml embedm
+type: table
+source: ./assets/tables/status_levels.json
+```
 
 ### Error Propagation
 

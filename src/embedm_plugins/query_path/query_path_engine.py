@@ -3,18 +3,22 @@ from __future__ import annotations
 import re
 from typing import Any
 
-_SEGMENT_RE = re.compile(r"`[^`]+`|[^.]+")
+_SEGMENT_RE = re.compile(r'`[^`]+`|"[^"]+"|[^.]+')
 
 
 def parse_path(path: str) -> list[str]:
     """Split a dot-notation path string into segments.
 
     Backtick-wrapped segments are treated as literal key lookups (e.g. the segment
-    ``value`` in the path ``node.`value`.child`` resolves the dict key `` `value` ``
+    `` `value` `` in the path ``node.`value`.child`` resolves the dict key `` `value` ``
     rather than the reserved XML text-content slot ``value``).
+
+    Double-quoted segments are unquoted (e.g. ``"a.b"`` in ``node."a.b".child``
+    resolves the dict key ``a.b``). This matches TOML quoted-key syntax where dots
+    inside quotes are part of the key name, not path separators.
     """
     assert path, "path must be a non-empty string"
-    return _SEGMENT_RE.findall(path)
+    return [s[1:-1] if s.startswith('"') else s for s in _SEGMENT_RE.findall(path)]
 
 
 def resolve(tree: Any, segments: list[str]) -> Any:
