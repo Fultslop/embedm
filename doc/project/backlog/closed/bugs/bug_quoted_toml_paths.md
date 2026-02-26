@@ -1,7 +1,7 @@
 BUG: Query-path does handle quoted toml paths
 ========================================
 Created: 26/02/2026  
-Closed: `<date>`  
+Closed: 26/02/2026  
 Created by: FS  
 
 

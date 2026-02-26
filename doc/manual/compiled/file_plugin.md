@@ -30,7 +30,7 @@ Non-markdown sources are wrapped in a fenced code block:
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 ```
 
 ```java
@@ -76,7 +76,7 @@ Mark sections of a file with `md.start:<name>` and `md.end:<name>` comments, the
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 region: simple-add
 ```
 
@@ -93,7 +93,7 @@ Supported formats: `"10"` (single line), `"5..10"` (inclusive range), `"5.."` (f
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "9..11"
 ```
 
@@ -108,7 +108,7 @@ Extract a named declaration by identifier. Supported for C/C++, C#, and Java sou
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.divide
 ```
 
@@ -124,7 +124,7 @@ When a method is overloaded, append a parameter signature to select the exact va
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.add(int, int, int)
 ```
 
@@ -143,7 +143,7 @@ Display options add a header line above the embedded block. They can be combined
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.divide
 title: "Divide"
 ```
@@ -163,12 +163,12 @@ title: "Divide"
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 region: simple-add
 link: true
 ```
 
-> [link example_symbols.java](../src/example_symbols.java)
+> [link example_symbols.java](../src/assets/java/example_symbols.java)
 ```java
     public int add(int a, int b) {
         return a + b;
@@ -180,7 +180,7 @@ link: true
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "13..18"
 line_numbers_range: true
 ```
@@ -200,14 +200,14 @@ All display options compose freely. This example labels an extracted range, link
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "13..18"
 title: "divide"
 link: true
 line_numbers_range: true
 ```
 
-> **"divide"** (lines 13..18) [link example_symbols.java](../src/example_symbols.java)
+> **"divide"** (lines 13..18) [link example_symbols.java](../src/assets/java/example_symbols.java)
 ```java
     public double divide(double numerator, double denominator) {
         if (denominator == 0) {
