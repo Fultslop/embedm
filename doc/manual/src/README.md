@@ -26,7 +26,17 @@ EmbedM compiles Markdown documents from directive blocks. Each directive referen
 
 ### Keeping code documentation in sync
 
-Embed a function directly from the source file, scoped by a named region or by symbol name. When the implementation changes the docs regenerate on the next compile — no copy-paste, no drift.
+Embed a function directly from the source file, scoped by a named region or by symbol name. When the implementation changes the docs regenerate on the next compile — no copy-paste, no drift. Instead of copying the function code, you simply add a reference to the class/function/method/enum or struct.
+
+Instead of adding code that may go out of date:
+
+```java
+public void createUser(string user) {
+    // ...
+}
+```
+
+You create a link to said method, which will be replaced with the up-to-date function at compile time, or give a clear error in case the method 'createUser' is no longer there.
 
 ````yaml
 type: file
@@ -38,7 +48,7 @@ link: true
 
 ### Live metadata in a README or changelog
 
-Pull version numbers, project names, and other values from `pyproject.toml`, `package.json`, or any JSON/YAML/TOML/XML file. The version at the top of this page is a live example — it is compiled from `pyproject.toml` at build time.
+Pull version numbers, project names, and other values from `pyproject.toml`, `package.json`, or any JSON/YAML/TOML/XML file. The version at the top of this page is a live example — it is compiled from `pyproject.toml` at build time. Instead of a hard coded version, create a reference to the project. Eg:
 
 ````yaml
 type: query-path
@@ -49,7 +59,7 @@ format: "Released: **v{value}**"
 
 ### Data tables without copy-paste
 
-Embed CSV or TSV data as formatted Markdown tables. Apply column selection, filtering, and sorting inline — the source file is the single source of truth.
+Embed CSV, TSV data or structured json as formatted Markdown tables. Apply column selection, filtering, and sorting inline — the source file is the single source of truth via:
 
 ````yaml
 type: table
@@ -157,7 +167,7 @@ embedm --init
 
 **Creating new plugins**
 
-See the [plugin_tutorial](./plugin_tutorial.md)
+See the [plugin_tutorial](./doc/manual/src/assets/tutorial/plugin_tutorial.md)
 
 ## Features
 

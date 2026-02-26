@@ -116,7 +116,7 @@ class MermaidPlugin(PluginBase):
         return "mermaid output"
 ```
 
-Now we need to let `embedm` where to find this plugin. We need to do two things: define a [python entry point](https://packaging.python.org/en/latest/specifications/entry-points/) and let embedm know when to run this plugin (see [why plugin order matters](./architecture.md#why-plugin_sequence-order-matters)).
+Now we need to let `embedm` where to find this plugin. We need to do two things: define a [python entry point](https://packaging.python.org/en/latest/specifications/entry-points/) and let embedm know when to run this plugin (see [why plugin order matters](../../architecture.md#why-plugin_sequence-order-matters)).
 
 To add an entry point add the following to your `pyproject.tomml`:
 
@@ -349,4 +349,4 @@ In this tutorial we've shown how to create a embedm plugin from scratch. Do note
  
 Error checking is up to the `validate_directive` and `normalize_input` methods. 
 
-We will address the 'proper' way of developing plugins in a future episode. For now please refer to [architecture](./architecture.md) and the [plugin implementations](https://github.com/Fultslop/embedm/tree/main/src/embedm_plugins) in embedm for more information.
+We will address the 'proper' way of developing plugins in a future episode. For now please refer to [architecture](../../architecture.md) and the [plugin implementations](https://github.com/Fultslop/embedm/tree/main/src/embedm_plugins) in embedm for more information.
