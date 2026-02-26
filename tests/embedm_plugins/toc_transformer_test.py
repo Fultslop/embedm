@@ -1,6 +1,6 @@
 from embedm.domain.directive import Directive
-from embedm_plugins.toc_resources import str_resources
-from embedm_plugins.toc_transformer import ToCParams, ToCTransformer
+from embedm_plugins.toc.toc_resources import str_resources
+from embedm_plugins.toc.toc_transformer import ToCParams, ToCTransformer
 
 
 def test_transformer_execute_with_empty_content():

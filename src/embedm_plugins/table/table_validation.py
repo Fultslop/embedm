@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.plugins.validation_base import ValidationBase, ValidationResult
-from embedm_plugins.table_resources import str_resources
+from embedm.plugins.normalization_base import NormalizationBase, NormalizationResult
+from embedm_plugins.table.table_resources import str_resources
 
 Row = dict[str, str]
 
@@ -99,43 +99,43 @@ def _validate_order_by(order_by_str: str) -> list[Status]:
     return errors
 
 
-class CsvTsvTableValidation(ValidationBase[CsvTsvValidationParams, list[Row]]):
+class CsvTsvTableValidation(NormalizationBase[CsvTsvValidationParams, list[Row]]):
     """Validates CSV and TSV table content, returning parsed rows as artifact."""
 
     params_type = CsvTsvValidationParams
 
-    def validate(self, params: CsvTsvValidationParams) -> ValidationResult[list[Row]]:
+    def validate(self, params: CsvTsvValidationParams) -> NormalizationResult[list[Row]]:
         """Parse and validate CSV/TSV content. Returns rows as artifact on success."""
         rows = _parse_delimited(params.content, params.delimiter)
 
         if not rows:
             empty_error = Status(StatusLevel.ERROR, str_resources.err_table_empty_content)
-            return ValidationResult(artifact=None, errors=[empty_error])
+            return NormalizationResult(normalized_data=None, errors=[empty_error])
 
         errors = _validate_select(rows, params.select) + _validate_order_by(params.order_by)
         if errors:
-            return ValidationResult(artifact=None, errors=errors)
+            return NormalizationResult(normalized_data=None, errors=errors)
 
-        return ValidationResult(artifact=rows)
+        return NormalizationResult(normalized_data=rows)
 
 
-class JsonTableValidation(ValidationBase[JsonValidationParams, list[Row]]):
+class JsonTableValidation(NormalizationBase[JsonValidationParams, list[Row]]):
     """Validates JSON table content, returning parsed rows as artifact."""
 
     params_type = JsonValidationParams
 
-    def validate(self, params: JsonValidationParams) -> ValidationResult[list[Row]]:
+    def validate(self, params: JsonValidationParams) -> NormalizationResult[list[Row]]:
         """Parse and validate JSON content. Returns rows as artifact on success."""
         rows, errors = _parse_json_rows(params.content)
         if errors:
-            return ValidationResult(artifact=None, errors=errors)
+            return NormalizationResult(normalized_data=None, errors=errors)
 
         if not rows:
             empty_error = Status(StatusLevel.ERROR, str_resources.err_table_empty_content)
-            return ValidationResult(artifact=None, errors=[empty_error])
+            return NormalizationResult(normalized_data=None, errors=[empty_error])
 
         errors = _validate_select(rows, params.select) + _validate_order_by(params.order_by)
         if errors:
-            return ValidationResult(artifact=None, errors=errors)
+            return NormalizationResult(normalized_data=None, errors=errors)
 
-        return ValidationResult(artifact=rows)
+        return NormalizationResult(normalized_data=rows)

@@ -10,17 +10,17 @@ from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_util import to_relative
+from embedm.plugins.normalization_base import NormalizationResult
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm.plugins.validation_base import ValidationResult
-from embedm_plugins import query_path_engine as engine
-from embedm_plugins import query_path_normalize_json as normalize_json
-from embedm_plugins import query_path_normalize_toml as normalize_toml
-from embedm_plugins import query_path_normalize_xml as normalize_xml
-from embedm_plugins import query_path_normalize_yaml as normalize_yaml
-from embedm_plugins.query_path_resources import str_resources
-from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
+from embedm_plugins.query_path import query_path_engine as engine
+from embedm_plugins.query_path import query_path_normalize_json as normalize_json
+from embedm_plugins.query_path import query_path_normalize_toml as normalize_toml
+from embedm_plugins.query_path import query_path_normalize_xml as normalize_xml
+from embedm_plugins.query_path import query_path_normalize_yaml as normalize_yaml
+from embedm_plugins.query_path.query_path_resources import str_resources
+from embedm_plugins.query_path.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
 
 _SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({"json", "yaml", "yml", "xml", "toml"})
 _EXT_TO_LANG_TAG: dict[str, str] = {"json": "json", "yaml": "yaml", "yml": "yaml", "xml": "xml", "toml": "toml"}
@@ -87,12 +87,12 @@ class QueryPathPlugin(PluginBase):
 
         return []
 
-    def validate_input(
+    def normalize_input(
         self,
         directive: Directive,
         content: str,
         _plugin_config: PluginConfiguration | None = None,
-    ) -> ValidationResult[_QueryPathArtifact]:
+    ) -> NormalizationResult[_QueryPathArtifact]:
         """Parse source file and resolve the query path. Returns the resolved value as artifact."""
         assert directive is not None, "directive is required"
         assert content is not None, "content is required"
@@ -105,11 +105,15 @@ class QueryPathPlugin(PluginBase):
         try:
             tree = _parse(content, ext)
         except Exception as exc:
-            return ValidationResult(artifact=None, errors=[Status(StatusLevel.ERROR, _parse_error_message(ext, exc))])
+            return NormalizationResult(
+                normalized_data=None, errors=[Status(StatusLevel.ERROR, _parse_error_message(ext, exc))]
+            )
 
         if not path_str:
-            return ValidationResult(
-                artifact=_QueryPathArtifact(value=None, raw_content=content, lang_tag=lang_tag, is_full_document=True)
+            return NormalizationResult(
+                normalized_data=_QueryPathArtifact(
+                    value=None, raw_content=content, lang_tag=lang_tag, is_full_document=True
+                )
             )
 
         segments = engine.parse_path(path_str)
@@ -120,14 +124,14 @@ class QueryPathPlugin(PluginBase):
                 StatusLevel.ERROR,
                 str_resources.err_query_path_not_found.format(path=path_str, source=to_relative(directive.source)),
             )
-            return ValidationResult(artifact=None, errors=[error])
+            return NormalizationResult(normalized_data=None, errors=[error])
 
         if format_str and isinstance(value, (dict, list)):
             error = Status(StatusLevel.ERROR, str_resources.err_query_path_format_non_scalar)
-            return ValidationResult(artifact=None, errors=[error])
+            return NormalizationResult(normalized_data=None, errors=[error])
 
-        return ValidationResult(
-            artifact=_QueryPathArtifact(
+        return NormalizationResult(
+            normalized_data=_QueryPathArtifact(
                 value=value, raw_content=content, lang_tag=lang_tag, is_full_document=False, format_str=format_str
             )
         )
@@ -142,7 +146,7 @@ class QueryPathPlugin(PluginBase):
         if plan_node.document is None:
             return ""
 
-        artifact: _QueryPathArtifact | None = plan_node.artifact
+        artifact: _QueryPathArtifact | None = plan_node.normalized_data
         if artifact is None:
             return ""
 

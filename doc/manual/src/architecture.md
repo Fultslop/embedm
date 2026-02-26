@@ -24,13 +24,13 @@ The domain layer is a small set of immutable dataclasses that flow through the e
 
 A `Directive` represents a single parsed embedm block. It holds the `type` string that identifies which plugin handles it, an optional `source` path, a dict of additional `options`, and the `base_dir` of the file that contains it (used for relative link computation).
 
-```python
-@dataclass
-class Directive:
-    type: str
-    source: str = ""
-    options: dict[str, str] = field(default_factory=dict)
-    base_dir: str = ""
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/directive.py
+symbol: Directive
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 ### Document and Fragments
@@ -39,11 +39,15 @@ A `Document` wraps the parsed output of a single source file: its file name and 
 
 ```python
 Fragment = str | Span | Directive
+```
 
-@dataclass
-class Document:
-    file_name: str
-    fragments: list[Fragment] = field(default_factory=list)
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/document.py
+symbol: Document
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 A `Fragment` is one of three things:
@@ -58,14 +62,13 @@ The document is built once during planning and consumed during compilation.
 
 A `PlanNode` is one node in the plan tree. Every directive in a document becomes a child node of the document's root node. The tree is built recursively: if a directive's source is itself a markdown file containing directives, those are planned as grandchildren.
 
-```python
-@dataclass
-class PlanNode:
-    directive: Directive
-    status: list[Status]
-    document: Document | None
-    children: list[PlanNode] | None
-    artifact: Any                  # set by validate_input; available to transform()
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/plan_node.py
+symbol: PlanNode
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 `document` holds the parsed fragments of this node's source. It is `None` when planning failed before a document could be built. `artifact` carries structured data computed during the plan phase (e.g. a parsed JSON tree) so that the compile phase does not need to re-parse files.
@@ -74,17 +77,22 @@ class PlanNode:
 
 `Status` is the shared language for all error reporting: from directive parsing, through plugin validation, to compile-time failures.
 
-```python
-class StatusLevel(Enum):
-    OK      = 1
-    WARNING = 2
-    ERROR   = 3
-    FATAL   = 4
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/status_level.py
+symbol: StatusLevel
+filter_comments: true
+link: true
+line_numbers_range: true
+```
 
-@dataclass
-class Status:
-    level: StatusLevel
-    description: str
+```yaml embedm
+type: file
+source: ../../../src/embedm/domain/status_level.py
+symbol: Status
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 See [Error Model](#error-model) for how each level is handled by the orchestrator.
@@ -95,31 +103,30 @@ See [Error Model](#error-model) for how each level is handled by the orchestrato
 
 Every plugin is a class that inherits from `PluginBase` and declares three class-level attributes. The `hello_world_plugin` in the standard distribution is the canonical minimal example: no source, no options, just a `validate_directive` that checks the type and a `transform` that returns a fixed string. It is useful as a starting point when writing a new plugin.
 
-```python
-class PluginBase(ABC):
-    name: ClassVar[str]           # human-readable name
-    api_version: ClassVar[int]    # must be 1
-    directive_type: ClassVar[str] # the type string matched in embedm blocks
+```yaml embedm
+type: file
+source: ../../../src/embedm/plugins/plugin_base.py
+region: PluginBase
+filter_comments: true
+link: true
+line_numbers_range: true
 ```
 
 The abstract interface has two mandatory methods and two optional ones:
 
-| Method | Required | Purpose |
-|--------|----------|---------|
-| `validate_directive(directive, config)` | Yes | Check options syntax; return `list[Status]` |
-| `transform(plan_node, parent_document, ...)` | Yes | Produce the compiled string output |
-| `validate_input(directive, content, config)` | No | Parse the source file; return a typed `ValidationResult` |
-| `validate_plugin_config(settings)` | No | Validate per-plugin config from `embedm-config.yaml` |
+```yaml embedm
+type: table
+source: ./assets/tables/plugin_methods.json
+```
 
 ### Plugin Discovery
 
 Plugins are discovered at startup via Python's `importlib.metadata` entry-point mechanism. Any installed package can register plugins under the `embedm.plugins` group in its `pyproject.toml`:
 
-```toml
-[project.entry-points."embedm.plugins"]
-file        = "embedm_plugins.file_plugin:FilePlugin"
-query-path  = "embedm_plugins.query_path_plugin:QueryPathPlugin"
-toc         = "embedm_plugins.toc_plugin:ToCPlugin"
+```yaml embedm
+type: file
+source: ../../../pyproject.toml
+region: entry_points
 ```
 
 This makes the plugin system open: third-party packages install alongside embedm and their plugins become available without any changes to the core codebase.
@@ -148,7 +155,7 @@ The system separates planning from compilation so that the entire input graph ca
 1. **Parses** — scans the source for ```` ```yaml embedm ```` blocks, producing a `Document` of `Fragment` objects.
 2. **Validates directives** — calls `plugin.validate_directive()` for every `Directive` in the document. Errors are collected but do not stop planning.
 3. **Checks sources** — verifies that each source file exists, is within size limits, is accessible, has not been seen before in the ancestor chain (cycle detection), and does not exceed the max recursion depth.
-4. **Validates input** — for buildable source directives, loads the source content and calls `plugin.validate_input()`. The returned `artifact` is stored on the child `PlanNode`.
+4. **Normalize input** — for buildable source directives, loads the source content and calls `plugin.normalize_input()`. The returned `normalized_data` is stored on the child `PlanNode`.
 5. **Recurses** — if the source is itself a markdown file, `create_plan` is called again for the child, incrementing depth and extending the ancestor set.
 
 The result is a fully populated tree of `PlanNode` objects. The plan phase never writes output.
@@ -167,12 +174,10 @@ When a directive is compiled, its pre-built `PlanNode` (from the plan phase) is 
 
 ### Status Levels
 
-| Level | Meaning |
-|-------|---------|
-| `OK` | Validation passed; set on a node when no other statuses are collected. |
-| `WARNING` | Something unexpected but non-blocking. Output is still produced. |
-| `ERROR` | A directive cannot be compiled as specified. The user is prompted to continue or abort. |
-| `FATAL` | A critical failure (e.g. circular dependency). Compilation of the affected file is aborted immediately. |
+```yaml embedm
+type: table
+source: ./assets/tables/status_levels.json
+```
 
 ### Error Propagation
 

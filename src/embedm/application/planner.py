@@ -151,22 +151,22 @@ def _validate_sourceless_directives(
     context: EmbedmContext,
     plugin_config: PluginConfiguration,
 ) -> list[PlanNode]:
-    """Call validate_input for source-less directives that have a registered plugin."""
+    """Call normalize_input for source-less directives that have a registered plugin."""
     nodes: list[PlanNode] = []
     for d in (d for d in directives if not d.source):
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
             continue
         t0 = time.perf_counter()
-        validate_result = plugin.validate_input(d, "", plugin_config)
+        validate_result = plugin.normalize_input(d, "", plugin_config)
         if context.config.verbosity >= 3:
-            verbose_timing("validate_input", d.type, d.source, time.perf_counter() - t0)
+            verbose_timing("normalize_input", d.type, d.source, time.perf_counter() - t0)
         if validate_result is not None and validate_result.errors:
             nodes.append(_error_node(d, validate_result.errors))
         else:
             node = PlanNode(directive=d, status=[], document=None, children=None)
-            if validate_result is not None and validate_result.artifact is not None:
-                node.artifact = validate_result.artifact
+            if validate_result is not None and validate_result.normalized_data is not None:
+                node.normalized_data = validate_result.normalized_data
             nodes.append(node)
     return nodes
 
@@ -207,20 +207,20 @@ def _validate_and_plan(
     context: EmbedmContext,
     plugin_config: PluginConfiguration,
 ) -> PlanNode:
-    """Run validate_input if a plugin is registered, then build a plan node."""
+    """Run normalize_input if a plugin is registered, then build a plan node."""
     plugin = context.plugin_registry.find_plugin_by_directive_type(directive.type)
     if plugin is not None:
         t0 = time.perf_counter()
-        validate_result = plugin.validate_input(directive, content, plugin_config)
+        validate_result = plugin.normalize_input(directive, content, plugin_config)
         if context.config.verbosity >= 3:
-            verbose_timing("validate_input", directive.type, directive.source, time.perf_counter() - t0)
+            verbose_timing("normalize_input", directive.type, directive.source, time.perf_counter() - t0)
     else:
         validate_result = None
     if validate_result is not None and validate_result.errors:
         return _error_node(directive, validate_result.errors)
     node = create_plan(directive, content, depth, context, ancestors)
-    if validate_result is not None and validate_result.artifact is not None:
-        node.artifact = validate_result.artifact
+    if validate_result is not None and validate_result.normalized_data is not None:
+        node.normalized_data = validate_result.normalized_data
     return node
 
 

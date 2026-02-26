@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any
 
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.table_resources import str_resources
+from embedm_plugins.table.table_resources import str_resources
 
 SELECT_KEY = "select"
 ORDER_BY_KEY = "order_by"
@@ -135,12 +135,12 @@ def _evaluate_condition(row_value: str, condition: str) -> bool:
 def _apply_select(rows: list[Row], select_str: str) -> tuple[list[Row], list[str]]:
     """Project and rename columns per select_str (e.g. 'col_a, col_b as b').
 
-    Precondition: select_str syntax and column existence validated by validate_input.
+    Precondition: select_str syntax and column existence validated by normalize_input.
     """
     column_map: list[tuple[str, str]] = []
     for part in select_str.split(","):
         match = _SELECT_ALIAS_PATTERN.match(part)
-        assert match is not None, f"invalid select expression '{part.strip()}' — must be caught by validate_input"
+        assert match is not None, f"invalid select expression '{part.strip()}' — must be caught by normalize_input"
         src_col = match.group(1)
         alias = match.group(2) or src_col
         column_map.append((src_col, alias))
@@ -148,7 +148,7 @@ def _apply_select(rows: list[Row], select_str: str) -> tuple[list[Row], list[str
     if rows:
         available = set(rows[0].keys())
         for src_col, _ in column_map:
-            assert src_col in available, f"column '{src_col}' not found — must be caught by validate_input"
+            assert src_col in available, f"column '{src_col}' not found — must be caught by normalize_input"
 
     new_rows = [{alias: row.get(src_col, "") for src_col, alias in column_map} for row in rows]
     headers = [alias for _, alias in column_map]
@@ -158,12 +158,12 @@ def _apply_select(rows: list[Row], select_str: str) -> tuple[list[Row], list[str
 def _apply_order_by(rows: list[Row], order_by_str: str) -> list[Row]:
     """Sort rows per order_by_str (e.g. 'col_a desc, col_b'). Later specs = higher priority.
 
-    Precondition: order_by_str syntax validated by validate_input.
+    Precondition: order_by_str syntax validated by normalize_input.
     """
     specs: list[tuple[str, bool]] = []
     for part in order_by_str.split(","):
         match = _ORDER_BY_PATTERN.match(part)
-        assert match is not None, f"invalid order_by expression '{part.strip()}' — must be caught by validate_input"
+        assert match is not None, f"invalid order_by expression '{part.strip()}' — must be caught by normalize_input"
         col = match.group(1)
         direction = (match.group(2) or "asc").lower()
         specs.append((col, direction == "desc"))

@@ -445,7 +445,7 @@ def test_validate_directive_valid_lines_format():
 
 def test_validate_directive_symbol_unsupported_extension():
     plugin = FilePlugin()
-    directive = Directive(type="file", source="foo.py", options={"symbol": "MyClass"})
+    directive = Directive(type="file", source="foo.go", options={"symbol": "MyClass"})
 
     errors = plugin.validate_directive(directive)
 
@@ -456,6 +456,30 @@ def test_validate_directive_symbol_unsupported_extension():
 def test_validate_directive_symbol_supported_extension():
     plugin = FilePlugin()
     directive = Directive(type="file", source="foo.cs", options={"symbol": "MyClass"})
+
+    assert plugin.validate_directive(directive) == []
+
+
+def test_validate_directive_filter_comments_unsupported_ext_warns():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.go", options={"filter_comments": "True"})
+
+    errors = plugin.validate_directive(directive)
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.WARNING
+
+
+def test_validate_directive_filter_comments_supported_ext_no_warning():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.py", options={"filter_comments": "True"})
+
+    assert plugin.validate_directive(directive) == []
+
+
+def test_validate_directive_filter_comments_false_no_warning():
+    plugin = FilePlugin()
+    directive = Directive(type="file", source="foo.go", options={"filter_comments": "False"})
 
     assert plugin.validate_directive(directive) == []
 

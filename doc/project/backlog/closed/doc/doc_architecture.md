@@ -14,7 +14,7 @@ We need to document the overall architecture. This should cover
 * Main domain entities (Directive, PlanNode, Fragment/Document, Status/StatusLevel)
 * Main orchestration flow
 * Main services (infrastructure - filecache, parsing)
-* Plan / compile two-phase model (validate_directive → validate_input → artifact → transform)
+* Plan / compile two-phase model (validate_directive → normalize_input → artifact → transform)
 * Error model (Status / StatusLevel semantics, ERROR vs FATAL, propagation through the tree)
 * Document model (Fragment sequence, parent_document, why plugin_sequence order matters)
 

@@ -2,8 +2,6 @@
 
 from collections.abc import Sequence
 
-import pytest
-
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode

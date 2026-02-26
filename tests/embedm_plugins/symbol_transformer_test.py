@@ -1,5 +1,5 @@
 from embedm.parsing.symbol_parser import CSHARP_CONFIG
-from embedm_plugins.symbol_transformer import SymbolParams, SymbolTransformer
+from embedm_plugins.file.symbol_transformer import SymbolParams, SymbolTransformer
 
 _SOURCE = """\
 public class Greeter

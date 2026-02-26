@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-from embedm.plugins.api import Directive, PlanNode, PluginBase, PluginConfiguration, Status, StatusLevel, ValidationResult
+from embedm.plugins.api import Directive, PlanNode, PluginBase, PluginConfiguration, Status, StatusLevel, NormalizationResult
 
 INPUT_KEY = "input"
 
@@ -25,12 +25,12 @@ class MermaidPlugin(PluginBase):
 
         return []
 
-    def validate_input(
+    def normalize_input(
             self,
             directive: Directive,
             content: str,
             _plugin_config: PluginConfiguration | None = None,
-        ) -> ValidationResult[Any]:
+        ) -> NormalizationResult[Any]:
 
         input_text = directive.options.get(INPUT_KEY)
 
@@ -39,13 +39,13 @@ class MermaidPlugin(PluginBase):
         nodes = [n.strip() for n in nodes if n.strip()]
 
         if len(nodes) < 2:
-            return ValidationResult(errors=
+            return NormalizationResult(errors=
                 [Status(StatusLevel.ERROR,"Mermaid error At least 2 nodes are required. Separate nodes with →, ->, or comma.")])
 
-        return ValidationResult(artifact=nodes)
+        return NormalizationResult(normalized_data=nodes)
 
     def transform(self, plan_node: PlanNode, parent_document, context=None):
-        nodes = plan_node.artifact
+        nodes = plan_node.normalized_data
 
         # Build mermaid diagram
         lines = ['flowchart LR']

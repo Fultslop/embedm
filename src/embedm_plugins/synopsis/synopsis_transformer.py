@@ -4,17 +4,17 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.synopsis_resources import str_resources
-from embedm_plugins.synopsis_stopwords import STOPWORDS
-from embedm_plugins.text_processing import (
-    _apply_block_weights,
-    _build_word_freq,
-    _clean_text,
-    _flatten_blocks,
-    _score_frequency,
-    _select_top,
-    _split_into_blocks,
-    _tokenize,
+from embedm_plugins.synopsis.synopsis_resources import str_resources
+from embedm_plugins.synopsis.synopsis_stopwords import STOPWORDS
+from embedm_plugins.synopsis.text_processing import (
+    apply_block_weights,
+    build_word_freq,
+    clean_text,
+    flatten_blocks,
+    score_frequency,
+    select_top,
+    split_into_blocks,
+    tokenize,
 )
 
 _LUHN_WINDOW = 5
@@ -38,12 +38,12 @@ class SynopsisTransformer(TransformerBase[SynopsisParams]):
         assert params.max_sentences >= 1, "max_sentences must be >= 1"
         assert params.sections >= 0, "sections must be >= 0"
 
-        text = _clean_text(params.text)
-        blocks = _split_into_blocks(text, params.sections)
+        text = clean_text(params.text)
+        blocks = split_into_blocks(text, params.sections)
         if not blocks:
             return f"{str_resources.note_no_synopsis_content}\n"
 
-        sentences, block_indices = _flatten_blocks(blocks)
+        sentences, block_indices = flatten_blocks(blocks)
         stopwords = STOPWORDS.get(params.language, STOPWORDS["en"])
         return f"> {_summarize(sentences, block_indices, params.algorithm, stopwords, params.max_sentences)}\n"
 
@@ -56,17 +56,17 @@ def _summarize(
     max_sentences: int,
 ) -> str:
     """Score, weight, select, and join sentences into a synopsis string."""
-    scorer = _score_luhn if algorithm == "luhn" else _score_frequency
+    scorer = _score_luhn if algorithm == "luhn" else score_frequency
     raw_scores = scorer(sentences, stopwords)
-    weighted = _apply_block_weights(raw_scores, block_indices)
-    selected = _select_top(weighted, max_sentences)
+    weighted = apply_block_weights(raw_scores, block_indices)
+    selected = select_top(weighted, max_sentences)
     return " ".join(sentences[i] for i in selected)
 
 
 def _score_luhn(sentences: list[str], stopwords: frozenset[str]) -> list[tuple[float, int]]:
     """Score sentences using Luhn's significant-word cluster algorithm."""
-    tokenized = [_tokenize(s) for s in sentences]
-    sig_words = _significant_words(_build_word_freq(tokenized, stopwords))
+    tokenized = [tokenize(s) for s in sentences]
+    sig_words = _significant_words(build_word_freq(tokenized, stopwords))
     if not sig_words:
         return [(0.0, i) for i in range(len(sentences))]
     return [(_best_cluster_score(_is_significant_mask(words, sig_words)), i) for i, words in enumerate(tokenized)]

@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from embedm_plugins.query_path_normalize_xml import normalize
+from embedm_plugins.query_path.query_path_normalize_xml import normalize
 
 
 def test_element_with_attributes():

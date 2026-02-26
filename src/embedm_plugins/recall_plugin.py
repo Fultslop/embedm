@@ -11,8 +11,8 @@ from embedm.plugins.directive_options import get_option, validate_option
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm_plugins.recall_resources import str_resources
-from embedm_plugins.recall_transformer import RecallParams, RecallTransformer
+from embedm_plugins.recall.recall_resources import str_resources
+from embedm_plugins.recall.recall_transformer import RecallParams, RecallTransformer
 
 MAX_SENTENCES_KEY = "max_sentences"
 LANGUAGE_KEY = "language"

@@ -3,14 +3,14 @@ from unittest.mock import MagicMock
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import StatusLevel
-from embedm_plugins.query_path_resources import str_resources
+from embedm_plugins.query_path.query_path_resources import str_resources
 from embedm_plugins.query_path_plugin import QueryPathPlugin, _QueryPathArtifact
 
 
 def _make_plan_node(source: str, options: dict[str, str] | None = None, artifact: object = None) -> PlanNode:
     directive = Directive(type="query-path", source=source, options=options or {})
     node = PlanNode(directive=directive, status=[], document=MagicMock())
-    node.artifact = artifact
+    node.normalized_data = artifact
     return node
 
 
@@ -80,188 +80,188 @@ def test_validate_format_with_path_and_placeholder_is_valid():
     assert errors == []
 
 
-# --- validate_input: JSON ---
+# --- normalize_input: JSON ---
 
 
-def test_validate_input_json_scalar():
+def test_normalize_input_json_scalar():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "version"})
-    result = plugin.validate_input(directive, '{"version": "1.2.3"}')
+    result = plugin.normalize_input(directive, '{"version": "1.2.3"}')
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == "1.2.3"
-    assert not result.artifact.is_full_document
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == "1.2.3"
+    assert not result.normalized_data.is_full_document
 
 
-def test_validate_input_json_nested_path():
+def test_normalize_input_json_nested_path():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "a.b.c"})
-    result = plugin.validate_input(directive, '{"a": {"b": {"c": 42}}}')
+    result = plugin.normalize_input(directive, '{"a": {"b": {"c": 42}}}')
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == 42
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == 42
 
 
-def test_validate_input_json_integer_index():
+def test_normalize_input_json_integer_index():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "items.1"})
-    result = plugin.validate_input(directive, '{"items": ["a", "b", "c"]}')
+    result = plugin.normalize_input(directive, '{"items": ["a", "b", "c"]}')
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == "b"
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == "b"
 
 
-def test_validate_input_json_no_path_is_full_document():
+def test_normalize_input_json_no_path_is_full_document():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json")
     raw = '{"version": "1.0"}'
-    result = plugin.validate_input(directive, raw)
+    result = plugin.normalize_input(directive, raw)
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.is_full_document
-    assert result.artifact.raw_content == raw
-    assert result.artifact.lang_tag == "json"
+    assert result.normalized_data is not None
+    assert result.normalized_data.is_full_document
+    assert result.normalized_data.raw_content == raw
+    assert result.normalized_data.lang_tag == "json"
 
 
-def test_validate_input_json_invalid_path():
+def test_normalize_input_json_invalid_path():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "missing.key"})
-    result = plugin.validate_input(directive, '{"version": "1.0"}')
+    result = plugin.normalize_input(directive, '{"version": "1.0"}')
     assert len(result.errors) == 1
     assert result.errors[0].level == StatusLevel.ERROR
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-def test_validate_input_invalid_json():
+def test_normalize_input_invalid_json():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "version"})
-    result = plugin.validate_input(directive, "not json")
+    result = plugin.normalize_input(directive, "not json")
     assert len(result.errors) == 1
     assert result.errors[0].level == StatusLevel.ERROR
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-# --- validate_input: YAML ---
+# --- normalize_input: YAML ---
 
 
-def test_validate_input_yaml_scalar():
+def test_normalize_input_yaml_scalar():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.yaml", options={"path": "project.version"})
-    result = plugin.validate_input(directive, "project:\n  version: 0.6.0")
+    result = plugin.normalize_input(directive, "project:\n  version: 0.6.0")
     assert result.errors == []
-    assert result.artifact is not None
-    assert str(result.artifact.value) == "0.6.0"
+    assert result.normalized_data is not None
+    assert str(result.normalized_data.value) == "0.6.0"
 
 
-def test_validate_input_yml_lang_tag():
+def test_normalize_input_yml_lang_tag():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.yml")
-    result = plugin.validate_input(directive, "key: value")
-    assert result.artifact is not None
-    assert result.artifact.lang_tag == "yaml"
+    result = plugin.normalize_input(directive, "key: value")
+    assert result.normalized_data is not None
+    assert result.normalized_data.lang_tag == "yaml"
 
 
-def test_validate_input_invalid_yaml():
+def test_normalize_input_invalid_yaml():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.yaml", options={"path": "key"})
-    result = plugin.validate_input(directive, "key: [unclosed")
+    result = plugin.normalize_input(directive, "key: [unclosed")
     assert len(result.errors) == 1
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-# --- validate_input: XML ---
+# --- normalize_input: XML ---
 
 
-def test_validate_input_xml_attribute():
+def test_normalize_input_xml_attribute():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.xml", options={"path": "server.attributes.host"})
-    result = plugin.validate_input(directive, '<server host="localhost"/>')
+    result = plugin.normalize_input(directive, '<server host="localhost"/>')
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == "localhost"
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == "localhost"
 
 
-def test_validate_input_xml_text_content():
+def test_normalize_input_xml_text_content():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.xml", options={"path": "root.value"})
-    result = plugin.validate_input(directive, "<root>hello</root>")
+    result = plugin.normalize_input(directive, "<root>hello</root>")
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == "hello"
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == "hello"
 
 
-def test_validate_input_xml_backtick_escape():
+def test_normalize_input_xml_backtick_escape():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.xml", options={"path": "root.`value`.child"})
     xml = "<root><value><child>found</child></value></root>"
-    result = plugin.validate_input(directive, xml)
+    result = plugin.normalize_input(directive, xml)
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == {"value": "found"}
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == {"value": "found"}
 
 
-def test_validate_input_invalid_xml():
+def test_normalize_input_invalid_xml():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.xml", options={"path": "root"})
-    result = plugin.validate_input(directive, "<unclosed>")
+    result = plugin.normalize_input(directive, "<unclosed>")
     assert len(result.errors) == 1
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-# --- validate_input: TOML ---
+# --- normalize_input: TOML ---
 
 
-def test_validate_input_toml_scalar():
+def test_normalize_input_toml_scalar():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pyproject.toml", options={"path": "project.version"})
-    result = plugin.validate_input(directive, '[project]\nversion = "0.6.0"')
+    result = plugin.normalize_input(directive, '[project]\nversion = "0.6.0"')
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.value == "0.6.0"
+    assert result.normalized_data is not None
+    assert result.normalized_data.value == "0.6.0"
 
 
-def test_validate_input_toml_no_path_is_full_document():
+def test_normalize_input_toml_no_path_is_full_document():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.toml")
     raw = '[project]\nversion = "1.0"'
-    result = plugin.validate_input(directive, raw)
+    result = plugin.normalize_input(directive, raw)
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.is_full_document
-    assert result.artifact.lang_tag == "toml"
+    assert result.normalized_data is not None
+    assert result.normalized_data.is_full_document
+    assert result.normalized_data.lang_tag == "toml"
 
 
-def test_validate_input_invalid_toml():
+def test_normalize_input_invalid_toml():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="cfg.toml", options={"path": "key"})
-    result = plugin.validate_input(directive, "not = [valid toml")
+    result = plugin.normalize_input(directive, "not = [valid toml")
     assert len(result.errors) == 1
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-def test_validate_input_format_scalar_stores_format_str():
+def test_normalize_input_format_scalar_stores_format_str():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "version", "format": "v: {value}"})
-    result = plugin.validate_input(directive, '{"version": "1.2.3"}')
+    result = plugin.normalize_input(directive, '{"version": "1.2.3"}')
     assert result.errors == []
-    assert result.artifact is not None
-    assert result.artifact.format_str == "v: {value}"
+    assert result.normalized_data is not None
+    assert result.normalized_data.format_str == "v: {value}"
 
 
-def test_validate_input_format_non_scalar_dict_is_error():
+def test_normalize_input_format_non_scalar_dict_is_error():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "meta", "format": "x: {value}"})
-    result = plugin.validate_input(directive, '{"meta": {"key": "val"}}')
+    result = plugin.normalize_input(directive, '{"meta": {"key": "val"}}')
     assert len(result.errors) == 1
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-def test_validate_input_format_non_scalar_list_is_error():
+def test_normalize_input_format_non_scalar_list_is_error():
     plugin = QueryPathPlugin()
     directive = Directive(type="query-path", source="pkg.json", options={"path": "items", "format": "x: {value}"})
-    result = plugin.validate_input(directive, '{"items": [1, 2, 3]}')
+    result = plugin.normalize_input(directive, '{"items": [1, 2, 3]}')
     assert len(result.errors) == 1
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
 # --- transform ---

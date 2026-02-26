@@ -1,10 +1,11 @@
-"""Tests for symbol_parser — covers C/C++, C#, and Java extraction."""
+"""Tests for symbol_parser — covers C/C++, C#, Java, and Python extraction."""
 import pytest
 
 from embedm.parsing.symbol_parser import (
     CSHARP_CONFIG,
     C_CPP_CONFIG,
     JAVA_CONFIG,
+    PYTHON_CONFIG,
     extract_symbol,
     get_language_config,
 )
@@ -30,8 +31,11 @@ def test_get_language_config_java():
     assert get_language_config("foo.java") is JAVA_CONFIG
 
 
+def test_get_language_config_py():
+    assert get_language_config("foo.py") is PYTHON_CONFIG
+
+
 def test_get_language_config_unsupported():
-    assert get_language_config("foo.py") is None
     assert get_language_config("foo.go") is None
     assert get_language_config("foo.txt") is None
 
@@ -463,3 +467,129 @@ def test_cs_symbol_inside_line_comment_is_skipped():
     lines = extract_symbol(_CS_LINE_COMMENT, "doSomething()", CSHARP_CONFIG)
     assert lines is not None
     assert any("// real" in l for l in lines)
+
+
+# ---------------------------------------------------------------------------
+# Python extraction
+# ---------------------------------------------------------------------------
+
+_PY_CLASSES = """\
+class Animal:
+    def __init__(self, name: str) -> None:
+        self.name = name
+
+    def speak(self) -> str:
+        return "..."
+
+
+class Dog(Animal):
+    def speak(self) -> str:
+        return "Woof"
+
+    def fetch(self, item: str) -> None:
+        print(f"Fetching {item}")
+"""
+
+_PY_FUNCTIONS = """\
+def add(x: int, y: int) -> int:
+    return x + y
+
+
+def subtract(x: int, y: int) -> int:
+    return x - y
+"""
+
+_PY_ENUM = """\
+from enum import Enum
+
+
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+"""
+
+_PY_ASYNC = """\
+class Service:
+    async def fetch(self, url: str) -> str:
+        return url
+"""
+
+_PY_COMMENT = """\
+class Foo:
+    # def fake(self): pass
+
+    def real(self) -> None:
+        pass
+"""
+
+
+def test_py_extract_class():
+    lines = extract_symbol(_PY_CLASSES, "Animal", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("class Animal" in l for l in lines)
+    assert any("speak" in l for l in lines)
+
+
+def test_py_extract_second_class():
+    lines = extract_symbol(_PY_CLASSES, "Dog", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("class Dog" in l for l in lines)
+    assert any("fetch" in l for l in lines)
+    assert not any("class Animal" in l for l in lines)
+
+
+def test_py_dot_notation_class_method():
+    lines = extract_symbol(_PY_CLASSES, "Dog.fetch", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("def fetch" in l for l in lines)
+    assert any("Fetching" in l for l in lines)
+
+
+def test_py_dot_notation_excludes_other_class_method():
+    """Dog.speak must resolve to Dog's method, not Animal's."""
+    lines = extract_symbol(_PY_CLASSES, "Dog.speak", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("Woof" in l for l in lines)
+    assert not any('"..."' in l for l in lines)
+
+
+def test_py_extract_function():
+    lines = extract_symbol(_PY_FUNCTIONS, "add", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("def add" in l for l in lines)
+    assert any("return x + y" in l for l in lines)
+    assert not any("subtract" in l for l in lines)
+
+
+def test_py_extract_second_function():
+    lines = extract_symbol(_PY_FUNCTIONS, "subtract", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("def subtract" in l for l in lines)
+    assert any("return x - y" in l for l in lines)
+
+
+def test_py_extract_enum():
+    lines = extract_symbol(_PY_ENUM, "Color", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("class Color" in l for l in lines)
+    assert any("RED" in l for l in lines)
+    assert any("BLUE" in l for l in lines)
+
+
+def test_py_extract_async_method():
+    lines = extract_symbol(_PY_ASYNC, "Service.fetch", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("async def fetch" in l for l in lines)
+
+
+def test_py_symbol_inside_comment_is_skipped():
+    """Symbol declared after # must be ignored; the real declaration is used."""
+    lines = extract_symbol(_PY_COMMENT, "Foo.real", PYTHON_CONFIG)
+    assert lines is not None
+    assert any("def real" in l for l in lines)
+    assert not any("fake" in l for l in lines)
+
+
+def test_py_not_found():
+    assert extract_symbol(_PY_CLASSES, "Cat", PYTHON_CONFIG) is None

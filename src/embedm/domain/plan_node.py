@@ -15,4 +15,5 @@ class PlanNode:
     status: list[Status]
     document: Document | None = None
     children: list[PlanNode] | None = None
-    artifact: Any = field(default=None, compare=False)
+    # data ready for the transform call (if any)
+    normalized_data: Any = field(default=None, compare=False)

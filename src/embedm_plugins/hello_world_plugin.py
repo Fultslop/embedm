@@ -5,7 +5,7 @@ from embedm.domain.plan_node import PlanNode
 from embedm.plugins.api import PluginBase
 from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.transformer_base import NoParams
-from embedm_plugins.hello_world_transformer import HelloWorldTransformer
+from embedm_plugins.hello_world.hello_world_transformer import HelloWorldTransformer
 
 
 class HelloWorldPlugin(PluginBase):

@@ -10,12 +10,12 @@ from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.plugins.directive_options import get_option, validate_option
+from embedm.plugins.normalization_base import NormalizationResult
 from embedm.plugins.plugin_base import PluginBase
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
-from embedm.plugins.validation_base import ValidationResult
-from embedm_plugins.table_resources import str_resources
-from embedm_plugins.table_transformer import (
+from embedm_plugins.table.table_resources import str_resources
+from embedm_plugins.table.table_transformer import (
     DATE_FORMAT_KEY,
     DEFAULT_LIMIT,
     DEFAULT_MAX_CELL_LENGTH,
@@ -34,7 +34,7 @@ from embedm_plugins.table_transformer import (
     TableParams,
     TableTransformer,
 )
-from embedm_plugins.table_validation import (
+from embedm_plugins.table.table_validation import (
     CsvTsvTableValidation,
     CsvTsvValidationParams,
     JsonTableValidation,
@@ -104,12 +104,12 @@ class TablePlugin(PluginBase):
 
         return errors
 
-    def validate_input(
+    def normalize_input(
         self,
         directive: Directive,
         content: str,
         _plugin_config: PluginConfiguration | None = None,
-    ) -> ValidationResult[Any]:
+    ) -> NormalizationResult[Any]:
         """Parse and validate file content. Returns parsed rows as artifact."""
         assert directive is not None, "directive is required"
         assert content is not None, "content is required"
@@ -131,7 +131,7 @@ class TablePlugin(PluginBase):
 
         # Extension already validated in validate_directive; this path is unreachable in normal flow
         error = Status(StatusLevel.ERROR, str_resources.err_table_unsupported_format.format(ext=ext))
-        return ValidationResult(artifact=None, errors=[error])
+        return NormalizationResult(normalized_data=None, errors=[error])
 
     def transform(
         self,
@@ -142,5 +142,5 @@ class TablePlugin(PluginBase):
         if plan_node.document is None:
             return ""
 
-        rows: list[Row] = plan_node.artifact if plan_node.artifact is not None else []
+        rows: list[Row] = plan_node.normalized_data if plan_node.normalized_data is not None else []
         return TableTransformer().execute(_build_params(plan_node.directive, rows))

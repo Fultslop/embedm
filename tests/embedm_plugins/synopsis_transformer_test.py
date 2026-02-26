@@ -1,20 +1,18 @@
 """Unit tests for SynopsisTransformer and its helper functions."""
 
-import pytest
-
-from embedm_plugins.synopsis_transformer import (
+from embedm_plugins.synopsis.synopsis_transformer import (
     SynopsisParams,
     SynopsisTransformer,
     _best_cluster_score,
     _score_luhn,
 )
-from embedm_plugins.text_processing import (
-    _block_to_sentences,
-    _clean_text,
-    _score_frequency,
-    _select_top,
-    _split_into_blocks,
-    _tokenize,
+from embedm_plugins.synopsis.text_processing import (
+    block_to_sentences,
+    clean_text,
+    score_frequency,
+    select_top,
+    split_into_blocks,
+    tokenize,
 )
 
 # ---------------------------------------------------------------------------
@@ -23,15 +21,15 @@ from embedm_plugins.text_processing import (
 
 
 def test_tokenize_lowercases_and_extracts_words() -> None:
-    assert _tokenize("Hello World!") == ["hello", "world"]
+    assert tokenize("Hello World!") == ["hello", "world"]
 
 
 def test_tokenize_strips_punctuation() -> None:
-    assert _tokenize("end.") == ["end"]
+    assert tokenize("end.") == ["end"]
 
 
 def test_tokenize_empty() -> None:
-    assert _tokenize("") == []
+    assert tokenize("") == []
 
 
 # ---------------------------------------------------------------------------
@@ -41,7 +39,7 @@ def test_tokenize_empty() -> None:
 
 def test_clean_text_removes_fenced_code_block() -> None:
     text = "Intro sentence with enough words here.\n\n```python\ncode = True\n```\n\nOutro sentence with enough words."
-    result = _clean_text(text)
+    result = clean_text(text)
     assert "code" not in result
     assert "Intro" in result
     assert "Outro" in result
@@ -49,43 +47,43 @@ def test_clean_text_removes_fenced_code_block() -> None:
 
 def test_clean_text_removes_table_rows() -> None:
     text = "Before the table with words.\n| A | B |\n|---|---|\n| 1 | 2 |\nAfter the table with words."
-    result = _clean_text(text)
+    result = clean_text(text)
     assert "|" not in result
     assert "Before" in result
     assert "After" in result
 
 
 def test_clean_text_removes_heading_markers() -> None:
-    result = _clean_text("## My Section\n\nSome prose follows.")
+    result = clean_text("## My Section\n\nSome prose follows.")
     assert "##" not in result
     assert "My Section" in result
 
 
 def test_clean_text_removes_bold_markers() -> None:
-    result = _clean_text("This is **important** text.")
+    result = clean_text("This is **important** text.")
     assert "**" not in result
     assert "important" in result
 
 
 def test_clean_text_removes_links() -> None:
-    result = _clean_text("Read [the docs](https://example.com) for details.")
+    result = clean_text("Read [the docs](https://example.com) for details.")
     assert "https" not in result
     assert "the docs" in result
 
 
 def test_clean_text_normalises_horizontal_whitespace() -> None:
-    result = _clean_text("   lots   of   spaces   ")
+    result = clean_text("   lots   of   spaces   ")
     assert "  " not in result
 
 
 def test_clean_text_preserves_newlines() -> None:
     # Newlines must survive so that headings/list items can be split and filtered
-    result = _clean_text("First line.\nSecond line.\n")
+    result = clean_text("First line.\nSecond line.\n")
     assert "\n" in result
 
 
 def test_clean_text_removes_blockquote_markers() -> None:
-    result = _clean_text("> This is a note inside a blockquote.")
+    result = clean_text("> This is a note inside a blockquote.")
     assert ">" not in result
     assert "note" in result
 
@@ -99,7 +97,7 @@ def test_block_to_sentences_splits_on_newlines() -> None:
     # Headings and list items land on their own lines after cleaning;
     # they must be treated as separate fragments (and filtered if too short)
     text = "Basic Usage\nSelecting Columns\nThe plugin embeds data as a formatted table with options."
-    sentences = _block_to_sentences(text)
+    sentences = block_to_sentences(text)
     # The two short headings are filtered (<3 words); only the prose sentence survives
     assert len(sentences) == 1
     assert "formatted" in sentences[0]
@@ -107,20 +105,20 @@ def test_block_to_sentences_splits_on_newlines() -> None:
 
 def test_block_to_sentences_basic() -> None:
     text = "The cat sat on the mat. The dog ran away quickly. The bird sang a song."
-    sentences = _block_to_sentences(text)
+    sentences = block_to_sentences(text)
     assert len(sentences) == 3
 
 
 def test_block_to_sentences_filters_short_fragments() -> None:
     # "OK." and "Sure." are too short (< 3 words)
     text = "OK. This is a complete sentence with words. Sure."
-    sentences = _block_to_sentences(text)
+    sentences = block_to_sentences(text)
     assert len(sentences) == 1
     assert "complete" in sentences[0]
 
 
 def test_block_to_sentences_empty() -> None:
-    assert _block_to_sentences("") == []
+    assert block_to_sentences("") == []
 
 
 # ---------------------------------------------------------------------------
@@ -130,26 +128,26 @@ def test_block_to_sentences_empty() -> None:
 
 def test_split_into_blocks_single_block() -> None:
     text = "First sentence with enough words. Second sentence with enough words."
-    blocks = _split_into_blocks(text, 0)
+    blocks = split_into_blocks(text, 0)
     assert len(blocks) == 1
 
 
 def test_split_into_blocks_multiple_blocks() -> None:
     text = "First sentence with enough words.\n\nSecond sentence with enough words."
-    blocks = _split_into_blocks(text, 0)
+    blocks = split_into_blocks(text, 0)
     assert len(blocks) == 2
 
 
 def test_split_into_blocks_max_blocks_caps_result() -> None:
     text = "Block one has a long sentence here.\n\nBlock two has a long sentence here.\n\nBlock three sentence here."
-    blocks = _split_into_blocks(text, 2)
+    blocks = split_into_blocks(text, 2)
     assert len(blocks) == 2
 
 
 def test_split_into_blocks_filters_blocks_with_no_sentences() -> None:
     # Trailing blank lines produce an empty block that gets filtered
     text = "Sentence one is long enough.\n\n\n\n"
-    blocks = _split_into_blocks(text, 0)
+    blocks = split_into_blocks(text, 0)
     assert len(blocks) == 1
 
 
@@ -210,7 +208,7 @@ _FREQ_SENTENCES = [
 
 
 def test_score_frequency_returns_correct_scores() -> None:
-    scores = _score_frequency(_FREQ_SENTENCES, _EN_STOPWORDS)
+    scores = score_frequency(_FREQ_SENTENCES, _EN_STOPWORDS)
     assert len(scores) == 3
     score_map = {i: s for s, i in scores}
     assert abs(score_map[0] - 1.0) < 1e-9
@@ -220,7 +218,7 @@ def test_score_frequency_returns_correct_scores() -> None:
 
 def test_score_frequency_all_stopwords_scores_zero() -> None:
     sentences = ["is a the on."]
-    scores = _score_frequency(sentences, _EN_STOPWORDS)
+    scores = score_frequency(sentences, _EN_STOPWORDS)
     assert scores[0][0] == 0.0
 
 
@@ -256,25 +254,25 @@ def test_score_luhn_all_unique_words_scores_zero_for_all() -> None:
 
 def test_select_top_returns_in_original_order() -> None:
     scores = [(1.0, 0), (0.6, 1), (1.0, 2)]
-    result = _select_top(scores, max_sentences=2)
+    result = select_top(scores, max_sentences=2)
     assert result == [0, 2]
 
 
 def test_select_top_tie_breaks_by_original_index() -> None:
     scores = [(1.0, 0), (1.0, 1), (1.0, 2)]
-    result = _select_top(scores, max_sentences=1)
+    result = select_top(scores, max_sentences=1)
     assert result == [0]
 
 
 def test_select_top_respects_max_sentences() -> None:
     scores = [(1.0, 0), (0.9, 1), (0.8, 2)]
-    result = _select_top(scores, max_sentences=2)
+    result = select_top(scores, max_sentences=2)
     assert result == [0, 1]
 
 
 def test_select_top_max_larger_than_available() -> None:
     scores = [(1.0, 0), (0.5, 1)]
-    result = _select_top(scores, max_sentences=5)
+    result = select_top(scores, max_sentences=5)
     assert result == [0, 1]
 
 

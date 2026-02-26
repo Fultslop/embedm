@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from embedm.domain.document import Fragment
 from embedm.plugins.transformer_base import TransformerBase
-from embedm_plugins.toc_resources import str_resources
+from embedm_plugins.toc.toc_resources import str_resources
 
 MAX_DEPTH_KEY = "max_depth"
 ADD_SLUGS_KEY = "add_slugs"

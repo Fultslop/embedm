@@ -2,7 +2,7 @@ from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.plugins.transformer_base import NoParams
 from embedm_plugins.hello_world_plugin import HelloWorldPlugin
-from embedm_plugins.hello_world_transformer import HelloWorldTransformer
+from embedm_plugins.hello_world.hello_world_transformer import HelloWorldTransformer
 
 
 def test_transformer_execute():

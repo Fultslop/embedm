@@ -297,9 +297,9 @@ def test_format_summary_verify_mode_singular_file() -> None:
 
 
 def test_verbose_timing_emits_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
-    verbose_timing("validate_input", "table", "/data/file.csv", 0.043)
+    verbose_timing("normalize_input", "table", "/data/file.csv", 0.043)
     captured = capsys.readouterr()
-    assert "[validate_input]" in captured.err
+    assert "[normalize_input]" in captured.err
     assert "0.043s" in captured.err
     assert "table" in captured.err
     assert "/data/file.csv" in captured.err

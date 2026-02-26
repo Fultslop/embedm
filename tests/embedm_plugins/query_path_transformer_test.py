@@ -1,4 +1,4 @@
-from embedm_plugins.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
+from embedm_plugins.query_path.query_path_transformer import QueryPathTransformer, QueryPathTransformerParams
 
 
 def _run(value: object, raw_content: str = "", lang_tag: str = "json", is_full_document: bool = False) -> str:

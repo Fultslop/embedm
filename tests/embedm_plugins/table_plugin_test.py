@@ -6,9 +6,9 @@ from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import StatusLevel
 from embedm.infrastructure.file_cache import FileCache
-from embedm_plugins.table_resources import str_resources
+from embedm_plugins.table.table_resources import str_resources
 from embedm_plugins.table_plugin import TablePlugin
-from embedm_plugins.table_transformer import FILTER_KEY, LIMIT_KEY, MAX_CELL_LENGTH_KEY
+from embedm_plugins.table.table_transformer import FILTER_KEY, LIMIT_KEY, MAX_CELL_LENGTH_KEY
 
 Row = dict[str, str]
 
@@ -21,7 +21,7 @@ def _make_plan_node(source: str, options: dict[str, str] | None = None, artifact
     directive = Directive(type="table", source=source, options=options or {})
     document = MagicMock()
     node = PlanNode(directive=directive, status=[], document=document)
-    node.artifact = artifact
+    node.normalized_data = artifact
     return node
 
 
@@ -127,64 +127,64 @@ def test_validate_valid_with_all_options():
     assert errors == []
 
 
-# --- validate_input ---
+# --- normalize_input ---
 
 
-def test_validate_input_csv_returns_rows_as_artifact():
+def test_normalize_input_csv_returns_rows_as_artifact():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.csv")
-    result = plugin.validate_input(directive, "name,age\nAlice,30\nBob,25\n")
+    result = plugin.normalize_input(directive, "name,age\nAlice,30\nBob,25\n")
     assert result.errors == []
-    assert result.artifact == [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+    assert result.normalized_data == [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
 
 
-def test_validate_input_tsv_returns_rows_as_artifact():
+def test_normalize_input_tsv_returns_rows_as_artifact():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.tsv")
-    result = plugin.validate_input(directive, "name\tage\nAlice\t30\n")
+    result = plugin.normalize_input(directive, "name\tage\nAlice\t30\n")
     assert result.errors == []
-    assert result.artifact == [{"name": "Alice", "age": "30"}]
+    assert result.normalized_data == [{"name": "Alice", "age": "30"}]
 
 
-def test_validate_input_json_returns_rows_as_artifact():
+def test_normalize_input_json_returns_rows_as_artifact():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.json")
-    result = plugin.validate_input(directive, '[{"city": "Paris", "pop": "2000"}]')
+    result = plugin.normalize_input(directive, '[{"city": "Paris", "pop": "2000"}]')
     assert result.errors == []
-    assert result.artifact == [{"city": "Paris", "pop": "2000"}]
+    assert result.normalized_data == [{"city": "Paris", "pop": "2000"}]
 
 
-def test_validate_input_empty_csv_returns_error():
+def test_normalize_input_empty_csv_returns_error():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.csv")
-    result = plugin.validate_input(directive, "name,age\n")
+    result = plugin.normalize_input(directive, "name,age\n")
     assert len(result.errors) == 1
     assert result.errors[0].level == StatusLevel.ERROR
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-def test_validate_input_invalid_json_returns_error():
+def test_normalize_input_invalid_json_returns_error():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.json")
-    result = plugin.validate_input(directive, "not json")
+    result = plugin.normalize_input(directive, "not json")
     assert any(e.level == StatusLevel.ERROR for e in result.errors)
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-def test_validate_input_unknown_select_column_returns_error():
+def test_normalize_input_unknown_select_column_returns_error():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.csv", options={"select": "missing"})
-    result = plugin.validate_input(directive, "name,age\nAlice,30\n")
+    result = plugin.normalize_input(directive, "name,age\nAlice,30\n")
     assert any("missing" in e.description for e in result.errors)
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
-def test_validate_input_invalid_order_by_returns_error():
+def test_normalize_input_invalid_order_by_returns_error():
     plugin = TablePlugin()
     directive = Directive(type="table", source="/path/data.csv", options={"order_by": "col a b"})
-    result = plugin.validate_input(directive, "name,age\nAlice,30\n")
+    result = plugin.normalize_input(directive, "name,age\nAlice,30\n")
     assert any(e.level == StatusLevel.ERROR for e in result.errors)
-    assert result.artifact is None
+    assert result.normalized_data is None
 
 
 # --- transform ---

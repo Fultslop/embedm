@@ -1,7 +1,6 @@
 import pytest
 
-from embedm_plugins.query_path_engine import parse_path, resolve
-
+from embedm_plugins.query_path.query_path_engine import parse_path, resolve
 
 # --- parse_path ---
 
@@ -32,6 +31,30 @@ def test_parse_backtick_at_end():
 
 def test_parse_dot_inside_backtick_is_not_split():
     assert parse_path("`a.b`") == ["`a.b`"]
+
+
+def test_parse_quoted_segment_unquoted():
+    assert parse_path('"embedm.plugins"') == ["embedm.plugins"]
+
+
+def test_parse_quoted_segment_in_path():
+    assert parse_path('project.entry-points."embedm.plugins"') == [
+        "project",
+        "entry-points",
+        "embedm.plugins",
+    ]
+
+
+def test_parse_dot_inside_quoted_is_not_split():
+    assert parse_path('a."b.c".d') == ["a", "b.c", "d"]
+
+
+def test_parse_quoted_at_start():
+    assert parse_path('"a.b".child') == ["a.b", "child"]
+
+
+def test_parse_quoted_at_end():
+    assert parse_path('node."a.b"') == ["node", "a.b"]
 
 
 # --- resolve ---
@@ -88,3 +111,8 @@ def test_resolve_null_value():
 
 def test_resolve_bool_value():
     assert resolve({"flag": True}, ["flag"]) is True
+
+
+def test_resolve_key_with_dot():
+    tree = {"project": {"entry-points": {"embedm.plugins": {"embedm_file": "pkg:Cls"}}}}
+    assert resolve(tree, ["project", "entry-points", "embedm.plugins"]) == {"embedm_file": "pkg:Cls"}
