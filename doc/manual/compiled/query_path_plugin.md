@@ -25,7 +25,7 @@ Embed a data file with `type: query-path` and a `source` path. Without a `path` 
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 ```
 
 ```json
@@ -46,7 +46,7 @@ Supply a `path` to extract a single value. Scalar results (strings, numbers, boo
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: project.name
 ```
 
@@ -60,7 +60,7 @@ Use dots to descend through nested keys. Each segment is resolved against the cu
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: build.target
 ```
 
@@ -72,7 +72,7 @@ Use an integer segment to index into a list. Indices are zero-based:
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: project.tags.0
 ```
 
@@ -92,7 +92,7 @@ Add `format` to interpolate a scalar result into a template string. The placehol
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: project.version
 format: "Released as **version {value}**"
 ```
@@ -105,7 +105,7 @@ When the resolved value is a dict or list, it is rendered as a YAML fenced code 
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: project.tags
 ```
 
@@ -119,7 +119,7 @@ Extracting a nested object works the same way:
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: project
 ```
 
@@ -140,7 +140,7 @@ Standard JSON files. All JSON types map directly to Python primitives.
 
 ```yaml
 type: query-path
-source: ./example_data.json
+source: ./assets/paths/example_data.json
 path: build.minify
 ```
 
@@ -154,7 +154,7 @@ Boolean values render as `true` or `false`; null renders as `null`.
 
 ```yaml
 type: query-path
-source: ./example_data.yaml
+source: ./assets/paths/example_data.yaml
 path: project.tags.1
 ```
 
@@ -187,7 +187,7 @@ Accessing an attribute:
 
 ```yaml
 type: query-path
-source: ./example_data.xml
+source: ./assets/paths/example_data.xml
 path: config.project.attributes.name
 ```
 
@@ -197,7 +197,7 @@ Accessing text content via the `value` key:
 
 ```yaml
 type: query-path
-source: ./example_data.xml
+source: ./assets/paths/example_data.xml
 path: config.project.description.value
 ```
 

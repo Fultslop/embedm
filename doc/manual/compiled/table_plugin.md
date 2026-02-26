@@ -22,7 +22,7 @@ Embed a CSV file by specifying `type: table` and a `source` path. Without any ot
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 limit: 5
 ```
 
@@ -42,7 +42,7 @@ The example below keeps only four of the fourteen source columns and renames the
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Period as Quarter, Series_title_1 as Metric, Series_title_2 as Industry, Data_value as Value_M"
 limit: 5
 ```
@@ -69,7 +69,7 @@ Show all quarterly sales figures for a single industry:
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Period as Quarter, Data_value as Sales_NZD_M"
 filter:
   Series_title_1: "Sales (operating income)"
@@ -97,7 +97,7 @@ Show all entries where the operating profit exceeded 1,000 NZD million in the Se
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Series_title_2 as Industry, Data_value as Profit_NZD_M"
 filter:
   Series_title_1: "Operating profit"
@@ -131,7 +131,7 @@ Top five industries by sales in the September 2025 quarter, unadjusted current p
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Series_title_2 as Industry, Data_value as Sales_NZD_M"
 filter:
   Series_title_1: "Sales (operating income)"
@@ -158,7 +158,7 @@ Page 1 — first five entries for Wholesale Trade sales:
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Period as Quarter, Data_value as Sales_NZD_M"
 filter:
   Series_title_1: "Sales (operating income)"
@@ -182,7 +182,7 @@ Page 2 — next five:
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Period as Quarter, Data_value as Sales_NZD_M"
 filter:
   Series_title_1: "Sales (operating income)"
@@ -210,7 +210,7 @@ Rows with a `STATUS` of `C` (confidential) have no `Data_value`. Use `null_strin
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Period as Quarter, Series_title_2 as Industry, Series_title_1 as Metric, Data_value as Value_M"
 filter:
   STATUS: "C"
@@ -235,7 +235,7 @@ The industry names in this dataset reach 60+ characters. Truncating at 30 keeps 
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Series_title_2 as Industry, Period as Quarter, Data_value as Sales_NZD_M"
 filter:
   Series_title_1: "Sales (operating income)"
@@ -264,7 +264,7 @@ All options compose freely. This example answers the question *"what were the fi
 
 ```yaml
 type: table
-source: ./business-financial-data-september-2025-quarter.csv
+source: ./assets/tables/business-financial-data-september-2025-quarter.csv
 select: "Series_title_2 as Industry, Period as Quarter, Data_value as Salaries_NZD_M"
 filter:
   Series_title_1: "Salaries and wages"

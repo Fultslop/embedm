@@ -22,12 +22,12 @@ Non-markdown sources are wrapped in a fenced code block:
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 ```
 
 Markdown sources are embedded inline — their content is merged directly into the output:
@@ -52,13 +52,13 @@ Mark sections of a file with `md.start:<name>` and `md.end:<name>` comments, the
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 region: simple-add
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 region: simple-add
 ```
 
@@ -70,13 +70,13 @@ Supported formats: `"10"` (single line), `"5..10"` (inclusive range), `"5.."` (f
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "9..11"
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "9..11"
 ```
 
@@ -86,13 +86,13 @@ Extract a named declaration by identifier. Supported for C/C++, C#, and Java sou
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.divide
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.divide
 ```
 
@@ -100,13 +100,13 @@ When a method is overloaded, append a parameter signature to select the exact va
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.add(int, int, int)
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.add(int, int, int)
 ```
 
@@ -120,14 +120,14 @@ Display options add a header line above the embedded block. They can be combined
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.divide
 title: "Divide"
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 symbol: Calculator.divide
 title: "Divide"
 ```
@@ -138,14 +138,14 @@ title: "Divide"
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 region: simple-add
 link: true
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 region: simple-add
 link: true
 ```
@@ -156,14 +156,14 @@ link: true
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "13..18"
 line_numbers_range: true
 ```
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "13..18"
 line_numbers_range: true
 ```
@@ -174,7 +174,7 @@ All display options compose freely. This example labels an extracted range, link
 
 ```yaml
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "13..18"
 title: "divide"
 link: true
@@ -183,7 +183,7 @@ line_numbers_range: true
 
 ```yaml embedm
 type: file
-source: ./example_symbols.java
+source: ./assets/java/example_symbols.java
 lines: "13..18"
 title: "divide"
 link: true
