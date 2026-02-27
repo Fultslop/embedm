@@ -137,3 +137,98 @@ def test_find_plugin_by_directive_type_empty_registry():
     result = registry.find_plugin_by_directive_type("hello_world")
 
     assert result is None
+
+
+# --- missing required attributes ---
+
+
+class _NoName(PluginBase):
+    directive_type = "test_no_name"
+
+    def transform(self, plan_node, parent_document, context=None) -> str:  # type: ignore[override]
+        return ""
+
+
+class _NoDirectiveType(PluginBase):
+    name = "test_no_directive_type"
+
+    def transform(self, plan_node, parent_document, context=None) -> str:  # type: ignore[override]
+        return ""
+
+
+class _NoBoth(PluginBase):
+    def transform(self, plan_node, parent_document, context=None) -> str:  # type: ignore[override]
+        return ""
+
+
+def _make_ep(ep_name: str, module_value: str, plugin_class: type) -> MagicMock:
+    ep = MagicMock(spec=EntryPoint)
+    ep.name = ep_name
+    ep.value = module_value
+    ep.load.return_value = plugin_class
+    return ep
+
+
+def test_duplicate_entry_points_are_loaded_once():
+    ep1 = _make_ep("my_plugin", "my_pkg.my_plugin:MyPlugin", MagicMock(spec=PluginBase))
+    ep2 = _make_ep("my_plugin", "my_pkg.my_plugin:MyPlugin", MagicMock(spec=PluginBase))
+
+    instance = MagicMock(spec=PluginBase)
+    instance.name = "my_plugin"
+    instance.directive_type = "my_type"
+    ep1.load.return_value = MagicMock(return_value=instance)
+    ep2.load.return_value = MagicMock(return_value=instance)
+
+    with patch("embedm.plugins.plugin_registry.entry_points") as mock_eps:
+        mock_eps.return_value = [ep1, ep2]
+        registry = PluginRegistry()
+        errors = registry.load_plugins()
+
+    assert registry.count == 1
+    assert len(errors) == 0
+    assert len(registry.discovered) == 1
+
+
+def test_missing_name_returns_fatal_error():
+    ep = _make_ep("no_name_plugin", "my_pkg.no_name:_NoName", _NoName)
+
+    with patch("embedm.plugins.plugin_registry.entry_points") as mock_eps:
+        mock_eps.return_value = [ep]
+        registry = PluginRegistry()
+        errors = registry.load_plugins()
+
+    assert registry.count == 0
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.FATAL
+    assert "no_name_plugin" in errors[0].description
+    assert "'name'" in errors[0].description
+
+
+def test_missing_directive_type_returns_fatal_error():
+    ep = _make_ep("no_dtype_plugin", "my_pkg.no_dtype:_NoDirectiveType", _NoDirectiveType)
+
+    with patch("embedm.plugins.plugin_registry.entry_points") as mock_eps:
+        mock_eps.return_value = [ep]
+        registry = PluginRegistry()
+        errors = registry.load_plugins()
+
+    assert registry.count == 0
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.FATAL
+    assert "no_dtype_plugin" in errors[0].description
+    assert "'directive_type'" in errors[0].description
+
+
+def test_missing_both_attributes_lists_all_in_single_error():
+    ep = _make_ep("no_both_plugin", "my_pkg.no_both:_NoBoth", _NoBoth)
+
+    with patch("embedm.plugins.plugin_registry.entry_points") as mock_eps:
+        mock_eps.return_value = [ep]
+        registry = PluginRegistry()
+        errors = registry.load_plugins()
+
+    assert registry.count == 0
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.FATAL
+    assert "'name'" in errors[0].description
+    assert "'directive_type'" in errors[0].description

@@ -5,6 +5,8 @@ from embedm.domain.status_level import Status, StatusLevel
 from .plugin_base import PluginBase
 from .plugin_resources import str_resources
 
+_REQUIRED_ATTRS: tuple[str, ...] = ("name", "directive_type")
+
 
 class _PluginLookup(dict):  # type: ignore[type-arg]
     """dict subclass that maintains a secondary directive_type → plugin index."""
@@ -44,9 +46,15 @@ class PluginRegistry:
         errors: list[Status] = []
         self.discovered = []
         self.skipped = []
+        seen_modules: set[str] = set()
 
         for entry in plugins:
             module_path = entry.value.split(":")[0]
+
+            if module_path in seen_modules:
+                continue
+            seen_modules.add(module_path)
+
             self.discovered.append((entry.name, module_path))
 
             if enabled_modules is not None and module_path not in enabled_modules:
@@ -59,6 +67,19 @@ class PluginRegistry:
             except Exception as exc:
                 errors.append(
                     Status(StatusLevel.ERROR, str_resources.err_plugin_load_failed.format(name=entry.name, exc=exc))
+                )
+                continue
+
+            missing = [a for a in _REQUIRED_ATTRS if not hasattr(instance, a)]
+            if missing:
+                errors.append(
+                    Status(
+                        StatusLevel.FATAL,
+                        str_resources.err_plugin_missing_attributes.format(
+                            name=entry.name,
+                            attrs=", ".join(f"'{a}'" for a in missing),
+                        ),
+                    )
                 )
                 continue
 

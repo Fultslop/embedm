@@ -61,7 +61,7 @@ query_path = "embedm_plugins.query_path_plugin:QueryPathPlugin"
 # md.end:entry_points
 
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
