@@ -1,9 +1,5 @@
-from embedm.infrastructure.events import (
-    EmbedmEvent,
-    EventDispatcher,
-    SessionComplete,
-    SessionStarted,
-)
+from embedm.application.application_events import SessionComplete, SessionStarted
+from embedm.infrastructure.events import EmbedmEvent, EventDispatcher
 
 _STARTED = SessionStarted(version="1.0", config_source="DEFAULT", input_type="file", output_type="stdout")
 _COMPLETE = SessionComplete(ok_count=1, error_count=0, total_elapsed=0.5)

@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from embedm.domain.status_level import StatusLevel
-from embedm.infrastructure.events import EventDispatcher, PluginDiagnostic
+from embedm.infrastructure.events import EventDispatcher
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_events import PluginDiagnostic
 
 if TYPE_CHECKING:
     from embedm.plugins.plugin_registry import PluginRegistry

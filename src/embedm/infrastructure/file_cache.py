@@ -7,7 +7,8 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.infrastructure.events import CacheEvent, EventDispatcher
+from embedm.infrastructure.cache_events import CacheEvent
+from embedm.infrastructure.events import EventDispatcher
 from embedm.infrastructure.file_util import to_relative
 
 from .infrastructure_resources import str_resources

@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 from embedm.domain.status_level import StatusLevel
+from embedm.infrastructure.cache_events import CacheEvent
+from embedm.infrastructure.events import EventDispatcher
 from embedm.infrastructure.file_cache import FileCache, FileState, WriteMode
 
 # --- validate: happy path ---
@@ -511,8 +513,6 @@ def test_file_inside_allowed_directory_is_accepted(tmp_path: Path):
 
 
 def test_cache_miss_emits_cache_event(tmp_path: Path) -> None:
-    from embedm.infrastructure.events import CacheEvent, EventDispatcher
-
     test_file = tmp_path / "data.md"
     test_file.write_text("hello world")
 
@@ -529,8 +529,6 @@ def test_cache_miss_emits_cache_event(tmp_path: Path) -> None:
 
 
 def test_cache_hit_emits_cache_event(tmp_path: Path) -> None:
-    from embedm.infrastructure.events import CacheEvent, EventDispatcher
-
     test_file = tmp_path / "data.md"
     test_file.write_text("hello world")
 
