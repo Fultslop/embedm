@@ -9,11 +9,12 @@ from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 
+from .application_events import NodeCompiled
 from .configuration import Configuration
 from .console import ContinueChoice, prompt_continue
 from .embedm_context import EmbedmContext
 from .output_util import present_errors
-from .plan_tree import collect_tree_errors
+from .plan_tree import collect_tree_errors, count_nodes
 
 
 def compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
@@ -52,6 +53,17 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
         plugin_sequence=build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
         plugin_settings=context.config.plugin_configuration,
     )
+    node_total = count_nodes(plan_root)
+    tracker: dict[str, int] = {"index": 0, "total": node_total}
+    file_path = plan_root.directive.source
+    events = context.events
+
+    def _on_node_compiled(node_index: int, node_count: int, elapsed: float) -> None:
+        if events is not None:
+            events.emit(
+                NodeCompiled(file_path=file_path, node_index=node_index, node_count=node_count, elapsed=elapsed)
+            )
+
     result = plugin.transform(
         plan_root,
         [],
@@ -61,7 +73,9 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
             plugin_config,
             events=context.events,
             plugin_name=plugin.name,
-            file_path=plan_root.directive.source,
+            file_path=file_path,
+            _compile_tracker=tracker,
+            _on_node_compiled=_on_node_compiled,
         ),
     )
     return result

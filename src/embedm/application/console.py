@@ -35,6 +35,8 @@ class RunSummary:
 
 def prompt_continue() -> ContinueChoice:
     """Prompt the user to continue, abort, accept all, or exit. Returns the user's choice."""
+    if not sys.stdin.isatty():
+        return ContinueChoice.EXIT
     try:
         response = input(str_resources.continue_compilation).strip().lower()
         if response in ("a", "always"):
@@ -129,10 +131,12 @@ def _format_summary(summary: RunSummary) -> str:
             f"{summary.up_to_date_count} up-to-date, {summary.stale_count} stale, "
             f"{summary.error_count} errors, completed in {summary.elapsed_s:.3f}s"
         )
-    noun = "file" if summary.files_written == 1 else "files"
-    target = f"to {summary.output_target}" if summary.output_target != "stdout" else "to stdout"
-    return (
-        f"embedm process complete, {summary.files_written} {noun} written {target}, "
-        f"{summary.ok_count} ok, {summary.warning_count} warnings, {summary.error_count} errors, "
-        f"completed in {summary.elapsed_s:.3f}s"
-    )
+    file_noun = "file" if summary.ok_count == 1 else "files"
+    parts = [f"{summary.ok_count} {file_noun} ok"]
+    if summary.warning_count:
+        warn_noun = "warning" if summary.warning_count == 1 else "warnings"
+        parts.append(f"{summary.warning_count} {warn_noun}")
+    if summary.error_count:
+        err_noun = "error" if summary.error_count == 1 else "errors"
+        parts.append(f"{summary.error_count} {err_noun}")
+    return f"Embedm complete, {', '.join(parts)}, total time: {summary.elapsed_s:.1f}s"

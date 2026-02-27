@@ -33,25 +33,24 @@ from embedm.plugins.plugin_registry import PluginRegistry
 
 
 def test_format_summary_single_file() -> None:
-    summary = RunSummary(files_written=1, output_target="out.md", ok_count=1)
+    summary = RunSummary(ok_count=1)
     result = _format_summary(summary)
-    assert "1 file written" in result
-    assert "to out.md" in result
-    assert "1 ok" in result
+    assert "Embedm complete" in result
+    assert "1 file ok" in result
 
 
 def test_format_summary_plural_files() -> None:
-    summary = RunSummary(files_written=3, output_target="./out", ok_count=2, warning_count=1)
+    summary = RunSummary(ok_count=2, warning_count=1)
     result = _format_summary(summary)
-    assert "3 files written" in result
-    assert "2 ok" in result
-    assert "1 warnings" in result
+    assert "2 files ok" in result
+    assert "1 warning" in result
 
 
-def test_format_summary_stdout() -> None:
-    summary = RunSummary(files_written=0, output_target="stdout")
+def test_format_summary_no_files() -> None:
+    summary = RunSummary(ok_count=0)
     result = _format_summary(summary)
-    assert "to stdout" in result
+    assert "Embedm complete" in result
+    assert "0 files ok" in result
 
 
 # --- _worst_status_label ---
@@ -80,21 +79,21 @@ def test_worst_status_label_fatal() -> None:
 
 
 def test_verbose_summary_writes_to_stderr(capsys: pytest.CaptureFixture[str]) -> None:
-    summary = RunSummary(files_written=2, output_target="./out", ok_count=2)
+    summary = RunSummary(ok_count=2)
     verbose_summary(summary)
     captured = capsys.readouterr()
-    assert "embedm process complete" in captured.err
-    assert "2 files" in captured.err
+    assert "Embedm complete" in captured.err
+    assert "2 files ok" in captured.err
 
 
 # --- present_run_hint ---
 
 
 def test_present_run_hint_includes_hint(capsys: pytest.CaptureFixture[str]) -> None:
-    summary = RunSummary(files_written=1, output_target="out.md", error_count=1)
+    summary = RunSummary(error_count=1)
     present_run_hint(summary)
     captured = capsys.readouterr()
-    assert "Use -v 3 or --verbose 3" in captured.err
+    assert "Use -v 2 or --verbose 2" in captured.err
 
 
 # --- verbose_plan_tree ---
@@ -260,9 +259,9 @@ def test_planner_non_verbose_unknown_type_no_available(tmp_path: Path) -> None:
 
 
 def test_format_summary_includes_elapsed() -> None:
-    summary = RunSummary(files_written=1, output_target="out.md", ok_count=1, elapsed_s=0.312)
+    summary = RunSummary(ok_count=1, elapsed_s=0.312)
     result = _format_summary(summary)
-    assert "completed in 0.312s" in result
+    assert "total time: 0.3s" in result
 
 
 def test_format_summary_verify_mode_up_to_date() -> None:

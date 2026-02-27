@@ -47,7 +47,8 @@ The process should work as follows (This doesn't apply to single, stdin compiles
   file_c is not in the target_list.
 
   I'm not sure if this avoidable at this point. This _could_ be avoided by carefully planning and ordering nodes, seeing there is a shared need for file_c and keeping it in memory or saving it to a scratch directory. This could be done in the future should this become a source of concern.
- 
+
+* Note multithreading is out of scope this item 
 
 ## Replication
 

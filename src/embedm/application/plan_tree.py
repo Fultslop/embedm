@@ -24,6 +24,11 @@ def tree_has_level(root: PlanNode, levels: tuple[StatusLevel, ...]) -> bool:
     return any(s.level in levels for node in walk_nodes(root) for s in node.status)
 
 
+def count_nodes(root: PlanNode) -> int:
+    """Count all nodes in the plan tree (root + all descendants)."""
+    return 1 + sum(count_nodes(c) for c in (root.children or []))
+
+
 def collect_embedded_sources(root: PlanNode, embed_type: str = "file") -> set[str]:
     """Return the resolved source paths of directives that merge content inline.
 

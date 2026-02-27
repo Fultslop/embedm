@@ -88,8 +88,11 @@ class Configuration:
     # if set, print plugin list and diagnostics then exit
     plugin_list: bool = False
 
-    # verbosity level: 0 silent, 1 minimal, 2 default, 3 verbose
+    # verbosity level: 0 silent, 1 minimal, 2 default (3 is silently treated as 2)
     verbosity: int = 2
+
+    # suppress color output (also suppressed by NO_COLOR env var or non-TTY stdout)
+    no_color: bool = False
 
     # per-plugin configuration keyed by plugin module name
     plugin_configuration: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -112,6 +115,7 @@ class Configuration:
             is_dry_run=cli_config.is_dry_run,
             is_verify=cli_config.is_verify,
             verbosity=cli_config.verbosity,
+            no_color=cli_config.no_color,
             init_path=cli_config.init_path,
             plugin_list=cli_config.plugin_list,
             config_file=config_path,

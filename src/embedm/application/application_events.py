@@ -140,16 +140,3 @@ class CompilationComplete(EmbedmEvent):
 
     ok_count: int
     error_count: int
-
-
-# --- Directory-mode progress ---
-
-
-@dataclass(frozen=True)
-class FileProcessed(EmbedmEvent):
-    """Emitted after each file is processed in directory mode (success or failure)."""
-
-    file_path: str
-    status_label: str
-    index: int
-    total: int

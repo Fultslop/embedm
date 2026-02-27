@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from embedm.domain.status_level import StatusLevel
@@ -28,6 +29,8 @@ class PluginContext:
     events: EventDispatcher | None = None
     plugin_name: str = ""
     file_path: str = ""
+    _compile_tracker: dict[str, int] | None = None
+    _on_node_compiled: Callable[[int, int, float], None] | None = field(default=None, repr=False)
 
     def emit_diagnostic(self, level: StatusLevel, message: str) -> None:
         """Emit a PluginDiagnostic event if an event dispatcher is attached."""
