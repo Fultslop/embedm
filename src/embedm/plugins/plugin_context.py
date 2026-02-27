@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from embedm.domain.status_level import StatusLevel
+from embedm.infrastructure.events import EventDispatcher, PluginDiagnostic
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_configuration import PluginConfiguration
 
@@ -22,3 +24,18 @@ class PluginContext:
     file_cache: FileCache
     plugin_registry: PluginRegistry | None = None
     plugin_config: PluginConfiguration | None = None
+    events: EventDispatcher | None = None
+    plugin_name: str = ""
+    file_path: str = ""
+
+    def emit_diagnostic(self, level: StatusLevel, message: str) -> None:
+        """Emit a PluginDiagnostic event if an event dispatcher is attached."""
+        if self.events is not None:
+            self.events.emit(
+                PluginDiagnostic(
+                    plugin_name=self.plugin_name,
+                    file_path=self.file_path,
+                    level=level,
+                    message=message,
+                )
+            )

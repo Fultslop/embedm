@@ -6,6 +6,7 @@ from pathlib import Path
 
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
+from embedm.infrastructure.events import EventDispatcher
 from embedm.infrastructure.file_cache import FileCache
 from embedm.infrastructure.file_util import apply_line_endings, expand_directory_input, extract_base_dir
 from embedm.plugins.plugin_registry import PluginRegistry
@@ -17,7 +18,6 @@ from .config_loader import discover_config, generate_default_config, load_config
 from .configuration import Configuration, InputMode
 from .console import (
     RunSummary,
-    make_cache_event_handler,
     present_errors,
     present_file_progress,
     present_plugin_list,
@@ -298,11 +298,11 @@ def _load_plugins(config: Configuration) -> tuple[PluginRegistry, list[Status]]:
 
 def _build_context(config: Configuration, plugin_registry: PluginRegistry) -> EmbedmContext:
     """Build the runtime context from configuration and a loaded plugin registry."""
-    on_event = make_cache_event_handler() if config.verbosity >= 3 else None
+    dispatcher = EventDispatcher()
     file_cache = FileCache(
-        config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size, on_event=on_event
+        config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size, events=dispatcher
     )
-    return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all)
+    return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all, events=dispatcher)
 
 
 def _format_output_label(config: Configuration) -> str:
