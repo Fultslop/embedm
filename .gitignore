@@ -218,5 +218,6 @@ compiled/
 !doc/readme/compiled/**
 .claude/
 .notes/
+tmp/
 
 tests/regression/actual/

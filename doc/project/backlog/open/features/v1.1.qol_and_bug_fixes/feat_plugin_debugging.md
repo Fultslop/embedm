@@ -1,14 +1,18 @@
-FEATURE: User input 'n' should exit the process
+FEATURE: `<TITLE>`
 ========================================
 `<Optional Draft>`
 `<Optional Planned release>`
-Created: 26/02/2026
+Created: `<date>`
 Closed: `<date>`
 Created by: `<Author>`
 
 ## Description
 
-Whenever a failure occurs in a set of files from a directory and the user selects 'n' the process will continue. However, it needs to exit.
+`<High level description of the feature>`
+
+`<optional link to original / related feature(s)>`
+
+`<optional dependencies on other feature(s)>`
 
 ## Acceptance criteria
 

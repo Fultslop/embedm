@@ -11,6 +11,7 @@ from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 
+from .application_resources import str_resources as app_resources
 from .cli import parse_command_line_arguments
 from .config_loader import discover_config, generate_default_config, load_config_file
 from .configuration import Configuration, InputMode
@@ -44,9 +45,7 @@ def main() -> None:
     start_time = time.perf_counter()
 
     config, errors = parse_command_line_arguments()
-    if errors:
-        present_errors(errors)
-        sys.exit(1)
+    _exit_if_errors(errors)
 
     if config.init_path is not None:
         _handle_init(config.init_path)
@@ -56,13 +55,10 @@ def main() -> None:
         present_title()
 
     config, errors = _resolve_config(config)
-    if errors:
-        present_errors(errors)
-        sys.exit(1)
+    _exit_if_errors(errors)
 
     context, load_errors = _build_context(config)
-    if load_errors:
-        present_errors(load_errors)
+    _handle_plugin_load_errors(load_errors)
 
     _emit_verbose_start(config, context)
     summary = RunSummary(output_target=_output_target(config))
@@ -71,9 +67,31 @@ def main() -> None:
 
     summary.elapsed_s = time.perf_counter() - start_time
     _emit_verbose_end(config, summary)
+    _exit_on_run_failure(config, summary)
 
+
+def _exit_if_errors(errors: list[Status]) -> None:
+    """Print errors and exit if the list is non-empty."""
+    if errors:
+        present_errors(errors)
+        sys.exit(1)
+
+
+def _exit_on_run_failure(config: Configuration, summary: RunSummary) -> None:
+    """Exit with failure if the run produced errors or stale files."""
     if summary.error_count > 0 or (config.is_verify and summary.stale_count > 0):
         sys.exit(1)
+
+
+def _handle_plugin_load_errors(load_errors: list[Status]) -> None:
+    """Present plugin load errors; exits if any are fatal."""
+    fatal = [e for e in load_errors if e.level == StatusLevel.FATAL]
+    if fatal:
+        present_errors(fatal)
+        present_errors(app_resources.err_fatal_plugins_cannot_start)
+        sys.exit(1)
+    if load_errors:
+        present_errors(load_errors)
 
 
 def _handle_init(directory: str) -> None:
