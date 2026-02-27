@@ -117,7 +117,7 @@ def test_circular_dependency_produces_error(tmp_path: Path):
 
 def test_directory_mode_skips_embedded_files(tmp_path: Path):
     """When processing a directory, files already embedded as children are skipped."""
-    from embedm.application.orchestration import _expand_directory_input
+    from embedm.infrastructure.file_util import expand_directory_input
     from embedm.application.plan_tree import collect_embedded_sources
 
     child = tmp_path / "child.md"
@@ -130,7 +130,7 @@ def test_directory_mode_skips_embedded_files(tmp_path: Path):
     standalone.write_text("Standalone content\n")
 
     # expand directory — all three .md files found
-    files = _expand_directory_input(str(tmp_path))
+    files = expand_directory_input(str(tmp_path))
     assert len(files) == 3
 
     # plan root and collect embedded sources

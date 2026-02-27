@@ -27,4 +27,7 @@ str_resources = SimpleNamespace(
     warn_unresolved_plugin_sequence=(
         "plugin_sequence entry '{module}' has no matching installed entry point — plugin will not load"
     ),
+    warn_plugin_config_unknown_module="plugin_configuration: unknown plugin module '{module}'",
+    warn_plugin_config_unknown_key="plugin_configuration['{module}']: unknown key '{key}'",
+    err_plugin_config_type_mismatch=("plugin_configuration['{module}']['{key}'] must be {expected}, got {got}"),
 )

@@ -6,7 +6,7 @@ Created by: `Agent (plugin-validator skill)`
 
 ## Description
 
-The plugin tutorial presents two separate registration steps — adding the plugin to
+The plugin tutorial (`.doc\manual\src\assets\tutorial\plugin_tutorial.md`) presents two separate registration steps — adding the plugin to
 `plugin_sequence` in `embedm-config.yaml` and registering an entry point in `pyproject.toml`
 — without explaining what each does or why both are required.
 

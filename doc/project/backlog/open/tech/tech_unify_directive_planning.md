@@ -1,6 +1,8 @@
 TECHNICAL IMPROVEMENT: Unify directive planning into a single pathway
 ========================================
-Created: 25/02/26
+Draft  
+Created: 25/02/26  
+Created by: FS  
 
 ## Description
 
@@ -9,11 +11,11 @@ The planner currently has two separate code paths for building child `PlanNode` 
 - **Source directives** → `_build_children` → `_build_child` → `_validate_and_plan` → `create_plan` (recursive)
 - **Source-less directives** → `_validate_sourceless_directives` → leaf `PlanNode`
 
-Both paths need to call `validate_input` and produce a `PlanNode` with an artifact. Having two parallel functions means any future change to the validate/plan/artifact logic must be applied in both places. The `_validate_sourceless_directives` function was introduced as a targeted fix rather than a structural one.
+Both paths need to call `normalize_input` and produce a `PlanNode` with an artifact. Having two parallel functions means any future change to the validate/plan/artifact logic must be applied in both places. The `_validate_sourceless_directives` function was introduced as a targeted fix rather than a structural one.
 
 The correct approach is a single `_plan_directive` function that:
 
-1. Calls `plugin.validate_input` (with file content for source directives, `""` for source-less)
+1. Calls `plugin.normalize_input` (with file content for source directives, `""` for source-less)
 2. On validation errors: returns an error node
 3. If source present: recurse via `create_plan`, set artifact, return node
 4. If source-less: return leaf node with artifact

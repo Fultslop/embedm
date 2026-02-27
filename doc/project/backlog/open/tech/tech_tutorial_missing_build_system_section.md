@@ -6,7 +6,7 @@ Created by: `Agent (plugin-validator skill)`
 
 ## Description
 
-The plugin tutorial's `pyproject.toml` example omits the `[build-system]` section entirely.
+The plugin tutorial's `pyproject.toml` example omits the `[build-system]` section entirely (see `.doc\manual\src\assets\tutorial\plugin_tutorial.md`).
 Users unfamiliar with Python packaging must guess this value, and incorrect guesses
 (e.g. `setuptools.backends.legacy:build`) produce an opaque pip error with no link back
 to the tutorial. The correct value (`setuptools.build_meta`) should be included explicitly.

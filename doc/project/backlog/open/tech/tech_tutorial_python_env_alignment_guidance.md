@@ -6,7 +6,7 @@ Created by: `Agent (plugin-validator skill)`
 
 ## Description
 
-The tutorial instructs users to "install into the current environment" without clarifying
+The tutorial (`.doc\manual\src\assets\tutorial\plugin_tutorial.md`) instructs users to "install into the current environment" without clarifying
 that the plugin must be installed into the same Python environment that runs the `embedm`
 CLI. In dev setups where embedm is installed in a project `.venv`, the `embedm` on PATH
 and the system `pip` resolve to different environments. The plugin installs into one;

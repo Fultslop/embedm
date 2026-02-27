@@ -35,7 +35,8 @@ The process should work as follows:
   * When compiling of a node which has a source begins, check if the file_cache has a reference to the source. If so it means it was previously compiled and can be gotten from the file_cache. 
   * This does not handle the double compilation which can happen when referencing files outside the target directory or its subdirectories. I'm not sure if this avoidable.
  
- ## Replication
+
+## Replication
 
 Because this bug has been "fixed", it's no longer possible to replicate it directly. Suggest we build an integration / white box test to verify if this works as intended
 
@@ -47,3 +48,12 @@ Collect target list, both a and b should be on there.
 Compile a. Both a and b should have compiled versions.
 Compile b. B should be retrieved from the cache.
 
+## Comments
+
+`27/02/26 FS/Agent: During orchestration refactoring discussion, three open questions surfaced that must be resolved before implementing the write-through design above:`
+
+`(1) Cache key — when A is compiled and written via the cache, what path is used as the key? The source path (A's original location) so that downstream embeds hit the cache, or the output path? Using the source path is necessary for B's embed of A to get the compiled version; but this would mean the cache entry for A's source path is replaced with compiled content, which could cause issues if A is also directly referenced elsewhere with its raw content. Using the output path means a separate lookup is needed.`
+
+`(2) Write-through timing — within a single compile pass, A's content is resolved during planning (from its raw source). The compiled version only exists after A's transform completes. This means the write-through approach works for the cross-file case (A compiled first, B reads A's compiled output), but not for inlining within the same transform call. The pipeline order must guarantee A is compiled before B attempts to read it.`
+
+`(3) Relationship to 'embedded' set — the current embedded set in _process_directory prevents A from being re-processed as a standalone root after being compiled as B's dependency. If writes go through the cache, does the embedded set become redundant, or do both mechanisms serve different purposes (one for root-skip logic, one for cache coherence)?`

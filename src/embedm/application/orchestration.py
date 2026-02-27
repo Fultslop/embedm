@@ -7,16 +7,15 @@ from pathlib import Path
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
-from embedm.plugins.plugin_configuration import PluginConfiguration
-from embedm.plugins.plugin_context import PluginContext
+from embedm.infrastructure.file_util import apply_line_endings, expand_directory_input, extract_base_dir
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .application_resources import str_resources as app_resources
 from .cli import parse_command_line_arguments
+from .compiler import compile_plan, dir_mode_compiled_dir, output_file_compiled_dir
 from .config_loader import discover_config, generate_default_config, load_config_file
 from .configuration import Configuration, InputMode
 from .console import (
-    ContinueChoice,
     RunSummary,
     make_cache_event_handler,
     present_errors,
@@ -27,20 +26,18 @@ from .console import (
     present_title,
     present_verify_status,
     present_warnings,
-    prompt_continue,
     verbose_config,
     verbose_output_path,
     verbose_plan_tree,
     verbose_plugins,
     verbose_section,
     verbose_summary,
-    verbose_timing,
 )
 from .embedm_context import EmbedmContext
-from .plan_tree import collect_embedded_sources, collect_tree_errors, tree_has_level
+from .plan_tree import collect_embedded_sources, tree_has_level
 from .planner import plan_content, plan_file
 from .plugin_diagnostics import PluginDiagnostics
-from .verification import VerifyStatus, apply_line_endings, verify_file_output
+from .verification import VerifyStatus, verify_file_output
 
 
 def main() -> None:
@@ -64,15 +61,16 @@ def main() -> None:
         _handle_plugin_list(config)
         return
 
-    context, load_errors = _build_context(config)
+    plugin_registry, load_errors = _load_plugins(config)
     _handle_plugin_load_errors(load_errors)
 
-    diagnostics = PluginDiagnostics().check(context.plugin_registry, config)
+    diagnostics = PluginDiagnostics().check(plugin_registry, config)
     if diagnostics:
         present_warnings(diagnostics)
 
+    context = _build_context(config, plugin_registry)
     _emit_verbose_start(config, context)
-    summary = RunSummary(output_target=_output_target(config))
+    summary = RunSummary(output_target=_format_output_label(config))
 
     _dispatch_input(config, context, summary)
 
@@ -151,12 +149,12 @@ def _dispatch_input(config: Configuration, context: EmbedmContext, summary: RunS
 
 def _process_directory(config: Configuration, context: EmbedmContext, summary: RunSummary) -> None:
     """Expand directory input to .md files, process each, skipping embedded dependencies."""
-    files = _expand_directory_input(config.input)
+    files = expand_directory_input(config.input, "*.md")
     if not files:
         present_errors(f"no .md files found in '{config.input}'")
         return
 
-    base_dir = _extract_base_dir(config.input)
+    base_dir = extract_base_dir(config.input)
     embedded: set[str] = set()
 
     for file_path in files:
@@ -185,8 +183,8 @@ def _process_directory_file(
     # track all sources this file embeds so we skip them as standalone roots
     embedded.update(collect_embedded_sources(plan_root, embed_type=config.root_directive_type))
 
-    compiled_dir = _dir_mode_compiled_dir(file_path, base_dir, config)
-    result = _compile_plan(plan_root, context, compiled_dir)
+    compiled_dir = dir_mode_compiled_dir(file_path, base_dir, config)
+    result = compile_plan(plan_root, context, compiled_dir)
     if result and config.is_verify and config.output_directory:
         relative = Path(file_path).resolve().relative_to(base_dir)
         output_path = str((Path(config.output_directory) / relative).resolve())
@@ -201,123 +199,6 @@ def _process_directory_file(
 
     if config.verbosity == 2:
         present_file_progress(file_path, plan_root)
-
-
-def _expand_directory_input(input_path: str) -> list[str]:
-    """Expand a directory or glob pattern to a sorted list of .md files."""
-    if "**" in input_path:
-        return sorted(str(p) for p in _glob_base(input_path).rglob("*.md"))
-    if "*" in input_path:
-        return sorted(str(p) for p in _glob_base(input_path).glob("*.md"))
-    return sorted(str(p) for p in Path(input_path).glob("*.md"))
-
-
-def _emit_errors(errors: list[Status], context: EmbedmContext) -> None:
-    """Present errors unless suppressed (accept-all at verbosity < 2)."""
-    if context.config.verbosity >= 2 or not context.accept_all:
-        present_errors(errors)
-
-
-def _compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
-    """Compile a plan tree into output with interactive error prompting."""
-    if plan_root.document is None:
-        _emit_errors(plan_root.status, context)
-        return ""
-
-    tree_errors = collect_tree_errors(plan_root)
-    if tree_errors:
-        _emit_errors(tree_errors, context)
-        has_fatal = any(s.level == StatusLevel.FATAL for s in tree_errors)
-        if has_fatal:
-            return ""
-        if not context.accept_all:
-            choice = prompt_continue()
-            if choice == ContinueChoice.EXIT:
-                sys.exit(1)
-            if choice == ContinueChoice.NO:
-                return ""
-            if choice == ContinueChoice.ALWAYS:
-                context.accept_all = True
-
-    return _compile_plan_node(plan_root, context, compiled_dir)
-
-
-def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = "") -> str:
-    """Compile a validated plan node via its plugin."""
-    plugin = context.plugin_registry.find_plugin_by_directive_type(plan_root.directive.type)
-    if plugin is None:
-        return ""
-    plugin_config = PluginConfiguration(
-        max_embed_size=context.config.max_embed_size,
-        max_recursion=context.config.max_recursion,
-        compiled_dir=compiled_dir,
-        plugin_sequence=_build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
-        plugin_settings=context.config.plugin_configuration,
-    )
-    t0 = time.perf_counter()
-    result = plugin.transform(plan_root, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
-    elapsed_s = time.perf_counter() - t0
-    if context.config.verbosity >= 3:
-        verbose_timing("transform", plan_root.directive.type, plan_root.directive.source, elapsed_s)
-    return result
-
-
-def _build_directive_sequence(plugin_sequence: list[str], registry: PluginRegistry) -> tuple[str, ...]:
-    """Return directive types ordered by plugin_sequence module order.
-
-    Any loaded plugins whose module is not in plugin_sequence are appended at the end.
-    """
-    result: list[str] = []
-    covered: set[str] = set()
-    for module in plugin_sequence:
-        for plugin in registry.lookup.values():
-            if plugin.__class__.__module__ == module and plugin.directive_type not in covered:
-                result.append(plugin.directive_type)
-                covered.add(plugin.directive_type)
-                break
-    for plugin in registry.lookup.values():
-        if plugin.directive_type not in covered:
-            result.append(plugin.directive_type)
-            covered.add(plugin.directive_type)
-    return tuple(result)
-
-
-def _glob_base(pattern: str) -> Path:
-    """Return the directory prefix of a glob pattern: all parts before the first wildcard."""
-    base: list[str] = []
-    for part in Path(pattern).parts:
-        if "*" in part:
-            break
-        base.append(part)
-    return Path(*base) if base else Path(".")
-
-
-def _extract_base_dir(input_path: str) -> Path:
-    """Extract the base directory from a directory input or glob pattern."""
-    return _glob_base(input_path).resolve() if "*" in input_path else Path(input_path).resolve()
-
-
-def _write_directory_output(
-    file_path: str,
-    base_dir: Path,
-    config: Configuration,
-    result: str,
-) -> str | None:
-    """Write a compiled file's output to the output directory (mirroring structure) or stdout.
-
-    Returns the path written to, or None if written to stdout.
-    """
-    content = apply_line_endings(result, config.line_endings)
-
-    if config.is_dry_run or not config.output_directory:
-        present_result(content)
-        return None
-
-    relative = Path(file_path).resolve().relative_to(base_dir)
-    output_path = Path(config.output_directory) / relative
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(content, encoding="utf-8")
-    return str(output_path.resolve())
 
 
 def _emit_verbose_start(config: Configuration, context: EmbedmContext) -> None:
@@ -354,8 +235,8 @@ def _process_single_input(
     if config.verbosity >= 3:
         verbose_section(f"planning: {source_label}")
         verbose_plan_tree(plan_root)
-    compiled_dir = _output_file_compiled_dir(config.output_file)
-    result = _compile_plan(plan_root, context, compiled_dir)
+    compiled_dir = output_file_compiled_dir(config.output_file)
+    result = compile_plan(plan_root, context, compiled_dir)
 
     if config.is_verify and result and config.output_file:
         output_path = str(Path(config.output_file).resolve())
@@ -376,21 +257,29 @@ def _validate_plugin_config_schemas(config: Configuration, registry: PluginRegis
     for module, settings in config.plugin_configuration.items():
         plugin = next((p for p in registry.lookup.values() if p.__class__.__module__ == module), None)
         if plugin is None:
-            errors.append(Status(StatusLevel.WARNING, f"plugin_configuration: unknown plugin module '{module}'"))
+            errors.append(
+                Status(StatusLevel.WARNING, app_resources.warn_plugin_config_unknown_module.format(module=module))
+            )
             continue
 
         schema = plugin.get_plugin_config_schema()
         for key, value in settings.items():
             if schema is None or key not in schema:
                 if config.verbosity >= 3:
-                    errors.append(Status(StatusLevel.WARNING, f"plugin_configuration['{module}']: unknown key '{key}'"))
+                    errors.append(
+                        Status(
+                            StatusLevel.WARNING,
+                            app_resources.warn_plugin_config_unknown_key.format(module=module, key=key),
+                        )
+                    )
                 continue
             if not isinstance(value, schema[key]):
                 errors.append(
                     Status(
                         StatusLevel.ERROR,
-                        f"plugin_configuration['{module}']['{key}'] must be {schema[key].__name__},"
-                        f" got {type(value).__name__}",
+                        app_resources.err_plugin_config_type_mismatch.format(
+                            module=module, key=key, expected=schema[key].__name__, got=type(value).__name__
+                        ),
                     )
                 )
 
@@ -399,32 +288,53 @@ def _validate_plugin_config_schemas(config: Configuration, registry: PluginRegis
     return errors
 
 
-def _build_context(config: Configuration) -> tuple[EmbedmContext, list[Status]]:
-    """Build the runtime context from configuration."""
+def _load_plugins(config: Configuration) -> tuple[PluginRegistry, list[Status]]:
+    """Create and populate the plugin registry, validating plugin configuration schemas."""
+    plugin_registry = PluginRegistry()
+    errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
+    errors.extend(_validate_plugin_config_schemas(config, plugin_registry))
+    return plugin_registry, errors
+
+
+def _build_context(config: Configuration, plugin_registry: PluginRegistry) -> EmbedmContext:
+    """Build the runtime context from configuration and a loaded plugin registry."""
     on_event = make_cache_event_handler() if config.verbosity >= 3 else None
     file_cache = FileCache(
         config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size, on_event=on_event
     )
-    plugin_registry = PluginRegistry()
-    errors = plugin_registry.load_plugins(enabled_modules=set(config.plugin_sequence))
-    errors.extend(_validate_plugin_config_schemas(config, plugin_registry))
-    return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all), errors
+    return EmbedmContext(config, file_cache, plugin_registry, accept_all=config.is_accept_all)
 
 
-def _output_file_compiled_dir(output_file: str | None) -> str:
-    """Return the directory of the output file, or empty string if writing to stdout."""
-    return str(Path(output_file).resolve().parent) if output_file else ""
+def _format_output_label(config: Configuration) -> str:
+    """Return a human-readable output target label for the summary line."""
+    if config.output_file:
+        return str(Path(config.output_file).resolve())
+    if config.output_directory:
+        return str(Path(config.output_directory).resolve())
+    return "stdout"
 
 
-def _dir_mode_compiled_dir(file_path: str, base_dir: Path, config: Configuration) -> str:
-    """Return the compiled output directory for a file in directory mode."""
-    if not config.output_directory:
-        return ""
-    try:
-        relative = Path(file_path).resolve().relative_to(base_dir)
-        return str((Path(config.output_directory) / relative).parent.resolve())
-    except ValueError:
-        return ""
+def _write_directory_output(
+    file_path: str,
+    base_dir: Path,
+    config: Configuration,
+    result: str,
+) -> str | None:
+    """Write a compiled file's output to the output directory (mirroring structure) or stdout.
+
+    Returns the path written to, or None if written to stdout.
+    """
+    content = apply_line_endings(result, config.line_endings)
+
+    if config.is_dry_run or not config.output_directory:
+        present_result(content)
+        return None
+
+    relative = Path(file_path).resolve().relative_to(base_dir)
+    output_path = Path(config.output_directory) / relative
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content, encoding="utf-8")
+    return str(output_path.resolve())
 
 
 def _write_output(result: str, config: Configuration) -> str | None:
@@ -448,15 +358,6 @@ def _write_output(result: str, config: Configuration) -> str | None:
 
     present_result(content)
     return None
-
-
-def _output_target(config: Configuration) -> str:
-    """Return a human-readable output target label for the summary line."""
-    if config.output_file:
-        return str(Path(config.output_file).resolve())
-    if config.output_directory:
-        return str(Path(config.output_directory).resolve())
-    return "stdout"
 
 
 def _update_summary(

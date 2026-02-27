@@ -4,16 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from embedm.application.orchestration import (
-    _expand_directory_input,
-    _glob_base,
-)
+from embedm.infrastructure.file_util import expand_directory_input, glob_base
 from embedm.application.plan_tree import collect_embedded_sources
 from embedm.domain.directive import Directive
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 
-# --- _expand_directory_input ---
+# --- expand_directory_input ---
 
 
 def test_expand_plain_directory(tmp_path: Path) -> None:
@@ -21,7 +18,7 @@ def test_expand_plain_directory(tmp_path: Path) -> None:
     (tmp_path / "b.md").write_text("b")
     (tmp_path / "c.txt").write_text("c")
 
-    result = _expand_directory_input(str(tmp_path))
+    result = expand_directory_input(str(tmp_path))
 
     assert len(result) == 2
     assert any("a.md" in p for p in result)
@@ -35,7 +32,7 @@ def test_expand_star_pattern(tmp_path: Path) -> None:
     sub.mkdir()
     (sub / "nested.md").write_text("nested")
 
-    result = _expand_directory_input(str(tmp_path / "*"))
+    result = expand_directory_input(str(tmp_path / "*"))
 
     # non-recursive: only top-level .md files
     assert len(result) == 1
@@ -48,7 +45,7 @@ def test_expand_double_star_pattern(tmp_path: Path) -> None:
     sub.mkdir()
     (sub / "nested.md").write_text("nested")
 
-    result = _expand_directory_input(str(tmp_path / "**"))
+    result = expand_directory_input(str(tmp_path / "**"))
 
     # recursive: both top-level and nested .md files
     assert len(result) == 2
@@ -63,7 +60,7 @@ def test_expand_mid_path_double_star_pattern(tmp_path: Path) -> None:
     (sub / "nested.md").write_text("nested")
 
     # Pattern with wildcard in the middle: base/**/*.md
-    result = _expand_directory_input(str(tmp_path / "**" / "*.md"))
+    result = expand_directory_input(str(tmp_path / "**" / "*.md"))
 
     assert len(result) == 2
     assert any("a.md" in p for p in result)
@@ -71,28 +68,28 @@ def test_expand_mid_path_double_star_pattern(tmp_path: Path) -> None:
 
 
 def test_expand_empty_directory(tmp_path: Path) -> None:
-    result = _expand_directory_input(str(tmp_path))
+    result = expand_directory_input(str(tmp_path))
 
     assert result == []
 
 
-# --- _glob_base ---
+# --- glob_base ---
 
 
-def test_glob_base_double_star_at_end(tmp_path: Path) -> None:
-    assert _glob_base(str(tmp_path / "**")) == tmp_path
+def testglob_base_double_star_at_end(tmp_path: Path) -> None:
+    assert glob_base(str(tmp_path / "**")) == tmp_path
 
 
-def test_glob_base_double_star_in_middle(tmp_path: Path) -> None:
-    assert _glob_base(str(tmp_path / "**" / "*.md")) == tmp_path
+def testglob_base_double_star_in_middle(tmp_path: Path) -> None:
+    assert glob_base(str(tmp_path / "**" / "*.md")) == tmp_path
 
 
-def test_glob_base_single_star(tmp_path: Path) -> None:
-    assert _glob_base(str(tmp_path / "*")) == tmp_path
+def testglob_base_single_star(tmp_path: Path) -> None:
+    assert glob_base(str(tmp_path / "*")) == tmp_path
 
 
-def test_glob_base_bare_star_returns_current_dir() -> None:
-    assert _glob_base("*") == Path(".")
+def testglob_base_bare_star_returns_current_dir() -> None:
+    assert glob_base("*") == Path(".")
 
 
 # --- _collect_embedded_sources ---
