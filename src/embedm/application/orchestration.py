@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import sys
 import time
+from importlib.metadata import version as pkg_version
 from pathlib import Path
 
+from embedm.application.application_events import FileProcessed, PluginsLoaded, SessionComplete, SessionStarted
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.events import EventDispatcher
@@ -16,24 +18,10 @@ from .cli import parse_command_line_arguments
 from .compiler import compile_plan, dir_mode_compiled_dir, output_file_compiled_dir
 from .config_loader import discover_config, generate_default_config, load_config_file
 from .configuration import Configuration, InputMode
-from .console import (
-    RunSummary,
-    present_errors,
-    present_file_progress,
-    present_plugin_list,
-    present_result,
-    present_run_hint,
-    present_title,
-    present_verify_status,
-    present_warnings,
-    verbose_config,
-    verbose_output_path,
-    verbose_plan_tree,
-    verbose_plugins,
-    verbose_section,
-    verbose_summary,
-)
+from .console import RunSummary
 from .embedm_context import EmbedmContext
+from .legacy_renderer import LegacyRenderer
+from .output_util import present_errors, present_plugin_list, present_result, present_verify_status
 from .plan_tree import collect_embedded_sources, tree_has_level
 from .planner import plan_content, plan_file
 from .plugin_diagnostics import PluginDiagnostics
@@ -51,11 +39,20 @@ def main() -> None:
         _handle_init(config.init_path)
         return
 
-    if config.verbosity >= 1:
-        present_title()
+    dispatcher = EventDispatcher()
+    LegacyRenderer(config).subscribe(dispatcher)
 
     config, errors = _resolve_config(config)
     _exit_if_errors(errors)
+
+    dispatcher.emit(
+        SessionStarted(
+            version=pkg_version("embedm"),
+            config_source=config.config_file or "DEFAULT",
+            input_type=config.input_mode.value,
+            output_type=_format_output_label(config),
+        )
+    )
 
     if config.plugin_list:
         _handle_plugin_list(config)
@@ -65,17 +62,34 @@ def main() -> None:
     _handle_plugin_load_errors(load_errors)
 
     diagnostics = PluginDiagnostics().check(plugin_registry, config)
-    if diagnostics:
-        present_warnings(diagnostics)
+    dispatcher.emit(
+        PluginsLoaded(
+            discovered=len(plugin_registry.discovered),
+            loaded=plugin_registry.count,
+            errors=[e.description for e in load_errors],
+            warnings=[d.description for d in diagnostics],
+        )
+    )
 
-    context = _build_context(config, plugin_registry)
-    _emit_verbose_start(config, context)
+    context = _build_context(config, plugin_registry, dispatcher)
     summary = RunSummary(output_target=_format_output_label(config))
 
     _dispatch_input(config, context, summary)
 
     summary.elapsed_s = time.perf_counter() - start_time
-    _emit_verbose_end(config, summary)
+    dispatcher.emit(
+        SessionComplete(
+            ok_count=summary.ok_count,
+            error_count=summary.error_count,
+            total_elapsed=summary.elapsed_s,
+            files_written=summary.files_written,
+            output_target=summary.output_target,
+            warning_count=summary.warning_count,
+            is_verify=summary.is_verify,
+            up_to_date_count=summary.up_to_date_count,
+            stale_count=summary.stale_count,
+        )
+    )
     _exit_on_run_failure(config, summary)
 
 
@@ -139,12 +153,12 @@ def _dispatch_input(config: Configuration, context: EmbedmContext, summary: RunS
     """Route to the appropriate processing function based on input mode."""
     if config.input_mode == InputMode.FILE:
         plan_root = plan_file(config.input, context)
-        _process_single_input(plan_root, config.input, config, context, summary)
+        _process_single_input(plan_root, config, context, summary)
     elif config.input_mode == InputMode.DIRECTORY:
         _process_directory(config, context, summary)
     elif config.input_mode == InputMode.STDIN:
         plan_root = plan_content(config.input, context)
-        _process_single_input(plan_root, "<stdin>", config, context, summary)
+        _process_single_input(plan_root, config, context, summary)
 
 
 def _process_directory(config: Configuration, context: EmbedmContext, summary: RunSummary) -> None:
@@ -157,12 +171,14 @@ def _process_directory(config: Configuration, context: EmbedmContext, summary: R
     base_dir = extract_base_dir(config.input)
     embedded: set[str] = set()
 
-    for file_path in files:
-        _process_directory_file(file_path, base_dir, config, context, summary, embedded)
+    for i, file_path in enumerate(files):
+        _process_directory_file(file_path, i, len(files), base_dir, config, context, summary, embedded)
 
 
 def _process_directory_file(
     file_path: str,
+    index: int,
+    total: int,
     base_dir: Path,
     config: Configuration,
     context: EmbedmContext,
@@ -176,10 +192,6 @@ def _process_directory_file(
 
     plan_root = plan_file(file_path, context)
 
-    if config.verbosity >= 3:
-        verbose_section(f"planning: {file_path}")
-        verbose_plan_tree(plan_root)
-
     # track all sources this file embeds so we skip them as standalone roots
     embedded.update(collect_embedded_sources(plan_root, embed_type=config.root_directive_type))
 
@@ -192,49 +204,22 @@ def _process_directory_file(
         present_verify_status(vstatus.value, output_path)
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
-        written_path = _write_directory_output(file_path, base_dir, config, result) if result else None
-        if written_path and config.verbosity >= 3:
-            verbose_output_path(written_path)
+        if result:
+            _write_directory_output(file_path, base_dir, config, result)
         _update_summary(summary, plan_root, wrote=bool(result))
 
-    if config.verbosity == 2:
-        present_file_progress(file_path, plan_root)
-
-
-def _emit_verbose_start(config: Configuration, context: EmbedmContext) -> None:
-    """Emit the configuration and plugin discovery sections when verbose is on."""
-    if config.verbosity >= 3:
-        verbose_section("configuration")
-        verbose_config(config)
-        verbose_section("plugins")
-        verbose_plugins(context.plugin_registry, config)
-
-
-def _emit_verbose_end(config: Configuration, summary: RunSummary) -> None:
-    """Emit the summary line (levels 1–2) or the full verbose summary (level 3)."""
-    if config.verbosity == 0:
-        return
-    if config.verbosity >= 3:
-        verbose_section("summary")
-        verbose_summary(summary)
-    elif summary.error_count > 0 and config.is_accept_all and config.verbosity < 2:
-        # level 1 + accept_all + errors: errors were suppressed; show summary + hint
-        present_run_hint(summary)
-    else:
-        verbose_summary(summary)
+    context.events.emit(
+        FileProcessed(file_path=file_path, status_label=_plan_status_label(plan_root), index=index, total=total)
+    )
 
 
 def _process_single_input(
     plan_root: PlanNode,
-    source_label: str,
     config: Configuration,
     context: EmbedmContext,
     summary: RunSummary,
 ) -> None:
     """Compile and write a single plan (FILE or STDIN mode), updating the summary."""
-    if config.verbosity >= 3:
-        verbose_section(f"planning: {source_label}")
-        verbose_plan_tree(plan_root)
     compiled_dir = output_file_compiled_dir(config.output_file)
     result = compile_plan(plan_root, context, compiled_dir)
 
@@ -244,10 +229,7 @@ def _process_single_input(
         present_verify_status(vstatus.value, output_path)
         _update_summary(summary, plan_root, wrote=False, verify_status=vstatus)
     else:
-        written_path = _write_output(result, config)
-        if written_path and config.verbosity >= 3:
-            verbose_section("output")
-            verbose_output_path(written_path)
+        _write_output(result, config)
         _update_summary(summary, plan_root, wrote=bool(result))
 
 
@@ -296,9 +278,10 @@ def _load_plugins(config: Configuration) -> tuple[PluginRegistry, list[Status]]:
     return plugin_registry, errors
 
 
-def _build_context(config: Configuration, plugin_registry: PluginRegistry) -> EmbedmContext:
+def _build_context(
+    config: Configuration, plugin_registry: PluginRegistry, dispatcher: EventDispatcher
+) -> EmbedmContext:
     """Build the runtime context from configuration and a loaded plugin registry."""
-    dispatcher = EventDispatcher()
     file_cache = FileCache(
         config.max_file_size, config.max_memory, ["./**"], max_embed_size=config.max_embed_size, events=dispatcher
     )
@@ -358,6 +341,18 @@ def _write_output(result: str, config: Configuration) -> str | None:
 
     present_result(content)
     return None
+
+
+def _plan_status_label(plan_root: PlanNode) -> str:
+    """Return a single status label string for the worst status in the plan root."""
+    statuses = plan_root.status
+    if any(s.level == StatusLevel.FATAL for s in statuses):
+        return "FATAL"
+    if any(s.level == StatusLevel.ERROR for s in statuses):
+        return "ERROR"
+    if any(s.level == StatusLevel.WARNING for s in statuses):
+        return "WARN"
+    return "OK"
 
 
 def _update_summary(

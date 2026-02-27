@@ -222,14 +222,8 @@ def _make_verbose_context(tmp_path: Path) -> EmbedmContext:
     return EmbedmContext(config=config, file_cache=file_cache, plugin_registry=registry)
 
 
-def test_planner_verbose_unknown_type_shows_available(tmp_path: Path) -> None:
+def test_planner_verbose_unknown_type_shows_error(tmp_path: Path) -> None:
     context = _make_verbose_context(tmp_path)
-    # register one plugin so 'available' is non-empty
-    mock_plugin = MagicMock(spec=PluginBase)
-    mock_plugin.name = "file"
-    mock_plugin.directive_type = "file"
-    mock_plugin.validate_directive.return_value = []
-    context.plugin_registry.lookup["file"] = mock_plugin
 
     plan = create_plan(
         Directive(type="root"),
@@ -239,8 +233,7 @@ def test_planner_verbose_unknown_type_shows_available(tmp_path: Path) -> None:
     )
 
     error_msgs = [s.description for s in plan.status if s.level == StatusLevel.ERROR]
-    assert any("Available:" in msg for msg in error_msgs)
-    assert any("file" in msg for msg in error_msgs)
+    assert any("no plugin registered" in msg for msg in error_msgs)
 
 
 def test_planner_non_verbose_unknown_type_no_available(tmp_path: Path) -> None:

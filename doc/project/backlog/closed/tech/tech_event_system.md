@@ -1,8 +1,7 @@
 TECHNICAL IMPROVEMENT: Event system
 =============================================================================
-Draft
 Created: 27/02/2026
-Closed: `<date>`
+Closed: 27/02/2026
 Created by: Claude
 
 ## Description

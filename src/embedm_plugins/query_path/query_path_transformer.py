@@ -12,6 +12,7 @@ from embedm.plugins.transformer_base import TransformerBase
 class QueryPathTransformerParams:
     """Parameters for the query path transformer."""
 
+    # TODO comment these values
     value: Any
     raw_content: str
     lang_tag: str

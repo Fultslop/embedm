@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-import time
 from pathlib import Path
 
 from embedm.domain.plan_node import PlanNode
@@ -11,8 +10,9 @@ from embedm.plugins.plugin_context import PluginContext
 from embedm.plugins.plugin_registry import PluginRegistry
 
 from .configuration import Configuration
-from .console import ContinueChoice, present_errors, prompt_continue, verbose_timing
+from .console import ContinueChoice, prompt_continue
 from .embedm_context import EmbedmContext
+from .output_util import present_errors
 from .plan_tree import collect_tree_errors
 
 
@@ -52,11 +52,18 @@ def _compile_plan_node(plan_root: PlanNode, context: EmbedmContext, compiled_dir
         plugin_sequence=build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
         plugin_settings=context.config.plugin_configuration,
     )
-    t0 = time.perf_counter()
-    result = plugin.transform(plan_root, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
-    elapsed_s = time.perf_counter() - t0
-    if context.config.verbosity >= 3:
-        verbose_timing("transform", plan_root.directive.type, plan_root.directive.source, elapsed_s)
+    result = plugin.transform(
+        plan_root,
+        [],
+        PluginContext(
+            context.file_cache,
+            context.plugin_registry,
+            plugin_config,
+            events=context.events,
+            plugin_name=plugin.name,
+            file_path=plan_root.directive.source,
+        ),
+    )
     return result
 
 

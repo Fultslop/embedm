@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 
 from embedm.domain.directive import Directive
@@ -10,7 +9,6 @@ from embedm.parsing.directive_parser import parse_yaml_embed_blocks
 from embedm.plugins.plugin_configuration import PluginConfiguration
 
 from .application_resources import str_resources
-from .console import verbose_timing
 from .embedm_context import EmbedmContext
 
 
@@ -94,17 +92,10 @@ def _check_plugins(
     for d in directives:
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
-            if context.config.verbosity >= 3:
-                available = ", ".join(sorted(p.directive_type for p in context.plugin_registry.lookup.values()))
-                msg = str_resources.err_plan_no_plugin_verbose.format(directive_type=d.type, available=available)
-            else:
-                msg = str_resources.err_plan_no_plugin.format(directive_type=d.type)
+            msg = str_resources.err_plan_no_plugin.format(directive_type=d.type)
             errors.append(Status(StatusLevel.ERROR, msg))
         else:
-            t0 = time.perf_counter()
             errors.extend(plugin.validate_directive(d, plugin_config))
-            if context.config.verbosity >= 3:
-                verbose_timing("validate_directive", d.type, d.source, time.perf_counter() - t0)
     return errors
 
 
@@ -157,10 +148,7 @@ def _validate_sourceless_directives(
         plugin = context.plugin_registry.find_plugin_by_directive_type(d.type)
         if plugin is None:
             continue
-        t0 = time.perf_counter()
         validate_result = plugin.normalize_input(d, "", plugin_config)
-        if context.config.verbosity >= 3:
-            verbose_timing("normalize_input", d.type, d.source, time.perf_counter() - t0)
         if validate_result is not None and validate_result.errors:
             nodes.append(_error_node(d, validate_result.errors))
         else:
@@ -209,13 +197,7 @@ def _validate_and_plan(
 ) -> PlanNode:
     """Run normalize_input if a plugin is registered, then build a plan node."""
     plugin = context.plugin_registry.find_plugin_by_directive_type(directive.type)
-    if plugin is not None:
-        t0 = time.perf_counter()
-        validate_result = plugin.normalize_input(directive, content, plugin_config)
-        if context.config.verbosity >= 3:
-            verbose_timing("normalize_input", directive.type, directive.source, time.perf_counter() - t0)
-    else:
-        validate_result = None
+    validate_result = plugin.normalize_input(directive, content, plugin_config) if plugin is not None else None
     if validate_result is not None and validate_result.errors:
         return _error_node(directive, validate_result.errors)
     node = create_plan(directive, content, depth, context, ancestors)

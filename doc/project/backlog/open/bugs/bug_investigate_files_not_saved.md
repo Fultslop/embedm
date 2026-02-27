@@ -27,13 +27,26 @@ def collect_embedded_sources(root: PlanNode, embed_type: str = "file") -> set[st
     return sources
 ```
 
-The process should work as follows:
+The process should work as follows (This doesn't apply to single, stdin compiles):
 
-  * This doesn't apply to single compiles
   * Collect all md files in the target directory / directories in case of compiling a directory (target_list)
-  * When compiling a node completes, check if the file is in the target_list. If so write it to file and remove it from the target_list. This _should_ cause the file cache to have a reference to the file (it may be unloaded). 
+  * When compiling a node completes, check if the file is in the target_list. If so write it to file and remove it from the target_list. This _should_ cause the file cache to have a reference to the file (altough it may get unloaded). 
   * When compiling of a node which has a source begins, check if the file_cache has a reference to the source. If so it means it was previously compiled and can be gotten from the file_cache. 
-  * This does not handle the double compilation which can happen when referencing files outside the target directory or its subdirectories. I'm not sure if this avoidable.
+  * This does not handle the double compilation which can happen when referencing files outside the target directory or its subdirectories. Eg:
+
+  root/  
+    some_other   
+        file_c
+  
+    target_dir/
+        file_a
+            -> references file_c
+        file_b
+            -> references file_c
+  
+  file_c is not in the target_list.
+
+  I'm not sure if this avoidable at this point. This _could_ be avoided by carefully planning and ordering nodes, seeing there is a shared need for file_c and keeping it in memory or saving it to a scratch directory. This could be done in the future should this become a source of concern.
  
 
 ## Replication

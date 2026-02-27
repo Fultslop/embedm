@@ -1,6 +1,6 @@
 """Events emitted by the application layer (session, plugins, planning, compilation)."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from embedm.infrastructure.events import EmbedmEvent
 
@@ -24,6 +24,12 @@ class SessionComplete(EmbedmEvent):
     ok_count: int
     error_count: int
     total_elapsed: float
+    files_written: int = 0
+    output_target: str = "stdout"
+    warning_count: int = 0
+    is_verify: bool = False
+    up_to_date_count: int = 0
+    stale_count: int = 0
 
 
 # --- Plugin loading ---
@@ -36,6 +42,7 @@ class PluginsLoaded(EmbedmEvent):
     discovered: int
     loaded: int
     errors: list[str]
+    warnings: list[str] = field(default_factory=list)
 
 
 # --- Planning ---
@@ -133,3 +140,16 @@ class CompilationComplete(EmbedmEvent):
 
     ok_count: int
     error_count: int
+
+
+# --- Directory-mode progress ---
+
+
+@dataclass(frozen=True)
+class FileProcessed(EmbedmEvent):
+    """Emitted after each file is processed in directory mode (success or failure)."""
+
+    file_path: str
+    status_label: str
+    index: int
+    total: int

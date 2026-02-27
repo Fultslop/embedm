@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import TypeVar
+
+_T = TypeVar("_T", bound="EmbedmEvent")
 
 
 @dataclass(frozen=True)
@@ -25,9 +28,9 @@ class EventDispatcher:
     def __init__(self) -> None:
         self._listeners: dict[type[EmbedmEvent], list[Callable[[EmbedmEvent], None]]] = defaultdict(list)
 
-    def subscribe(self, event_type: type[EmbedmEvent], listener: Callable[[EmbedmEvent], None]) -> None:
+    def subscribe(self, event_type: type[_T], listener: Callable[[_T], None]) -> None:
         """Register listener to be called whenever an event of event_type is emitted."""
-        self._listeners[event_type].append(listener)
+        self._listeners[event_type].append(listener)  # type: ignore[arg-type]
 
     def emit(self, event: EmbedmEvent) -> None:
         """Dispatch event to all listeners registered for its exact type."""
