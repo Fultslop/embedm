@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 # TODO move all user facing strings here
 str_resources = SimpleNamespace(
-    continue_compilation="Continue with compilation (yes/no/always)? [y/N/a]",
+    continue_compilation="Continue with compilation (yes/no/always/exit)? [y/N/a/x]",
     err_cli_file_and_dir_output="cannot specify both --output-file and --output-dir",
     err_cli_no_input="no input provided; pass a file/directory or pipe via stdin",
     err_cli_out_file_and_dir_input="cannot use --output-file with directory input, use --output-dir",

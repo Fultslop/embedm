@@ -4,6 +4,10 @@ This document contains entries related to the work done or decisions on feature,
 
 ## Entries
 
+* 27/02/26 [TASK] feat_cli_exit — add `x`/`exit` option to the compilation continue prompt. `ContinueChoice.EXIT` added to enum; `prompt_continue()` returns EXIT for `x`/`exit` input and maps `ctrl+C`/EOF to EXIT (was NO); `_compile_plan()` calls `sys.exit(1)` on EXIT; prompt string updated to `[y/N/a/x]`. 12 new tests in `console_test.py`.
+
+* 27/02/26 [TASK] bug_missing_properties_crash — graceful handling of plugins missing required ClassVars (`name`, `directive_type`). `_REQUIRED_ATTRS` constant and post-instantiation attribute check added to `plugin_registry.py`; missing attrs → `StatusLevel.FATAL` error using entry-point name as identifier. `_handle_plugin_load_errors` extracted from `main()` to handle fatal load errors (present + `sys.exit(1)`); `_exit_if_errors` and `_exit_on_run_failure` extracted to bring `main()` to cyclomatic complexity A (3). Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. New resource strings in `plugin_resources.py` and `application_resources.py`. 4 new tests.
+
 * 26/02/26 [TASK] feat_add_filter_comments — implement `filter_comments: true` option for the file plugin. New `comment_filter.py` in `embedm.parsing` with `filter_comments(content, style)` (drops full-line comments, strips trailing inline comments, preserves blank lines and string literals). New `CommentFilterTransformer` in `embedm_plugins/file/`. File plugin applies transformer post-extraction. Validation warns when `filter_comments: true` is used with an unsupported extension.
 
 * 26/02/26 [TASK] feat_python_symbol_config — add Python language config to symbol_parser.py (class, function, enum patterns). Requires new `indent` block_style strategy and indent-based depth tracking in `_find_symbol_in_range` (Python uses indentation, not braces). Enum pattern matches `class Foo(Enum):` form. Tests added to symbol_parser_test.py.

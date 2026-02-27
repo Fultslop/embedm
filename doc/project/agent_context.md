@@ -97,19 +97,19 @@ old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
 
 Key decisions about plugin structure, registration, and naming extracted from the decision log.
 
-> 26/02/26 [TASK] feat_add_filter_comments — implement `filter_comments: true` option for the file plugin. File plugin applies transformer post-extraction. 25/02/26 [TASK] reorganize embedded.plugin directory. Updated `test_create_plan_directive_without_source` to reflect the new correct behaviour (source-less directives with a registered plugin now produce a child node). 24/02/26 [MISS] fix root directive skipping validate_input — `plan_file` and `plan_content` called `create_plan` directly, bypassing `plugin.validate_input` on the root node.
+> `_REQUIRED_ATTRS` constant and post-instantiation attribute check added to `plugin_registry.py`; missing attrs → `StatusLevel.FATAL` error using entry-point name as identifier. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. New resource strings in `plugin_resources.py` and `application_resources.py`. 26/02/26 [TASK] feat_add_filter_comments — implement `filter_comments: true` option for the file plugin. File plugin applies transformer post-extraction.
 
 ## Architectural rules
 
 Core rules about the validation/transform boundary, error handling, and code quality.
 
-> File plugin applies transformer post-extraction. Validation warns when `filter_comments: true` is used with an unsupported extension. 23/02/26 [ARCH] feat_verify_cli_option — three design decisions added: (1) compilation errors exit 1 in all modes (not just verify), correcting prior soft-fail behaviour; (2) line_endings config option (lf|crlf, default lf) applied before write and before verify comparison — project-level not directive-level; (3) verify-mode summary reports files_checked/up-to-date/stale instead of files_written. 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input. 16/02/26 [Standards] Error handling guidelines — coding errors crash via assert, input errors collect Status and recover.
+> `_handle_plugin_load_errors` extracted from `main()` to handle fatal load errors (present + `sys.exit(1)`); `_exit_if_errors` and `_exit_on_run_failure` extracted to bring `main()` to cyclomatic complexity A (3). Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. File plugin applies transformer post-extraction. Validation warns when `filter_comments: true` is used with an unsupported extension. 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input.
 
 ## Patterns — avoid these misses
 
 Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
 
-> Enum pattern matches `class Foo(Enum):` form. Added `_rel(path)` helper (CWD-relative POSIX string, fallback to original) to `file_cache.py` and `planner.py`; applied to all path-bearing error strings in `validate()`, `write()`, `get_files()` (file_cache) and `plan_file()`, `_validate_source()`, `_build_child()` (planner). 25/02/26 [ARCH] tech_unify_directive_planning — the current fix for source-less directives (`_validate_sourceless_directives`) is a parallel code path rather than a unified one. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
+> Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. Enum pattern matches `class Foo(Enum):` form. Added `_rel(path)` helper (CWD-relative POSIX string, fallback to original) to `file_cache.py` and `planner.py`; applied to all path-bearing error strings in `validate()`, `write()`, `get_files()` (file_cache) and `plan_file()`, `_validate_source()`, `_build_child()` (planner). 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
 
 ## Active feature spec
 

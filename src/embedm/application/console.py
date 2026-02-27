@@ -18,6 +18,7 @@ class ContinueChoice(Enum):
     YES = "yes"
     NO = "no"
     ALWAYS = "always"
+    EXIT = "exit"
 
 
 @dataclass
@@ -67,16 +68,18 @@ def present_file_progress(file_path: str, plan_root: PlanNode) -> None:
 
 
 def prompt_continue() -> ContinueChoice:
-    """Prompt the user to continue, abort, or accept all. Returns the user's choice."""
+    """Prompt the user to continue, abort, accept all, or exit. Returns the user's choice."""
     try:
         response = input(str_resources.continue_compilation).strip().lower()
         if response in ("a", "always"):
             return ContinueChoice.ALWAYS
         if response in ("y", "yes"):
             return ContinueChoice.YES
+        if response in ("x", "exit"):
+            return ContinueChoice.EXIT
         return ContinueChoice.NO
     except (EOFError, KeyboardInterrupt):
-        return ContinueChoice.NO
+        return ContinueChoice.EXIT
 
 
 # --- verbose output ---

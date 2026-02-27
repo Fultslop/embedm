@@ -211,6 +211,8 @@ def _compile_plan(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str
             return ""
         if not context.accept_all:
             choice = prompt_continue()
+            if choice == ContinueChoice.EXIT:
+                sys.exit(1)
             if choice == ContinueChoice.NO:
                 return ""
             if choice == ContinueChoice.ALWAYS:
