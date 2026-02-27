@@ -15,7 +15,7 @@ from pathlib import Path
 from embedm.application.config_loader import load_config_file
 from embedm.application.configuration import Configuration
 from embedm.application.embedm_context import EmbedmContext
-from embedm.application.orchestration import _build_directive_sequence
+from embedm.application.compiler import build_directive_sequence
 from embedm.application.planner import plan_file
 from embedm.domain.plan_node import PlanNode
 from embedm.infrastructure.file_cache import FileCache
@@ -73,7 +73,7 @@ def _compile(plan_root: PlanNode, context: EmbedmContext, compiled_dir: str = ""
         max_embed_size=context.config.max_embed_size,
         max_recursion=context.config.max_recursion,
         compiled_dir=compiled_dir,
-        plugin_sequence=_build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
+        plugin_sequence=build_directive_sequence(context.config.plugin_sequence, context.plugin_registry),
     )
     return plugin.transform(plan_root, [], PluginContext(context.file_cache, context.plugin_registry, plugin_config))
 

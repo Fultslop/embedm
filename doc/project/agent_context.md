@@ -97,19 +97,19 @@ old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
 
 Key decisions about plugin structure, registration, and naming extracted from the decision log.
 
-> 27/02/26 [TASK] feat_plugin_debugging — `-p`/`--plugin-list` CLI flag + `PluginDiagnostics` service + WARNING on unresolved `plugin_sequence` entries. New `PluginDiagnostics.check()` returns `WARNING` statuses for `plugin_sequence` modules with no matching entry point. `_REQUIRED_ATTRS` constant and post-instantiation attribute check added to `plugin_registry.py`; missing attrs → `StatusLevel.FATAL` error using entry-point name as identifier. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. New resource strings in `plugin_resources.py` and `application_resources.py`.
+> `_build_context(config)` split into `_load_plugins(config) → (PluginRegistry, errors)` and `_build_context(config, registry) → EmbedmContext` for explicit plugin-load staging. 27/02/26 [TASK] feat_plugin_debugging — `-p`/`--plugin-list` CLI flag + `PluginDiagnostics` service + WARNING on unresolved `plugin_sequence` entries. New `PluginDiagnostics.check()` returns `WARNING` statuses for `plugin_sequence` modules with no matching entry point. `_REQUIRED_ATTRS` constant and post-instantiation attribute check added to `plugin_registry.py`; missing attrs → `StatusLevel.FATAL` error using entry-point name as identifier. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors.
 
 ## Architectural rules
 
 Core rules about the validation/transform boundary, error handling, and code quality.
 
-> `_handle_plugin_load_errors` extracted from `main()` to handle fatal load errors (present + `sys.exit(1)`); `_exit_if_errors` and `_exit_on_run_failure` extracted to bring `main()` to cyclomatic complexity A (3). Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. File plugin applies transformer post-extraction. Validation warns when `filter_comments: true` is used with an unsupported extension. 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input.
+> `_build_context(config)` split into `_load_plugins(config) → (PluginRegistry, errors)` and `_build_context(config, registry) → EmbedmContext` for explicit plugin-load staging. `_handle_plugin_load_errors` extracted from `main()` to handle fatal load errors (present + `sys.exit(1)`); `_exit_if_errors` and `_exit_on_run_failure` extracted to bring `main()` to cyclomatic complexity A (3). Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. File plugin applies transformer post-extraction. 21/02/26 [REVIEW] tech_move_validation_from_table_transformer_execute — pipeline steps (_apply_select, _apply_order_by) currently return errors via CAUTION strings; for the transformer to be fully pure, column/expression validation must also move to validate_input.
 
 ## Patterns — avoid these misses
 
 Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
 
-> Startup warning path added alongside normal compilation flow. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. Enum pattern matches `class Foo(Enum):` form. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
+> `_glob_base`, `_extract_base_dir`, `_expand_directory_input`, `apply_line_endings` moved to `infrastructure/file_util.py` (functions made public; `expand_directory_input` gains `pattern=".md"` default). Three hardcoded strings in `_validate_plugin_config_schemas` replaced with `app_resources` entries. Startup warning path added alongside normal compilation flow. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
 
 ## Active feature spec
 
