@@ -343,3 +343,37 @@ def test_verify_with_output_dir_is_valid() -> None:
     assert not errors
     assert config.is_verify is True
     assert config.output_directory == "./out"
+
+
+# --- plugin list ---
+
+
+def test_plugin_list_short_flag() -> None:
+    config, errors = parse_command_line_arguments(["-p"])
+
+    assert not errors
+    assert config.plugin_list is True
+
+
+def test_plugin_list_long_flag() -> None:
+    config, errors = parse_command_line_arguments(["--plugin-list"])
+
+    assert not errors
+    assert config.plugin_list is True
+
+
+def test_plugin_list_defaults_to_false() -> None:
+    config, errors = parse_command_line_arguments(["my_content.md"])
+
+    assert not errors
+    assert config.plugin_list is False
+
+
+def test_plugin_list_skips_input_validation() -> None:
+    with patch("sys.stdin") as mock_stdin:
+        mock_stdin.isatty.return_value = True
+
+        config, errors = parse_command_line_arguments(["-p"])
+
+    assert not errors
+    assert config.plugin_list is True

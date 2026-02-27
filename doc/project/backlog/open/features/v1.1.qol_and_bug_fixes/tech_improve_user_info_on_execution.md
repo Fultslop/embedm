@@ -15,9 +15,11 @@ Moreover there is no sense of progress to the user. There are two things we can 
 - We also know, after planning, how many directives we need to compile. This is the `file progress`. 
 - As we're compiling we can update both progress points and display them to the user. We will work towards a multithreading model where embedm can process multiple files/nodes at the same time, so the output needs to take that in account while still being compatible with all verbosity flags. Proposal for the progress output for the default verbosity flag while executing.
 
-We establish three output states during execution
+We establish these output states during execution
 
  * A start state
+ * A init / plugin verification state
+ * A plan state
  * An exection state
  * A complete state
 

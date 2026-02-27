@@ -85,6 +85,9 @@ class Configuration:
     # path for --init output (generate config file and exit)
     init_path: str | None = None
 
+    # if set, print plugin list and diagnostics then exit
+    plugin_list: bool = False
+
     # verbosity level: 0 silent, 1 minimal, 2 default, 3 verbose
     verbosity: int = 2
 
@@ -110,5 +113,6 @@ class Configuration:
             is_verify=cli_config.is_verify,
             verbosity=cli_config.verbosity,
             init_path=cli_config.init_path,
+            plugin_list=cli_config.plugin_list,
             config_file=config_path,
         )

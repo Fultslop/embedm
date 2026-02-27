@@ -21,10 +21,12 @@ from .console import (
     make_cache_event_handler,
     present_errors,
     present_file_progress,
+    present_plugin_list,
     present_result,
     present_run_hint,
     present_title,
     present_verify_status,
+    present_warnings,
     prompt_continue,
     verbose_config,
     verbose_output_path,
@@ -37,6 +39,7 @@ from .console import (
 from .embedm_context import EmbedmContext
 from .plan_tree import collect_embedded_sources, collect_tree_errors, tree_has_level
 from .planner import plan_content, plan_file
+from .plugin_diagnostics import PluginDiagnostics
 from .verification import VerifyStatus, apply_line_endings, verify_file_output
 
 
@@ -57,8 +60,16 @@ def main() -> None:
     config, errors = _resolve_config(config)
     _exit_if_errors(errors)
 
+    if config.plugin_list:
+        _handle_plugin_list(config)
+        return
+
     context, load_errors = _build_context(config)
     _handle_plugin_load_errors(load_errors)
+
+    diagnostics = PluginDiagnostics().check(context.plugin_registry, config)
+    if diagnostics:
+        present_warnings(diagnostics)
 
     _emit_verbose_start(config, context)
     summary = RunSummary(output_target=_output_target(config))
@@ -101,6 +112,16 @@ def _handle_init(directory: str) -> None:
         present_errors(errors)
         sys.exit(1)
     present_result(f"created {path}\n")
+
+
+def _handle_plugin_list(config: Configuration) -> None:
+    """Load plugins, run diagnostics, print the report, and exit."""
+    registry = PluginRegistry()
+    load_errors = registry.load_plugins(enabled_modules=set(config.plugin_sequence))
+    diagnostics = PluginDiagnostics().check(registry, config)
+    present_plugin_list(registry, load_errors + diagnostics)
+    has_errors = any(e.level in (StatusLevel.ERROR, StatusLevel.FATAL) for e in load_errors)
+    sys.exit(1 if has_errors else 0)
 
 
 def _resolve_config(config: Configuration) -> tuple[Configuration, list[Status]]:

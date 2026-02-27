@@ -21,6 +21,9 @@ def parse_command_line_arguments(
         init_path = parsed.init if parsed.init else "."
         return Configuration(init_path=init_path), []
 
+    if parsed.plugin_list:
+        return Configuration(plugin_list=True, config_file=parsed.config), []
+
     errors = _validate(parsed)
     if errors:
         return Configuration(), errors
@@ -69,6 +72,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="verbosity level 0-3 (default 2; -v alone sets 3)",
     )
     parser.add_argument("--init", nargs="?", const="", default=None, help="generate embedm-config.yaml in directory")
+    parser.add_argument(
+        "-p", "--plugin-list", action="store_true", default=False, help="list loaded plugins, run diagnostics, and exit"
+    )
     return parser
 
 

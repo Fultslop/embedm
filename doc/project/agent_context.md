@@ -97,7 +97,7 @@ old `[TASK]`/`[FEAT]` entries to `devlog_archive.md`.
 
 Key decisions about plugin structure, registration, and naming extracted from the decision log.
 
-> `_REQUIRED_ATTRS` constant and post-instantiation attribute check added to `plugin_registry.py`; missing attrs → `StatusLevel.FATAL` error using entry-point name as identifier. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. New resource strings in `plugin_resources.py` and `application_resources.py`. 26/02/26 [TASK] feat_add_filter_comments — implement `filter_comments: true` option for the file plugin. File plugin applies transformer post-extraction.
+> 27/02/26 [TASK] feat_plugin_debugging — `-p`/`--plugin-list` CLI flag + `PluginDiagnostics` service + WARNING on unresolved `plugin_sequence` entries. New `PluginDiagnostics.check()` returns `WARNING` statuses for `plugin_sequence` modules with no matching entry point. `_REQUIRED_ATTRS` constant and post-instantiation attribute check added to `plugin_registry.py`; missing attrs → `StatusLevel.FATAL` error using entry-point name as identifier. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. New resource strings in `plugin_resources.py` and `application_resources.py`.
 
 ## Architectural rules
 
@@ -109,7 +109,7 @@ Core rules about the validation/transform boundary, error handling, and code qua
 
 Established patterns that have caused errors when overlooked. Check these before writing any embed directive or adding a plugin.
 
-> Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. Enum pattern matches `class Foo(Enum):` form. Added `_rel(path)` helper (CWD-relative POSIX string, fallback to original) to `file_cache.py` and `planner.py`; applied to all path-bearing error strings in `validate()`, `write()`, `get_files()` (file_cache) and `plan_file()`, `_validate_source()`, `_build_child()` (planner). 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
+> Startup warning path added alongside normal compilation flow. Deduplication by module path added to `load_plugins` to prevent duplicate entry-point registrations from producing duplicate errors. Enum pattern matches `class Foo(Enum):` form. 23/02/26 [MISS] hardcoded version string in recall_plugin.md instead of using query-path directive.
 
 ## Active feature spec
 

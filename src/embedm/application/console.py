@@ -171,6 +171,35 @@ def present_run_hint(summary: RunSummary) -> None:
     print(f"{_format_summary(summary)}. {str_resources.verbose_hint}", file=sys.stderr)
 
 
+def present_warnings(warnings: list[Status]) -> None:
+    """Print warning-level statuses to stderr."""
+    for w in warnings:
+        print(f"warning: {w.description}", file=sys.stderr)
+
+
+def present_plugin_list(registry: PluginRegistry, issues: list[Status]) -> None:
+    """Print a formatted plugin health report to stdout."""
+    loaded = list(registry.lookup.values())
+    print(f"plugins ({len(loaded)} loaded):")
+    if loaded:
+        dt_width = max(len(p.directive_type) for p in loaded)
+        name_width = max(len(p.name) for p in loaded)
+        for plugin in loaded:
+            module = plugin.__class__.__module__
+            print(f"  {plugin.directive_type:<{dt_width}}  {plugin.name:<{name_width}}  {module}")
+
+    if registry.skipped:
+        print(f"\nskipped ({len(registry.skipped)} not in plugin_sequence):")
+        for name, module in registry.skipped:
+            print(f"  {name}  ({module})")
+
+    if issues:
+        print(f"\nissues ({len(issues)}):")
+        for issue in issues:
+            prefix = "error" if issue.level in (StatusLevel.ERROR, StatusLevel.FATAL) else "warning"
+            print(f"  {prefix}: {issue.description}")
+
+
 def make_cache_event_handler() -> Callable[[str, str, float], None]:
     """Return a callable that prints cache events to stderr."""
 

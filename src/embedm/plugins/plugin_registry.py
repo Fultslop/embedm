@@ -1,4 +1,4 @@
-from importlib.metadata import entry_points
+from importlib.metadata import EntryPoint, entry_points
 
 from embedm.domain.status_level import Status, StatusLevel
 
@@ -50,42 +50,56 @@ class PluginRegistry:
 
         for entry in plugins:
             module_path = entry.value.split(":")[0]
-
             if module_path in seen_modules:
                 continue
             seen_modules.add(module_path)
-
             self.discovered.append((entry.name, module_path))
-
             if enabled_modules is not None and module_path not in enabled_modules:
                 self.skipped.append((entry.name, module_path))
                 continue
-
-            try:
-                plugin_class = entry.load()
-                instance = plugin_class()
-            except Exception as exc:
-                errors.append(
-                    Status(StatusLevel.ERROR, str_resources.err_plugin_load_failed.format(name=entry.name, exc=exc))
-                )
-                continue
-
-            missing = [a for a in _REQUIRED_ATTRS if not hasattr(instance, a)]
-            if missing:
-                errors.append(
-                    Status(
-                        StatusLevel.FATAL,
-                        str_resources.err_plugin_missing_attributes.format(
-                            name=entry.name,
-                            attrs=", ".join(f"'{a}'" for a in missing),
-                        ),
-                    )
-                )
-                continue
-
-            self.lookup[instance.name] = instance
+            self._register_entry(entry, errors)
 
         return errors
+
+    def _register_entry(self, entry: EntryPoint, errors: list[Status]) -> None:
+        """Instantiate, validate, and register a single entry point."""
+        try:
+            plugin_class = entry.load()
+            instance = plugin_class()
+        except Exception as exc:
+            errors.append(
+                Status(StatusLevel.ERROR, str_resources.err_plugin_load_failed.format(name=entry.name, exc=exc))
+            )
+            return
+
+        missing = [a for a in _REQUIRED_ATTRS if not hasattr(instance, a)]
+        if missing:
+            errors.append(
+                Status(
+                    StatusLevel.FATAL,
+                    str_resources.err_plugin_missing_attributes.format(
+                        name=entry.name,
+                        attrs=", ".join(f"'{a}'" for a in missing),
+                    ),
+                )
+            )
+            return
+
+        existing = self.lookup._by_directive_type.get(instance.directive_type)
+        if existing:
+            errors.append(
+                Status(
+                    StatusLevel.ERROR,
+                    str_resources.err_duplicate_directive_type.format(
+                        name=instance.name,
+                        dtype=instance.directive_type,
+                        existing=existing.name,
+                    ),
+                )
+            )
+            return
+
+        self.lookup[instance.name] = instance
 
     def get_plugin(self, name: str) -> PluginBase | None:
         return self.lookup.get(name)
