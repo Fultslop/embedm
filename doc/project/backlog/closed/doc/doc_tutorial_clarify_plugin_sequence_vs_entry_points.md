@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: `Tutorial does not explain the relationship between plugin_sequence and entry points`
 ========================================
 Created: `27/02/26`
-Closed: `<date>`
+Closed: `27/02/26`
 Created by: `Agent (plugin-validator skill)`
 
 ## Description
@@ -19,6 +19,7 @@ users who encounter a load failure have no conceptual frame for debugging it.
 
 - Tutorial includes a brief explanation (1–3 sentences) of what each registration step
   does: entry points = discovery, plugin_sequence = load order
+- Tutorial includes a short explanation how this ties in with the '-p' cli option.
 - The explanation appears before or alongside the two registration steps
 
 ## Comments
