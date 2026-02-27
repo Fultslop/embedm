@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 
 from embedm.domain.status_level import StatusLevel
+from embedm.infrastructure.cache_events import CacheEvent
+from embedm.infrastructure.events import EventDispatcher
 from embedm.infrastructure.file_cache import FileCache, FileState, WriteMode
 
 # --- validate: happy path ---
@@ -507,42 +509,37 @@ def test_file_inside_allowed_directory_is_accepted(tmp_path: Path):
     assert errors == []
 
 
-# --- on_event timing ---
+# --- CacheEvent dispatch ---
 
 
-def test_on_event_miss_receives_positive_elapsed(tmp_path: Path) -> None:
+def test_cache_miss_emits_cache_event(tmp_path: Path) -> None:
     test_file = tmp_path / "data.md"
     test_file.write_text("hello world")
 
-    events: list[tuple[str, str, float]] = []
-    cache = FileCache(
-        max_file_size=1024,
-        memory_limit=4096,
-        allowed_paths=[str(tmp_path)],
-        on_event=lambda path, event, elapsed_s: events.append((path, event, elapsed_s)),
-    )
+    dispatcher = EventDispatcher()
+    received: list[CacheEvent] = []
+    dispatcher.subscribe(CacheEvent, received.append)  # type: ignore[arg-type]
+
+    cache = FileCache(max_file_size=1024, memory_limit=4096, allowed_paths=[str(tmp_path)], events=dispatcher)
     cache.get_file(str(test_file))
 
-    assert len(events) == 1
-    _, event, elapsed_s = events[0]
-    assert event == "miss"
-    assert elapsed_s > 0
+    assert len(received) == 1
+    assert received[0].kind == "miss"
+    assert received[0].elapsed > 0
 
 
-def test_on_event_hit_receives_zero_elapsed(tmp_path: Path) -> None:
+def test_cache_hit_emits_cache_event(tmp_path: Path) -> None:
     test_file = tmp_path / "data.md"
     test_file.write_text("hello world")
 
-    events: list[tuple[str, str, float]] = []
-    cache = FileCache(
-        max_file_size=1024,
-        memory_limit=4096,
-        allowed_paths=[str(tmp_path)],
-        on_event=lambda path, event, elapsed_s: events.append((path, event, elapsed_s)),
-    )
+    dispatcher = EventDispatcher()
+    received: list[CacheEvent] = []
+    dispatcher.subscribe(CacheEvent, received.append)  # type: ignore[arg-type]
+
+    cache = FileCache(max_file_size=1024, memory_limit=4096, allowed_paths=[str(tmp_path)], events=dispatcher)
     cache.get_file(str(test_file))  # miss
     cache.get_file(str(test_file))  # hit
 
-    hit_events = [(p, e, s) for p, e, s in events if e == "hit"]
+    hit_events = [e for e in received if e.kind == "hit"]
     assert len(hit_events) == 1
-    assert hit_events[0][2] == 0.0
+    assert hit_events[0].elapsed == 0.0

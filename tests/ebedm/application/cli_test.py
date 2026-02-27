@@ -264,14 +264,14 @@ def test_verbose_short_flag() -> None:
     config, errors = parse_command_line_arguments(["my_content.md", "-v"])
 
     assert not errors
-    assert config.verbosity == 3
+    assert config.verbosity == 2
 
 
 def test_verbose_long_flag() -> None:
     config, errors = parse_command_line_arguments(["my_content.md", "--verbose"])
 
     assert not errors
-    assert config.verbosity == 3
+    assert config.verbosity == 2
 
 
 def test_verbose_defaults_to_2() -> None:

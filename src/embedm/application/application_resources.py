@@ -19,7 +19,7 @@ str_resources = SimpleNamespace(
     ),
     err_plan_no_plugin="no plugin registered for directive type '{directive_type}'",
     err_plan_no_plugin_verbose=("no plugin registered for directive type '{directive_type}'. Available: {available}"),
-    verbose_hint="Use -v 3 or --verbose 3 for more information.",
+    verbose_hint="Use -v 2 or --verbose 2 for more information.",
     err_cli_invalid_verbosity="verbosity level must be 0-3, got {level}",
     err_fatal_plugins_cannot_start=(
         "Embedm cannot start, please fix these issues first or disable the plugins in 'embedm-config.yaml'"

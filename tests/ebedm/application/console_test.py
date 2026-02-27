@@ -3,59 +3,69 @@ from unittest.mock import patch
 from embedm.application.console import ContinueChoice, present_warnings, prompt_continue
 from embedm.domain.status_level import Status, StatusLevel
 
+# All prompt_continue tests simulate an interactive terminal (isatty=True).
+# The non-TTY early-exit path is covered by test_prompt_continue_non_tty_returns_exit.
+
+_TTY = patch("sys.stdin.isatty", return_value=True)
+
 
 def test_yes_returns_yes():
-    with patch("builtins.input", return_value="y"):
+    with _TTY, patch("builtins.input", return_value="y"):
         assert prompt_continue() == ContinueChoice.YES
 
 
 def test_yes_full_word_returns_yes():
-    with patch("builtins.input", return_value="yes"):
+    with _TTY, patch("builtins.input", return_value="yes"):
         assert prompt_continue() == ContinueChoice.YES
 
 
 def test_always_returns_always():
-    with patch("builtins.input", return_value="a"):
+    with _TTY, patch("builtins.input", return_value="a"):
         assert prompt_continue() == ContinueChoice.ALWAYS
 
 
 def test_always_full_word_returns_always():
-    with patch("builtins.input", return_value="always"):
+    with _TTY, patch("builtins.input", return_value="always"):
         assert prompt_continue() == ContinueChoice.ALWAYS
 
 
 def test_no_returns_no():
-    with patch("builtins.input", return_value="n"):
+    with _TTY, patch("builtins.input", return_value="n"):
         assert prompt_continue() == ContinueChoice.NO
 
 
 def test_empty_returns_no():
-    with patch("builtins.input", return_value=""):
+    with _TTY, patch("builtins.input", return_value=""):
         assert prompt_continue() == ContinueChoice.NO
 
 
 def test_unrecognised_returns_no():
-    with patch("builtins.input", return_value="maybe"):
+    with _TTY, patch("builtins.input", return_value="maybe"):
         assert prompt_continue() == ContinueChoice.NO
 
 
 def test_x_returns_exit():
-    with patch("builtins.input", return_value="x"):
+    with _TTY, patch("builtins.input", return_value="x"):
         assert prompt_continue() == ContinueChoice.EXIT
 
 
 def test_exit_full_word_returns_exit():
-    with patch("builtins.input", return_value="exit"):
+    with _TTY, patch("builtins.input", return_value="exit"):
         assert prompt_continue() == ContinueChoice.EXIT
 
 
 def test_keyboard_interrupt_returns_exit():
-    with patch("builtins.input", side_effect=KeyboardInterrupt):
+    with _TTY, patch("builtins.input", side_effect=KeyboardInterrupt):
         assert prompt_continue() == ContinueChoice.EXIT
 
 
 def test_eof_returns_exit():
-    with patch("builtins.input", side_effect=EOFError):
+    with _TTY, patch("builtins.input", side_effect=EOFError):
+        assert prompt_continue() == ContinueChoice.EXIT
+
+
+def test_prompt_continue_non_tty_returns_exit():
+    with patch("sys.stdin.isatty", return_value=False):
         assert prompt_continue() == ContinueChoice.EXIT
 
 

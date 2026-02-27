@@ -2,12 +2,13 @@ import glob
 import os
 import time
 from collections import OrderedDict
-from collections.abc import Callable
 from enum import Enum
 from fnmatch import fnmatch
 from pathlib import Path
 
 from embedm.domain.status_level import Status, StatusLevel
+from embedm.infrastructure.cache_events import CacheEvent
+from embedm.infrastructure.events import EventDispatcher
 from embedm.infrastructure.file_util import to_relative
 
 from .infrastructure_resources import str_resources
@@ -38,7 +39,7 @@ class FileCache:
         allowed_paths: list[str],
         write_mode: WriteMode = WriteMode.CREATE_NEW,
         max_embed_size: int = 0,
-        on_event: Callable[[str, str, float], None] | None = None,
+        events: EventDispatcher | None = None,
     ):
         assert memory_limit > max_file_size, (
             f"memory_limit ({memory_limit}) must be greater than max_file_size ({max_file_size})"
@@ -48,7 +49,7 @@ class FileCache:
         self.allowed_paths = allowed_paths
         self.write_mode = write_mode
         self.max_embed_size = max_embed_size
-        self._on_event = on_event
+        self._events = events
         self._cache: OrderedDict[str, str | None] = OrderedDict()
         self._memory_in_use = 0
 
@@ -95,8 +96,8 @@ class FileCache:
         # return cached content if loaded
         if path in self._cache and self._cache[path] is not None:
             self._cache.move_to_end(path, last=False)
-            if self._on_event:
-                self._on_event(path, "hit", 0.0)
+            if self._events is not None:
+                self._events.emit(CacheEvent(kind="hit", key=path, elapsed=0.0))
             return self._cache[path], []
 
         # validate if not yet in cache
@@ -113,8 +114,8 @@ class FileCache:
         self._cache[path] = content
         self._cache.move_to_end(path, last=False)
         self._memory_in_use += len(content)
-        if self._on_event:
-            self._on_event(path, "miss", elapsed_s)
+        if self._events is not None:
+            self._events.emit(CacheEvent(kind="miss", key=path, elapsed=elapsed_s))
 
         return content, []
 
@@ -192,8 +193,8 @@ class FileCache:
             if content is not None:
                 self._memory_in_use -= len(content)
                 self._cache[path] = None
-                if self._on_event:
-                    self._on_event(path, "eviction", 0.0)
+                if self._events is not None:
+                    self._events.emit(CacheEvent(kind="eviction", key=path, elapsed=0.0))
                 return True
         return False
 

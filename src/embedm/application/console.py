@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from importlib.metadata import version
-from pathlib import Path
 
 from embedm.application.application_resources import str_resources
-from embedm.application.configuration import Configuration
 from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
-from embedm.plugins.plugin_registry import PluginRegistry
 
 
 class ContinueChoice(Enum):
@@ -37,38 +33,10 @@ class RunSummary:
     stale_count: int = 0
 
 
-def present_title() -> None:
-    """Print the application banner."""
-    print(f"embedm v{version('embedm')}")
-
-
-def present_errors(errors: Sequence[Status] | str) -> None:
-    """Print errors to stderr."""
-    if isinstance(errors, str):
-        print(f"error: {errors}", file=sys.stderr)
-        return
-    for error in errors:
-        print(f"error: {error.description}", file=sys.stderr)
-
-
-def present_result(result: str) -> None:
-    """Print compilation result to stdout."""
-    print(result, end="")
-
-
-def present_verify_status(status: str, path: str) -> None:
-    """Print a verify-mode per-file status line to stderr (always, not behind --verbose)."""
-    print(f"[{status.upper()}] {path}", file=sys.stderr)
-
-
-def present_file_progress(file_path: str, plan_root: PlanNode) -> None:
-    """Print a per-file progress line to stderr at verbosity level 2."""
-    label = _worst_status_label(plan_root.status)
-    print(f"  {Path(file_path).name}  [{label}]", file=sys.stderr)
-
-
 def prompt_continue() -> ContinueChoice:
     """Prompt the user to continue, abort, accept all, or exit. Returns the user's choice."""
+    if not sys.stdin.isatty():
+        return ContinueChoice.EXIT
     try:
         response = input(str_resources.continue_compilation).strip().lower()
         if response in ("a", "always"):
@@ -83,58 +51,6 @@ def prompt_continue() -> ContinueChoice:
 
 
 # --- verbose output ---
-
-
-def verbose_section(title: str) -> None:
-    """Print a section header to stderr."""
-    print(f"\n--- {title} ---", file=sys.stderr)
-
-
-def verbose_config(config: Configuration) -> None:
-    """Print the current working directory and all configuration fields to stderr."""
-    _vprint(f"cwd:                {Path.cwd()}")
-    _vprint(f"config_file:        {config.config_file or '(none)'}")
-    _vprint(f"input_mode:         {config.input_mode.value}")
-    input_display = config.input if len(config.input) <= 60 else config.input[:57] + "..."
-    _vprint(f"input:              {input_display}")
-    _vprint(f"output_file:        {config.output_file or '(none)'}")
-    _vprint(f"output_directory:   {config.output_directory or '(none)'}")
-    _vprint(f"max_file_size:      {config.max_file_size}")
-    _vprint(f"max_recursion:      {config.max_recursion}")
-    _vprint(f"max_memory:         {config.max_memory}")
-    _vprint(f"max_embed_size:     {config.max_embed_size}")
-    _vprint(f"root_directive:     {config.root_directive_type}")
-    _vprint(f"is_accept_all:      {config.is_accept_all}")
-    _vprint(f"is_dry_run:         {config.is_dry_run}")
-    _vprint(f"is_verify:          {config.is_verify}")
-    _vprint(f"line_endings:       {config.line_endings}")
-    _vprint(f"verbosity:          {config.verbosity}")
-    _vprint("plugin_sequence:")
-    for module in config.plugin_sequence:
-        _vprint(f"  {module}")
-
-
-def verbose_plugins(registry: PluginRegistry, config: Configuration) -> None:
-    """Print plugin discovery results to stderr."""
-    _vprint(f"sequence (from config): {len(config.plugin_sequence)} modules")
-
-    _vprint(f"discovered:         {len(registry.discovered)} entry points")
-    for name, module in registry.discovered:
-        _vprint(f"  {name:<24} ({module})")
-
-    if registry.skipped:
-        _vprint(f"skipped:            {len(registry.skipped)}")
-        for name, module in registry.skipped:
-            config_entry = next((m for m in config.plugin_sequence if m.strip().rstrip(",") == module), None)
-            if config_entry and config_entry != module:
-                _vprint(f"  {name:<24} entry: {module}")
-                _vprint(f"  {'':<24} config: '{config_entry}'  <- mismatch")
-            else:
-                _vprint(f"  {name:<24} ({module})")
-
-    _vprint(f"loaded:             {registry.count}")
-    for plugin in registry.lookup.values():
-        _vprint(f"  {plugin.name:<24} type: {plugin.directive_type:<20} ({plugin.__class__.__module__})")
 
 
 def verbose_plan_tree(node: PlanNode, indent: int = 0) -> None:
@@ -156,11 +72,6 @@ def verbose_plan_tree(node: PlanNode, indent: int = 0) -> None:
         verbose_plan_tree(child, indent + 1)
 
 
-def verbose_output_path(path: str) -> None:
-    """Print the full path of a written output file to stderr."""
-    _vprint(f"output: {path}")
-
-
 def verbose_summary(summary: RunSummary) -> None:
     """Print the full run summary to stderr."""
     print(_format_summary(summary), file=sys.stderr)
@@ -175,29 +86,6 @@ def present_warnings(warnings: list[Status]) -> None:
     """Print warning-level statuses to stderr."""
     for w in warnings:
         print(f"warning: {w.description}", file=sys.stderr)
-
-
-def present_plugin_list(registry: PluginRegistry, issues: list[Status]) -> None:
-    """Print a formatted plugin health report to stdout."""
-    loaded = list(registry.lookup.values())
-    print(f"plugins ({len(loaded)} loaded):")
-    if loaded:
-        dt_width = max(len(p.directive_type) for p in loaded)
-        name_width = max(len(p.name) for p in loaded)
-        for plugin in loaded:
-            module = plugin.__class__.__module__
-            print(f"  {plugin.directive_type:<{dt_width}}  {plugin.name:<{name_width}}  {module}")
-
-    if registry.skipped:
-        print(f"\nskipped ({len(registry.skipped)} not in plugin_sequence):")
-        for name, module in registry.skipped:
-            print(f"  {name}  ({module})")
-
-    if issues:
-        print(f"\nissues ({len(issues)}):")
-        for issue in issues:
-            prefix = "error" if issue.level in (StatusLevel.ERROR, StatusLevel.FATAL) else "warning"
-            print(f"  {prefix}: {issue.description}")
 
 
 def make_cache_event_handler() -> Callable[[str, str, float], None]:
@@ -243,10 +131,12 @@ def _format_summary(summary: RunSummary) -> str:
             f"{summary.up_to_date_count} up-to-date, {summary.stale_count} stale, "
             f"{summary.error_count} errors, completed in {summary.elapsed_s:.3f}s"
         )
-    noun = "file" if summary.files_written == 1 else "files"
-    target = f"to {summary.output_target}" if summary.output_target != "stdout" else "to stdout"
-    return (
-        f"embedm process complete, {summary.files_written} {noun} written {target}, "
-        f"{summary.ok_count} ok, {summary.warning_count} warnings, {summary.error_count} errors, "
-        f"completed in {summary.elapsed_s:.3f}s"
-    )
+    file_noun = "file" if summary.ok_count == 1 else "files"
+    parts = [f"{summary.ok_count} {file_noun} ok"]
+    if summary.warning_count:
+        warn_noun = "warning" if summary.warning_count == 1 else "warnings"
+        parts.append(f"{summary.warning_count} {warn_noun}")
+    if summary.error_count:
+        err_noun = "error" if summary.error_count == 1 else "errors"
+        parts.append(f"{summary.error_count} {err_noun}")
+    return f"Embedm complete, {', '.join(parts)}, total time: {summary.elapsed_s:.1f}s"

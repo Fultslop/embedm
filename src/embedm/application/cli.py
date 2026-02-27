@@ -40,6 +40,7 @@ def parse_command_line_arguments(
         is_dry_run=parsed.dry_run,
         is_verify=parsed.verify,
         verbosity=parsed.verbose if parsed.verbose is not None else 2,
+        no_color=parsed.no_color,
     ), []
 
 
@@ -67,14 +68,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "--verbose",
         nargs="?",
         type=int,
-        const=3,
+        const=2,
         default=None,
-        help="verbosity level 0-3 (default 2; -v alone sets 3)",
+        help="verbosity level 0-2 (default 2; -v alone sets 2)",
     )
     parser.add_argument("--init", nargs="?", const="", default=None, help="generate embedm-config.yaml in directory")
     parser.add_argument(
         "-p", "--plugin-list", action="store_true", default=False, help="list loaded plugins, run diagnostics, and exit"
     )
+    parser.add_argument("--no-color", action="store_true", default=False, help="disable color output")
     return parser
 
 

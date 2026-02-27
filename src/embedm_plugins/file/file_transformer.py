@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -111,12 +112,25 @@ def _transform_directive(
         error_msgs = [s.description for s in node.status if s.level in (StatusLevel.ERROR, StatusLevel.FATAL)]
         return render_error_note(error_msgs)
 
+    start = time.perf_counter()
     result = plugin.transform(node, parent_document, context)
+    elapsed = time.perf_counter() - start
+
+    _maybe_emit_node_compiled(context, elapsed)
+
     if context.file_cache.max_embed_size > 0 and len(result) > context.file_cache.max_embed_size:
         return render_error_note(
             [str_resources.err_embed_size_exceeded.format(limit=context.file_cache.max_embed_size)]
         )
     return result
+
+
+def _maybe_emit_node_compiled(context: PluginContext, elapsed: float) -> None:
+    """Increment the compile tracker and fire the node-compiled callback if both are set."""
+    tracker = context._compile_tracker
+    if context._on_node_compiled is not None and tracker is not None:
+        tracker["index"] += 1
+        context._on_node_compiled(tracker["index"], tracker["total"], elapsed)
 
 
 def _find_or_create_node(directive: Directive, child_lookup: dict[int, PlanNode]) -> PlanNode:
