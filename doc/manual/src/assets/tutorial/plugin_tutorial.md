@@ -90,8 +90,12 @@ First let's define a minimal python project:
 name = "plugin_test"
 version = "0.1.0"
 dependencies = [
-    "embedm" 
+    "embedm"
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 ```
 
 Next let's generate a embedm configuration file. We'll need that (and the pyproject) to declare the plugin we will be writing:
@@ -116,9 +120,14 @@ class MermaidPlugin(PluginBase):
         return "mermaid output"
 ```
 
-Now we need to let `embedm` where to find this plugin. We need to do two things: define a [python entry point](https://packaging.python.org/en/latest/specifications/entry-points/) and let embedm know when to run this plugin (see [why plugin order matters](../../architecture.md#why-plugin_sequence-order-matters)).
+Now we need to let `embedm` know where to find this plugin. We need to do two things:
 
-To add an entry point add the following to your `pyproject.tomml`:
+- **Register an entry point** in `pyproject.toml` — this is a Python packaging mechanism that makes the plugin *discoverable*. Without it embedm cannot find your class at all, regardless of any other configuration.
+- **Add the module to `plugin_sequence`** in `embedm-config.yaml` — this controls *load order*, i.e. which plugins embedm will actually load and in what sequence. A plugin that is not in `plugin_sequence` will be discovered but skipped.
+
+You can verify both steps at any time with `embedm -p`, which prints every loaded plugin, any skipped ones, and any diagnostics such as unresolved `plugin_sequence` entries.
+
+To add an entry point, add the following to your `pyproject.toml`:
 
 ```toml
 [project.entry-points."embedm.plugins"]
@@ -140,10 +149,12 @@ plugin_sequence:
   - embedm_plugins.toc_plugin
 ```
 
-Once that's in place, we'll need to install this 'package' so python actually can find it:
+Once that's in place, we'll need to install this 'package' so python actually can find it.
+
+> **Environment note:** The plugin must be installed into the same Python environment that runs `embedm`. If you are using a virtual environment (as set up above), make sure it is active before running the install command. A common silent failure is installing with a system-level `pip` while `embedm` runs from a project `.venv` — the plugin will be discovered but never loaded.
 
 ```bash
-pip install -e . 
+pip install -e .
 ```
 
 With the scaffolding in place we can update the `test.md` file to embed this mermaid plugin:
@@ -213,7 +224,7 @@ If we re-run `embedm`, you will find that it's expressing some disapproval of ou
 ```shell
 embedm vx.y.z
 error: Mermaid plugin is missing  Directive option "Input"
-Continue with compilation (yes/no/always)? [y/N/a]
+Continue with compilation (yes/no/always/exit)? [y/N/a/x]
 ```
 
 Press 'n' (no), and let's update the `test.md` file:

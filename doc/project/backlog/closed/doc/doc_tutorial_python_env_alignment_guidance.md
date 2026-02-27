@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: `Plugin tutorial gives no guidance on Python environment alignment`
 ========================================
 Created: `27/02/26`
-Closed: `<date>`
+Closed: `27/02/26`
 Created by: `Agent (plugin-validator skill)`
 
 ## Description

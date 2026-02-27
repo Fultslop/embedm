@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: `Plugin tutorial missing [build-system] section in pyproject.toml example`
 ========================================
 Created: `27/02/26`
-Closed: `<date>`
+Closed: `27/02/26`
 Created by: `Agent (plugin-validator skill)`
 
 ## Description
