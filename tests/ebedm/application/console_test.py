@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
-from embedm.application.console import ContinueChoice, prompt_continue
+from embedm.application.console import ContinueChoice, present_warnings, prompt_continue
+from embedm.domain.status_level import Status, StatusLevel
 
 
 def test_yes_returns_yes():
@@ -56,3 +57,37 @@ def test_keyboard_interrupt_returns_exit():
 def test_eof_returns_exit():
     with patch("builtins.input", side_effect=EOFError):
         assert prompt_continue() == ContinueChoice.EXIT
+
+
+# --- present_warnings ---
+
+
+def test_present_warnings_prints_to_stderr(capsys) -> None:
+    warnings = [Status(StatusLevel.WARNING, "something went wrong")]
+
+    present_warnings(warnings)
+
+    captured = capsys.readouterr()
+    assert "warning: something went wrong" in captured.err
+    assert captured.out == ""
+
+
+def test_present_warnings_multiple(capsys) -> None:
+    warnings = [
+        Status(StatusLevel.WARNING, "first warning"),
+        Status(StatusLevel.WARNING, "second warning"),
+    ]
+
+    present_warnings(warnings)
+
+    captured = capsys.readouterr()
+    assert "warning: first warning" in captured.err
+    assert "warning: second warning" in captured.err
+
+
+def test_present_warnings_empty_list_prints_nothing(capsys) -> None:
+    present_warnings([])
+
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    assert captured.out == ""

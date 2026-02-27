@@ -24,4 +24,7 @@ str_resources = SimpleNamespace(
     err_fatal_plugins_cannot_start=(
         "Embedm cannot start, please fix these issues first or disable the plugins in 'embedm-config.yaml'"
     ),
+    warn_unresolved_plugin_sequence=(
+        "plugin_sequence entry '{module}' has no matching installed entry point — plugin will not load"
+    ),
 )

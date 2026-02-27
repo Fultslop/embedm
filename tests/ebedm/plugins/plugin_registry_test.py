@@ -232,3 +232,50 @@ def test_missing_both_attributes_lists_all_in_single_error():
     assert errors[0].level == StatusLevel.FATAL
     assert "'name'" in errors[0].description
     assert "'directive_type'" in errors[0].description
+
+
+# --- duplicate directive_type ---
+
+
+class _Alpha(PluginBase):
+    name = "alpha"
+    directive_type = "shared_type"
+
+    def transform(self, plan_node, parent_document, context=None) -> str:  # type: ignore[override]
+        return ""
+
+
+class _Beta(PluginBase):
+    name = "beta"
+    directive_type = "shared_type"
+
+    def transform(self, plan_node, parent_document, context=None) -> str:  # type: ignore[override]
+        return ""
+
+
+def test_duplicate_directive_type_returns_error():
+    ep_a = _make_ep("alpha", "my_pkg.alpha:_Alpha", _Alpha)
+    ep_b = _make_ep("beta", "my_pkg.beta:_Beta", _Beta)
+
+    with patch("embedm.plugins.plugin_registry.entry_points") as mock_eps:
+        mock_eps.return_value = [ep_a, ep_b]
+        registry = PluginRegistry()
+        errors = registry.load_plugins()
+
+    assert len(errors) == 1
+    assert errors[0].level == StatusLevel.ERROR
+    assert "shared_type" in errors[0].description
+
+
+def test_duplicate_directive_type_second_plugin_not_registered():
+    ep_a = _make_ep("alpha", "my_pkg.alpha:_Alpha", _Alpha)
+    ep_b = _make_ep("beta", "my_pkg.beta:_Beta", _Beta)
+
+    with patch("embedm.plugins.plugin_registry.entry_points") as mock_eps:
+        mock_eps.return_value = [ep_a, ep_b]
+        registry = PluginRegistry()
+        registry.load_plugins()
+
+    assert registry.count == 1
+    assert registry.get_plugin("alpha") is not None
+    assert registry.get_plugin("beta") is None

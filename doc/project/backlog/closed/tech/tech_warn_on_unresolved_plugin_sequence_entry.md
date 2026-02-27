@@ -1,7 +1,7 @@
 TECHNICAL IMPROVEMENT: `No warning when a plugin_sequence module has no matching entry point`
 ========================================
 Created: `27/02/26`
-Closed: `<date>`
+Closed: `27/02/26`
 Created by: `Agent (plugin-validator skill)`
 
 ## Description
@@ -24,3 +24,5 @@ the root cause immediately apparent.
 ## Comments
 
 `27/02/26 Agent: discovered during plugin-validator skill run — mermaid_plugin listed in plugin_sequence but silently absent from loaded plugins; required -v 3 + prior knowledge to diagnose`
+
+`27/02/26 Agent: folded into feat_plugin_debugging.md — covered by the PluginDiagnostics service and the WARNING during normal compilation.`
