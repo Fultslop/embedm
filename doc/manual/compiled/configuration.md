@@ -1,6 +1,6 @@
 # Configuration
 
-version 1.0.0
+version 1.0.1
 
 embedm is configured via a YAML file named `embedm-config.yaml`. Settings in this file control file size limits, recursion depth, output format, and which plugins are loaded.
 

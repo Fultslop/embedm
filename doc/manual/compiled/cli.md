@@ -1,6 +1,6 @@
 # Command-Line Interface
 
-version 1.0.0
+version 1.0.1
 
 embedm is invoked from the terminal. Input can be a file, a directory, or piped via stdin. Output goes to a file, a directory, or stdout.
 

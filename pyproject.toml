@@ -1,6 +1,6 @@
 [project]
 name = "embedm"
-version = "1.0.0"
+version = "1.0.1"
 description = "A Python tool for embedding files, code snippets, and generating tables of contents in Markdown documents with built-in safety limits and validation"
 readme = "README.md"
 requires-python = ">=3.8"

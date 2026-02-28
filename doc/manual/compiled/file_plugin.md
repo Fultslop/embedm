@@ -1,6 +1,6 @@
 # File Plugin
 
-version 1.0.0
+version 1.0.1
 
 The file plugin embeds the contents of an external file into your document. Markdown files are merged inline; all other file types are wrapped in a fenced code block, with the file extension used as the language hint. Optional extraction by region, line range, or language symbol narrows the output to exactly the part you need.
 

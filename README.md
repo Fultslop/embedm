@@ -1,6 +1,6 @@
 # EmbedM
 
-version 1.0.0
+version 1.0.1
 
 A Markdown compiler driven by source files.
 
