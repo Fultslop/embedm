@@ -3,7 +3,7 @@ FEATURE: Add deprecation to directive options
 Draft
 Release v1.1
 Created: 27/02/2026
-Closed: `<date>`
+Closed: 28/02/2026
 Created by: FS
 
 ## Description

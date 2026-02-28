@@ -24,7 +24,11 @@ We plan to implement this as a standalone system, then create and add this syste
 
 The system consists of the following components:
 
-* A memory bound, recency lookup table. This table works similar  
+* A memory bound, recency lookup table. This table works similar to the LRU lookup in FileCache. We should create a separate component that deals with this.
+
+* A resouce lookup table. 
+
+* 
 
 ## Acceptance criteria
 

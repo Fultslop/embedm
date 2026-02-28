@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-02-28T00:00:00Z",
+  "status": "OK",
+  "summary": "Trivial 'shout' plugin created and verified end-to-end: entry-point registered, plugin discovered, directive rendered correctly.",
+  "encountered_problems": [
+    {
+      "attempt": 1,
+      "action": "pip install embedm (check version)",
+      "result": "embedm 1.0.0 was installed; upgraded to 1.0.1 before proceeding."
+    },
+    {
+      "attempt": 1,
+      "action": "pip install -e . (global pip)",
+      "result": "Plugin installed into global Python, not into the project .venv. embedm -p showed warning 'plugin_sequence entry shout_plugin has no matching installed entry point' because the CLI resolves to .venv/Scripts/embedm which uses a different environment."
+    },
+    {
+      "attempt": 2,
+      "action": ".venv/Scripts/python.exe -m pip install -e .",
+      "result": "No module named pip — venv was created without pip (likely via uv)."
+    },
+    {
+      "attempt": 3,
+      "action": "uv pip install -e . --python .venv/Scripts/python.exe",
+      "result": "Success. Plugin installed into the correct venv. 8 plugins loaded, shout plugin listed. embedm test.md produced '> **HELLO WORLD**' as expected."
+    }
+  ],
+  "feedback": [
+    "The tutorial recommends 'pip install -e .' without clarifying which pip. On a project using uv, the project venv has no pip module, and the system pip targets a different Python. The tutorial should explicitly state 'install into the same environment that runs embedm' with examples for uv-based projects: 'uv pip install -e . --python <path-to-venv-python>'.",
+    "The tutorial mentions 'uv pip install embedm' for setup but switches back to plain 'pip install -e .' for plugin installation — inconsistent. It should stay consistent with one tool throughout.",
+    "The environment-alignment callout in the tutorial is present but appears after the install step. Moving it before the install command would reduce confusion.",
+    "The 'embedm -p' diagnostic correctly surfaces the 'no matching installed entry point' warning, which was the key signal that pointed to the wrong environment — this is good UX.",
+    "embedm --init correctly generated embedm-config.yaml with a plugin_sequence section ready to be extended — no friction here."
+  ]
+}

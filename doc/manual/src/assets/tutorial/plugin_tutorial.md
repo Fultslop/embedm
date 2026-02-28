@@ -142,8 +142,10 @@ plugin_sequence:
   - embedm_plugins.file_plugin
   - embedm_plugins.query_path_plugin
   - embedm_plugins.table_plugin
+  # put your plugin below the table_plugin
   - embedm_plugins.hello_world_plugin
   - mermaid_plugin
+  # but above the synopsis_plugin
   - embedm_plugins.synopsis_plugin
   - embedm_plugins.recall_plugin
   - embedm_plugins.toc_plugin
@@ -151,10 +153,17 @@ plugin_sequence:
 
 Once that's in place, we'll need to install this 'package' so python actually can find it.
 
-> **Environment note:** The plugin must be installed into the same Python environment that runs `embedm`. If you are using a virtual environment (as set up above), make sure it is active before running the install command. A common silent failure is installing with a system-level `pip` while `embedm` runs from a project `.venv` — the plugin will be discovered but never loaded.
+> **Environment note:** The plugin must be installed into the same Python environment that runs `embedm`. A common silent failure is installing into a different environment — the plugin appears registered but is never loaded. Make sure your project virtual environment is active before running the install command below.
 
 ```bash
-pip install -e .
+uv pip install -e .
+```
+
+If your virtual environment is not active, or you need to target it explicitly, pass the Python interpreter path:
+
+```bash
+uv pip install -e . --python .venv/Scripts/python.exe   # Windows
+uv pip install -e . --python .venv/bin/python           # macOS / Linux
 ```
 
 With the scaffolding in place we can update the `test.md` file to embed this mermaid plugin:
