@@ -19,6 +19,7 @@ str_resources = SimpleNamespace(
     ),
     err_plan_no_plugin="no plugin registered for directive type '{directive_type}'",
     err_plan_no_plugin_verbose=("no plugin registered for directive type '{directive_type}'. Available: {available}"),
+    warn_deprecated_directive_type="directive type '{old_type}' is deprecated, use '{new_type}' instead",
     verbose_hint="Use -v 2 or --verbose 2 for more information.",
     err_cli_invalid_verbosity="verbosity level must be 0-3, got {level}",
     err_fatal_plugins_cannot_start=(

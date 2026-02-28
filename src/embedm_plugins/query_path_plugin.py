@@ -64,8 +64,8 @@ class QueryPathPlugin(PluginBase):
 
     name = "query path plugin"
     api_version = 1
-    # TODO: normalize this to "query_path", deprecate "query-path"
-    directive_type = "query-path"
+    directive_type = "query_path"
+    deprecated_directive_types = ["query-path"]
 
     def validate_directive(
         self, directive: Directive, _configuration: PluginConfiguration | None = None

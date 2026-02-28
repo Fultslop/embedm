@@ -9,19 +9,24 @@ _REQUIRED_ATTRS: tuple[str, ...] = ("name", "directive_type")
 
 
 class _PluginLookup(dict):  # type: ignore[type-arg]
-    """dict subclass that maintains a secondary directive_type → plugin index."""
+    """dict subclass that maintains secondary directive_type and deprecated_type → plugin indices."""
 
     def __init__(self) -> None:
         super().__init__()
         self._by_directive_type: dict[str, PluginBase] = {}
+        self._by_deprecated_type: dict[str, PluginBase] = {}
 
     def __setitem__(self, key: str, value: PluginBase) -> None:
         super().__setitem__(key, value)
         self._by_directive_type[value.directive_type] = value
+        for old_type in value.deprecated_directive_types:
+            self._by_deprecated_type[old_type] = value
 
     def __delitem__(self, key: str) -> None:
         plugin = self[key]
         self._by_directive_type.pop(plugin.directive_type, None)
+        for old_type in plugin.deprecated_directive_types:
+            self._by_deprecated_type.pop(old_type, None)
         super().__delitem__(key)
 
 
@@ -103,6 +108,20 @@ class PluginRegistry:
 
     def get_plugin(self, name: str) -> PluginBase | None:
         return self.lookup.get(name)
+
+    def resolve_directive_type(self, type_str: str) -> tuple[str, bool]:
+        """Return (canonical_type, is_deprecated).
+
+        If type_str is a canonical type, returns (type_str, False).
+        If type_str is a deprecated type, returns (canonical, True).
+        If type_str is unknown, returns (type_str, False).
+        """
+        if type_str in self.lookup._by_directive_type:
+            return type_str, False
+        plugin = self.lookup._by_deprecated_type.get(type_str)
+        if plugin is not None:
+            return plugin.directive_type, True
+        return type_str, False
 
     def find_plugin_by_directive_type(self, directive_type: str) -> PluginBase | None:
         """Find a plugin that handles the given directive type."""

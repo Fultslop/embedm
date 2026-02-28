@@ -59,6 +59,10 @@ class FilePlugin(PluginBase):
     name = "file plugin"
     api_version = 1
     directive_type = "file"
+    deprecated_option_names = {
+        "show_link": ["link"],
+        "show_line_range": ["line_numbers_range"],
+    }
 
     def get_plugin_config_schema(self) -> dict[str, type]:
         """Return the config keys accepted by the file plugin."""
@@ -135,8 +139,8 @@ class FilePlugin(PluginBase):
         content = _apply_comment_filter(content, source_path, plan_node.directive)
 
         title = plan_node.directive.options.get("title")
-        show_link = get_option(plan_node.directive, "link", bool, False)
-        show_line_range = get_option(plan_node.directive, "line_numbers_range", bool, False)
+        show_link = get_option(plan_node.directive, "show_link", bool, False)
+        show_line_range = get_option(plan_node.directive, "show_line_range", bool, False)
         compiled_dir = context.plugin_config.compiled_dir if context.plugin_config else ""
         header = _build_header(source_path, compiled_dir, title, show_line_range, show_link, line_range)
 

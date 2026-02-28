@@ -1,9 +1,14 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
 from pathlib import Path
 from unittest.mock import MagicMock
 
 from embedm.application.embedm_context import EmbedmContext
 from embedm.application.planner import create_plan, plan_content, plan_file
 from embedm.domain.directive import Directive
+from embedm.domain.document import Fragment
+from embedm.domain.plan_node import PlanNode
 from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_cache import FileCache
 from embedm.plugins.plugin_base import PluginBase
@@ -509,3 +514,61 @@ def test_plan_content_normalize_input_artifact_stored_on_root(tmp_path: Path):
     plan = plan_content("# Content\n", context)
 
     assert plan.normalized_data == artifact
+
+
+# --- deprecated directive type and option remapping ---
+
+
+class _DeprecatedTypePlugin(PluginBase):
+    name = "new_plugin"
+    directive_type = "new_type"
+    deprecated_directive_types = ["old-type"]
+
+    def transform(self, plan_node: PlanNode, parent_document: Sequence[Fragment], context=None) -> str:
+        return ""
+
+
+class _DeprecatedOptionPlugin(PluginBase):
+    name = "opt_plugin"
+    directive_type = "opt_type"
+    deprecated_option_names = {"new_opt": ["old_opt"]}
+
+    def transform(self, plan_node: PlanNode, parent_document: Sequence[Fragment], context=None) -> str:
+        return ""
+
+
+def test_create_plan_remaps_deprecated_directive_type(tmp_path: Path):
+    """A deprecated directive type is remapped to canonical before validation. WARNING collected."""
+    context = _make_context(tmp_path)
+    context.plugin_registry.lookup[_DeprecatedTypePlugin.name] = _DeprecatedTypePlugin()
+    directive = Directive(type="root")
+    content = "```yaml embedm\ntype: old-type\n```\n"
+
+    plan = create_plan(directive, content, depth=0, context=context)
+
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].directive.type == "new_type"
+    warning_statuses = [s for s in plan.status if s.level == StatusLevel.WARNING]
+    assert len(warning_statuses) == 1
+    assert "old-type" in warning_statuses[0].description
+    assert "new_type" in warning_statuses[0].description
+
+
+def test_create_plan_remaps_deprecated_option_name(tmp_path: Path):
+    """Deprecated option names are remapped to canonical before validation. WARNING collected."""
+    context = _make_context(tmp_path)
+    context.plugin_registry.lookup[_DeprecatedOptionPlugin.name] = _DeprecatedOptionPlugin()
+    directive = Directive(type="root")
+    content = "```yaml embedm\ntype: opt_type\nold_opt: some_value\n```\n"
+
+    plan = create_plan(directive, content, depth=0, context=context)
+
+    assert plan.children is not None
+    assert len(plan.children) == 1
+    assert plan.children[0].directive.options.get("new_opt") == "some_value"
+    assert "old_opt" not in plan.children[0].directive.options
+    warning_statuses = [s for s in plan.status if s.level == StatusLevel.WARNING]
+    assert len(warning_statuses) == 1
+    assert "old_opt" in warning_statuses[0].description
+    assert "new_opt" in warning_statuses[0].description

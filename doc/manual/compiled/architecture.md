@@ -116,6 +116,8 @@ class PluginBase(ABC):
     name: ClassVar[str]
     api_version: ClassVar[int]
     directive_type: ClassVar[str]
+    deprecated_directive_types: ClassVar[list[str]] = []
+    deprecated_option_names: ClassVar[dict[str, list[str]]] = {}
 ```
 The abstract interface has two mandatory methods and two optional ones:
 

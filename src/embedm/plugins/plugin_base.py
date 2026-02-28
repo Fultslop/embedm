@@ -7,10 +7,11 @@ from typing import Any, ClassVar
 from embedm.domain.directive import Directive
 from embedm.domain.document import Fragment
 from embedm.domain.plan_node import PlanNode
-from embedm.domain.status_level import Status
+from embedm.domain.status_level import Status, StatusLevel
 from embedm.plugins.normalization_base import NormalizationResult
 from embedm.plugins.plugin_configuration import PluginConfiguration
 from embedm.plugins.plugin_context import PluginContext
+from embedm.plugins.plugin_resources import str_resources
 
 
 # md.start: PluginBase
@@ -18,7 +19,27 @@ class PluginBase(ABC):
     name: ClassVar[str]
     api_version: ClassVar[int]
     directive_type: ClassVar[str]
+    deprecated_directive_types: ClassVar[list[str]] = []
+    deprecated_option_names: ClassVar[dict[str, list[str]]] = {}
     # md.end: PluginBase
+
+    def remap_deprecated_options(self, directive: Directive) -> list[Status]:
+        """Remap deprecated option names to canonical names in-place.
+
+        Returns WARNING statuses for each deprecated name encountered.
+        """
+        warnings: list[Status] = []
+        for canonical, old_names in self.deprecated_option_names.items():
+            for old_name in old_names:
+                if old_name in directive.options:
+                    directive.options[canonical] = directive.options.pop(old_name)
+                    warnings.append(
+                        Status(
+                            StatusLevel.WARNING,
+                            str_resources.warn_deprecated_option.format(old_name=old_name, new_name=canonical),
+                        )
+                    )
+        return warnings
 
     def get_plugin_config_schema(self) -> dict[str, type] | None:
         """Return accepted config keys and their expected types, or None if plugin takes no config."""

@@ -7,6 +7,7 @@ from embedm.domain.status_level import Status, StatusLevel
 from embedm.infrastructure.file_util import to_relative
 from embedm.parsing.directive_parser import parse_yaml_embed_blocks
 from embedm.plugins.plugin_configuration import PluginConfiguration
+from embedm.plugins.plugin_registry import PluginRegistry
 
 from .application_resources import str_resources
 from .embedm_context import EmbedmContext
@@ -59,6 +60,9 @@ def create_plan(
     document = Document(file_name=directive.source, fragments=fragments)
     directives = [f for f in fragments if isinstance(f, Directive)]
 
+    # step 2b: remap deprecated directive types and option names in-place
+    all_errors.extend(_remap_deprecated(directives, context.plugin_registry))
+
     # step 3: validate directives — collect errors and determine which sources are buildable
     plugin_config = PluginConfiguration(
         max_embed_size=context.config.max_embed_size,
@@ -80,6 +84,28 @@ def create_plan(
         document=document,
         children=children,
     )
+
+
+def _remap_deprecated(directives: list[Directive], registry: PluginRegistry) -> list[Status]:
+    """Remap deprecated directive types and option names in-place.
+
+    Returns WARNING statuses for all deprecated names encountered.
+    """
+    warnings: list[Status] = []
+    for d in directives:
+        canonical, is_deprecated = registry.resolve_directive_type(d.type)
+        if is_deprecated:
+            warnings.append(
+                Status(
+                    StatusLevel.WARNING,
+                    str_resources.warn_deprecated_directive_type.format(old_type=d.type, new_type=canonical),
+                )
+            )
+            d.type = canonical
+        plugin = registry.find_plugin_by_directive_type(d.type)
+        if plugin is not None:
+            warnings.extend(plugin.remap_deprecated_options(d))
+    return warnings
 
 
 def _check_plugins(

@@ -125,7 +125,7 @@ def test_verbose_plan_tree_error_node_shows_description(capsys: pytest.CaptureFi
 
 def test_verbose_plan_tree_child_shows_directive_type(capsys: pytest.CaptureFixture[str]) -> None:
     child = PlanNode(
-        directive=Directive(type="query-path", source="/data.json"),
+        directive=Directive(type="query_path", source="/data.json"),
         status=[Status(StatusLevel.OK, "ok")],
         children=[],
     )
@@ -136,7 +136,7 @@ def test_verbose_plan_tree_child_shows_directive_type(capsys: pytest.CaptureFixt
     )
     verbose_plan_tree(root)
     captured = capsys.readouterr()
-    assert "query-path" in captured.err
+    assert "query_path" in captured.err
     assert "/data.json" in captured.err
 
 

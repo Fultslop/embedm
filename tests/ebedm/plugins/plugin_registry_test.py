@@ -279,3 +279,54 @@ def test_duplicate_directive_type_second_plugin_not_registered():
     assert registry.count == 1
     assert registry.get_plugin("alpha") is not None
     assert registry.get_plugin("beta") is None
+
+
+# --- resolve_directive_type ---
+
+
+class _WithDeprecated(PluginBase):
+    name = "new_plugin"
+    directive_type = "new_type"
+    deprecated_directive_types = ["old-type", "old_type_v1"]
+
+    def transform(self, plan_node, parent_document, context=None) -> str:  # type: ignore[override]
+        return ""
+
+
+def test_resolve_directive_type_canonical_returns_unchanged():
+    registry = PluginRegistry()
+    registry.lookup["new_plugin"] = _WithDeprecated()
+
+    canonical, is_deprecated = registry.resolve_directive_type("new_type")
+
+    assert canonical == "new_type"
+    assert is_deprecated is False
+
+
+def test_resolve_directive_type_deprecated_returns_canonical():
+    registry = PluginRegistry()
+    registry.lookup["new_plugin"] = _WithDeprecated()
+
+    canonical, is_deprecated = registry.resolve_directive_type("old-type")
+
+    assert canonical == "new_type"
+    assert is_deprecated is True
+
+
+def test_resolve_directive_type_all_deprecated_aliases_map_to_canonical():
+    registry = PluginRegistry()
+    registry.lookup["new_plugin"] = _WithDeprecated()
+
+    canonical, is_deprecated = registry.resolve_directive_type("old_type_v1")
+
+    assert canonical == "new_type"
+    assert is_deprecated is True
+
+
+def test_resolve_directive_type_unknown_returns_unchanged():
+    registry = PluginRegistry()
+
+    canonical, is_deprecated = registry.resolve_directive_type("unknown_type")
+
+    assert canonical == "unknown_type"
+    assert is_deprecated is False

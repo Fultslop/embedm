@@ -8,7 +8,7 @@ from embedm_plugins.query_path_plugin import QueryPathPlugin, _QueryPathArtifact
 
 
 def _make_plan_node(source: str, options: dict[str, str] | None = None, artifact: object = None) -> PlanNode:
-    directive = Directive(type="query-path", source=source, options=options or {})
+    directive = Directive(type="query_path", source=source, options=options or {})
     node = PlanNode(directive=directive, status=[], document=MagicMock())
     node.normalized_data = artifact
     return node
@@ -19,7 +19,7 @@ def _make_plan_node(source: str, options: dict[str, str] | None = None, artifact
 
 def test_validate_missing_source():
     plugin = QueryPathPlugin()
-    errors = plugin.validate_directive(Directive(type="query-path"))
+    errors = plugin.validate_directive(Directive(type="query_path"))
     assert len(errors) == 1
     assert errors[0].level == StatusLevel.ERROR
     assert "source" in errors[0].description
@@ -27,38 +27,38 @@ def test_validate_missing_source():
 
 def test_validate_unsupported_extension():
     plugin = QueryPathPlugin()
-    errors = plugin.validate_directive(Directive(type="query-path", source="data.csv"))
+    errors = plugin.validate_directive(Directive(type="query_path", source="data.csv"))
     assert any("csv" in e.description for e in errors)
 
 
 def test_validate_supported_toml():
     plugin = QueryPathPlugin()
-    assert plugin.validate_directive(Directive(type="query-path", source="data.toml")) == []
+    assert plugin.validate_directive(Directive(type="query_path", source="data.toml")) == []
 
 
 def test_validate_supported_json():
     plugin = QueryPathPlugin()
-    assert plugin.validate_directive(Directive(type="query-path", source="data.json")) == []
+    assert plugin.validate_directive(Directive(type="query_path", source="data.json")) == []
 
 
 def test_validate_supported_yaml():
     plugin = QueryPathPlugin()
-    assert plugin.validate_directive(Directive(type="query-path", source="data.yaml")) == []
+    assert plugin.validate_directive(Directive(type="query_path", source="data.yaml")) == []
 
 
 def test_validate_supported_yml():
     plugin = QueryPathPlugin()
-    assert plugin.validate_directive(Directive(type="query-path", source="data.yml")) == []
+    assert plugin.validate_directive(Directive(type="query_path", source="data.yml")) == []
 
 
 def test_validate_supported_xml():
     plugin = QueryPathPlugin()
-    assert plugin.validate_directive(Directive(type="query-path", source="data.xml")) == []
+    assert plugin.validate_directive(Directive(type="query_path", source="data.xml")) == []
 
 
 def test_validate_format_without_path_is_error():
     plugin = QueryPathPlugin()
-    errors = plugin.validate_directive(Directive(type="query-path", source="data.json", options={"format": "v: {value}"}))
+    errors = plugin.validate_directive(Directive(type="query_path", source="data.json", options={"format": "v: {value}"}))
     assert len(errors) == 1
     assert "path" in errors[0].description
 
@@ -66,7 +66,7 @@ def test_validate_format_without_path_is_error():
 def test_validate_format_missing_placeholder_is_error():
     plugin = QueryPathPlugin()
     errors = plugin.validate_directive(
-        Directive(type="query-path", source="data.json", options={"path": "version", "format": "no placeholder"})
+        Directive(type="query_path", source="data.json", options={"path": "version", "format": "no placeholder"})
     )
     assert len(errors) == 1
     assert "{value}" in errors[0].description
@@ -75,7 +75,7 @@ def test_validate_format_missing_placeholder_is_error():
 def test_validate_format_with_path_and_placeholder_is_valid():
     plugin = QueryPathPlugin()
     errors = plugin.validate_directive(
-        Directive(type="query-path", source="data.json", options={"path": "version", "format": "v: {value}"})
+        Directive(type="query_path", source="data.json", options={"path": "version", "format": "v: {value}"})
     )
     assert errors == []
 
@@ -85,7 +85,7 @@ def test_validate_format_with_path_and_placeholder_is_valid():
 
 def test_normalize_input_json_scalar():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "version"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "version"})
     result = plugin.normalize_input(directive, '{"version": "1.2.3"}')
     assert result.errors == []
     assert result.normalized_data is not None
@@ -95,7 +95,7 @@ def test_normalize_input_json_scalar():
 
 def test_normalize_input_json_nested_path():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "a.b.c"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "a.b.c"})
     result = plugin.normalize_input(directive, '{"a": {"b": {"c": 42}}}')
     assert result.errors == []
     assert result.normalized_data is not None
@@ -104,7 +104,7 @@ def test_normalize_input_json_nested_path():
 
 def test_normalize_input_json_integer_index():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "items.1"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "items.1"})
     result = plugin.normalize_input(directive, '{"items": ["a", "b", "c"]}')
     assert result.errors == []
     assert result.normalized_data is not None
@@ -113,7 +113,7 @@ def test_normalize_input_json_integer_index():
 
 def test_normalize_input_json_no_path_is_full_document():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json")
+    directive = Directive(type="query_path", source="pkg.json")
     raw = '{"version": "1.0"}'
     result = plugin.normalize_input(directive, raw)
     assert result.errors == []
@@ -125,7 +125,7 @@ def test_normalize_input_json_no_path_is_full_document():
 
 def test_normalize_input_json_invalid_path():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "missing.key"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "missing.key"})
     result = plugin.normalize_input(directive, '{"version": "1.0"}')
     assert len(result.errors) == 1
     assert result.errors[0].level == StatusLevel.ERROR
@@ -134,7 +134,7 @@ def test_normalize_input_json_invalid_path():
 
 def test_normalize_input_invalid_json():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "version"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "version"})
     result = plugin.normalize_input(directive, "not json")
     assert len(result.errors) == 1
     assert result.errors[0].level == StatusLevel.ERROR
@@ -146,7 +146,7 @@ def test_normalize_input_invalid_json():
 
 def test_normalize_input_yaml_scalar():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.yaml", options={"path": "project.version"})
+    directive = Directive(type="query_path", source="cfg.yaml", options={"path": "project.version"})
     result = plugin.normalize_input(directive, "project:\n  version: 0.6.0")
     assert result.errors == []
     assert result.normalized_data is not None
@@ -155,7 +155,7 @@ def test_normalize_input_yaml_scalar():
 
 def test_normalize_input_yml_lang_tag():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.yml")
+    directive = Directive(type="query_path", source="cfg.yml")
     result = plugin.normalize_input(directive, "key: value")
     assert result.normalized_data is not None
     assert result.normalized_data.lang_tag == "yaml"
@@ -163,7 +163,7 @@ def test_normalize_input_yml_lang_tag():
 
 def test_normalize_input_invalid_yaml():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.yaml", options={"path": "key"})
+    directive = Directive(type="query_path", source="cfg.yaml", options={"path": "key"})
     result = plugin.normalize_input(directive, "key: [unclosed")
     assert len(result.errors) == 1
     assert result.normalized_data is None
@@ -174,7 +174,7 @@ def test_normalize_input_invalid_yaml():
 
 def test_normalize_input_xml_attribute():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.xml", options={"path": "server.attributes.host"})
+    directive = Directive(type="query_path", source="cfg.xml", options={"path": "server.attributes.host"})
     result = plugin.normalize_input(directive, '<server host="localhost"/>')
     assert result.errors == []
     assert result.normalized_data is not None
@@ -183,7 +183,7 @@ def test_normalize_input_xml_attribute():
 
 def test_normalize_input_xml_text_content():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.xml", options={"path": "root.value"})
+    directive = Directive(type="query_path", source="cfg.xml", options={"path": "root.value"})
     result = plugin.normalize_input(directive, "<root>hello</root>")
     assert result.errors == []
     assert result.normalized_data is not None
@@ -192,7 +192,7 @@ def test_normalize_input_xml_text_content():
 
 def test_normalize_input_xml_backtick_escape():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.xml", options={"path": "root.`value`.child"})
+    directive = Directive(type="query_path", source="cfg.xml", options={"path": "root.`value`.child"})
     xml = "<root><value><child>found</child></value></root>"
     result = plugin.normalize_input(directive, xml)
     assert result.errors == []
@@ -202,7 +202,7 @@ def test_normalize_input_xml_backtick_escape():
 
 def test_normalize_input_invalid_xml():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.xml", options={"path": "root"})
+    directive = Directive(type="query_path", source="cfg.xml", options={"path": "root"})
     result = plugin.normalize_input(directive, "<unclosed>")
     assert len(result.errors) == 1
     assert result.normalized_data is None
@@ -213,7 +213,7 @@ def test_normalize_input_invalid_xml():
 
 def test_normalize_input_toml_scalar():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pyproject.toml", options={"path": "project.version"})
+    directive = Directive(type="query_path", source="pyproject.toml", options={"path": "project.version"})
     result = plugin.normalize_input(directive, '[project]\nversion = "0.6.0"')
     assert result.errors == []
     assert result.normalized_data is not None
@@ -222,7 +222,7 @@ def test_normalize_input_toml_scalar():
 
 def test_normalize_input_toml_no_path_is_full_document():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.toml")
+    directive = Directive(type="query_path", source="cfg.toml")
     raw = '[project]\nversion = "1.0"'
     result = plugin.normalize_input(directive, raw)
     assert result.errors == []
@@ -233,7 +233,7 @@ def test_normalize_input_toml_no_path_is_full_document():
 
 def test_normalize_input_invalid_toml():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="cfg.toml", options={"path": "key"})
+    directive = Directive(type="query_path", source="cfg.toml", options={"path": "key"})
     result = plugin.normalize_input(directive, "not = [valid toml")
     assert len(result.errors) == 1
     assert result.normalized_data is None
@@ -241,7 +241,7 @@ def test_normalize_input_invalid_toml():
 
 def test_normalize_input_format_scalar_stores_format_str():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "version", "format": "v: {value}"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "version", "format": "v: {value}"})
     result = plugin.normalize_input(directive, '{"version": "1.2.3"}')
     assert result.errors == []
     assert result.normalized_data is not None
@@ -250,7 +250,7 @@ def test_normalize_input_format_scalar_stores_format_str():
 
 def test_normalize_input_format_non_scalar_dict_is_error():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "meta", "format": "x: {value}"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "meta", "format": "x: {value}"})
     result = plugin.normalize_input(directive, '{"meta": {"key": "val"}}')
     assert len(result.errors) == 1
     assert result.normalized_data is None
@@ -258,7 +258,7 @@ def test_normalize_input_format_non_scalar_dict_is_error():
 
 def test_normalize_input_format_non_scalar_list_is_error():
     plugin = QueryPathPlugin()
-    directive = Directive(type="query-path", source="pkg.json", options={"path": "items", "format": "x: {value}"})
+    directive = Directive(type="query_path", source="pkg.json", options={"path": "items", "format": "x: {value}"})
     result = plugin.normalize_input(directive, '{"items": [1, 2, 3]}')
     assert len(result.errors) == 1
     assert result.normalized_data is None
@@ -269,7 +269,7 @@ def test_normalize_input_format_non_scalar_list_is_error():
 
 def test_transform_no_document():
     plugin = QueryPathPlugin()
-    node = PlanNode(Directive(type="query-path", source="pkg.json"), status=[], document=None)
+    node = PlanNode(Directive(type="query_path", source="pkg.json"), status=[], document=None)
     assert plugin.transform(node, []) == ""
 
 
